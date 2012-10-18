@@ -46,13 +46,13 @@ public class Main extends Sprite
   private static const Image3Cls:Class;
   private static const image3:Bitmap = new Image3Cls();
 
-  // Video
-  [Embed(source="../assets/Frage1.flv", mimeType="application/octet-stream")]
-  private static const Frage1VideoCls:Class;
-
   // Font
   [Embed(source="../assets/awesomefont.ttf", fontName="AwesomeFont")]
   private static const AwesomeFontCls:Class;
+
+  // Video
+  [Embed(source="../assets/Frage1.flv", mimeType="application/octet-stream")]
+  private static const Frage1VideoCls:Class;
 
   // Block images: http://www.minecraftwiki.net/wiki/File:BlockCSS.png
   [Embed(source="../assets/blocks.png", mimeType="image/png")]
@@ -266,24 +266,6 @@ import flash.geom.Matrix;
 import flash.geom.Rectangle;
 
 
-//  Constraint
-// 
-class Constraint
-{
-  public function Constraint(dx0:int=0, dy0:int=0, dx1:int=0, dy1:int=0)
-  {
-    this.dx0 = dx0;
-    this.dy0 = dy0;
-    this.dx1 = dx1;
-    this.dy1 = dy1;
-  }
-  public var dx0:int;
-  public var dy0:int;
-  public var dx1:int;
-  public var dy1:int;
-}
-
-
 //  Scene
 // 
 class Scene
@@ -295,9 +277,10 @@ class Scene
 //
 class TileMap extends Bitmap
 {
-  private var map:BitmapData;
-  private var blocks:BitmapData;
-  private var blocksize:int;
+  public var map:BitmapData;
+  public var blocks:BitmapData;
+  public var blocksize:int;
+
   private var prevrect:Rectangle;
   private var window:Rectangle;
   private var xmax:int, ymax:int;
@@ -370,31 +353,66 @@ class TileMap extends Bitmap
     }
   }
 
-  // Jim(r)
-  public function Jim(src:Rectangle):Constraint
+  // getCollisionY(r)
+  public function getCollisionY(src:Rectangle, vy:int):int
   {
     var x0:int = src.x/blocksize;
     var x1:int = (src.x+src.width-1)/blocksize;
+    var y0:int, y1:int;
+    var x:int, y:int;
+    if (vy < 0) {
+      y0 = src.y/blocksize;
+      y1 = (src.y+vy)/blocksize;
+      for (y = y0; y1 <= y; y--) {
+	for (x = x0; x <= x1; x++) {
+	  if (hasObstacle(x, y)) {
+	    return src.y-(y+1)*blocksize;
+	  }
+	}
+      }
+    } else if (0 < vy) {
+      y0 = (src.y+src.height-1)/blocksize;
+      y1 = (src.y+src.height+vy-1)/blocksize;
+      for (y = y0; y <= y1; y++) {
+	for (x = x0; x <= x1; x++) {
+	  if (hasObstacle(x, y)) {
+	    return y*blocksize-(src.y+src.height);
+	  }
+	}
+      }
+    }
+    return vy;
+  }
+
+  // getCollisionX(r)
+  public function getCollisionX(src:Rectangle, vx:int):int
+  {
     var y0:int = src.y/blocksize;
     var y1:int = (src.y+src.height-1)/blocksize;
-    var r:Constraint = new Constraint();
-    for (var x:int = x0; x <= x1; x++) {
-      if (hasObstacle(x, y0) && !hasObstacle(x, y0+1)) {
-	r.dy0 = (y0+1)*blocksize-src.y; // >= 0
+    var x0:int, x1:int;
+    var x:int, y:int;
+    if (vx < 0) {
+      x0 = src.x/blocksize;
+      x1 = (src.x+vx)/blocksize;
+      for (x = x0; x1 <= x; x--) {
+	for (y = y0; y <= y1; y++) {
+	  if (hasObstacle(x, y)) {
+	    return src.x-(x+1)*blocksize;
+	  }
+	}
       }
-      if (hasObstacle(x, y1) && !hasObstacle(x, y1-1)) {
-	r.dy1 = y1*blocksize-(src.y+src.height); // <= 0
+    } else if (0 < vx) {
+      x0 = (src.x+src.width-1)/blocksize;
+      x1 = (src.x+src.width+vx-1)/blocksize;
+      for (x = x0; x <= x1; x++) {
+	for (y = y0; y <= y1; y++) {
+	  if (hasObstacle(x, y)) {
+	    return x*blocksize-(src.x+src.width);
+	  }
+	}
       }
     }
-    for (var y:int = y0; y <= y1; y++) {
-      if (hasObstacle(x0, y) && !hasObstacle(x0+1, y)) {
-	r.dx0 = (x0+1)*blocksize-src.x; // >= 0
-      } 
-      if (hasObstacle(x1, y) && !hasObstacle(x1-1, y)) {
-	r.dx1 = x1*blocksize-(src.x+src.width); // <= 0
-      }
-    }
-    return r;
+    return vx;
   }
 
   // repaint()
@@ -813,7 +831,7 @@ class Player extends Actor
 
   private const gravity:int = 4;
   private const speed:int = 8;
-  private const jumpacc:int = -24;
+  private const jumpacc:int = -36;
 
   // Player(image)
   public function Player(image:BitmapData)
@@ -846,26 +864,17 @@ class Player extends Actor
   // update(tilemap)
   public override function update(tilemap:TileMap):void
   {
-    //Main.log("dx0="+r.dx0+", dx1="+r.dx1+", dy0="+r.dy0+", dy1="+r.dy1);
     vy += gravity;
+    var vy0:int = vy;
+    vy = tilemap.getCollisionY(getBounds(), vy0);
     pos.y += vy;
-    var r:Constraint = tilemap.Jim(getBounds());
-    if (r.dy0 == 0 || r.dy1 == 0) {
-      pos.y += r.dy0+r.dy1;
-      if (r.dy1 != 0) {
-	if (jumping) {
-	  vy = jumpacc;
-	} else {
-	  vy = 0;
-	}
+    if (jumping) {
+      if (0 < vy0 && vy == 0) {
+	vy = jumpacc;
       }
+      jumping = false;
     }
-    jumping = false;
-    pos.x += vx;
-    r = tilemap.Jim(getBounds());
-    if (r.dx0 == 0 || r.dx1 == 0) {
-      pos.x += r.dx0+r.dx1;
-    }
+    pos.x += tilemap.getCollisionX(getBounds(), vx);
     tilemap.setCenter(pos, 200);
     if (vx != 0) {
       phase += Math.abs(vx)*0.1;
