@@ -68,12 +68,12 @@ public class Main extends Sprite
   // Main()
   public function Main()
   {
+    //loginit();
     stage.addEventListener(KeyboardEvent.KEY_DOWN, OnKeyDown);
     stage.addEventListener(KeyboardEvent.KEY_UP, OnKeyUp);
     stage.addEventListener(Event.ENTER_FRAME, OnEnterFrame);
     stage.scaleMode = StageScaleMode.NO_SCALE;
     init();
-    //loginit();
   }
 
   /// Logging functions
@@ -97,8 +97,10 @@ public class Main extends Sprite
   // log(x)
   public static function log(x:String):void
   {
-    logger.appendText(x+"\n");
-    logger.scrollV = logger.maxScrollV;
+    if (logger != null) {
+      logger.appendText(x+"\n");
+      logger.scrollV = logger.maxScrollV;
+    }
   }
 
   // OnKeyDown(e)
@@ -121,8 +123,8 @@ public class Main extends Sprite
 
   /// Game-related functions
 
+  private var scene:Scene;
   private var tilemap:TileMap;
-  private var sprites:Array = [];
   private var player:Player;
   private var state:int = 0;
 
@@ -134,21 +136,20 @@ public class Main extends Sprite
     graphics.endFill();
     
     tilemap = new TileMap(mapimage.bitmapData, blocksimage.bitmapData, 32);
-    tilemap.setSize(stage.stageWidth, stage.stageHeight);
-    addChild(tilemap);
+    scene = new Scene(stage.stageWidth, stage.stageHeight, tilemap);
 
-    player = new Player(image0.bitmapData);
+    player = new Player(scene, image0.bitmapData);
     player.setPosition(new Point(100, 100));
-    addChild(player.getSkin());
+    scene.add(player);
 
     for (var i:int = 0; i < images.length; i++) {
-      var p:Person = new Person(images[i].bitmapData);
+      var p:Person = new Person(scene, images[i].bitmapData);
       p.setPosition(new Point(i*100+200, i*100+200));
       p.move(+1);
-      addChild(p.getSkin());
-      sprites.push(p);
+      scene.add(p);
     }
 
+    addChild(scene);
     //playVideo(new Frage1VideoCls());
   }
 
@@ -177,7 +178,7 @@ public class Main extends Sprite
     case Keyboard.SPACE:
     case 88:			// X
     case 90:			// Z
-      player.jump(tilemap);
+      player.jump();
       break;
     }
   }
@@ -207,15 +208,11 @@ public class Main extends Sprite
   // update()
   private function update():void
   {
-    for each (var p:Person in sprites) {
-      p.update(tilemap);
-    }
-    player.update(tilemap);
-    tilemap.repaint();
+    scene.update();
     if (state == 0 && player.isAlive()) {
       state = 1;
       popupVideo(new Frage1VideoCls());
-      removeChild(player.getSkin());
+      scene.remove(player);
     }
   }
 
@@ -264,268 +261,6 @@ import flash.text.TextFieldType;
 import flash.geom.Point;
 import flash.geom.Matrix;
 import flash.geom.Rectangle;
-
-
-//  Scene
-// 
-class Scene
-{
-}
-
-
-//  TileMap
-//
-class TileMap extends Bitmap
-{
-  public var map:BitmapData;
-  public var blocks:BitmapData;
-  public var blocksize:int;
-
-  private var prevrect:Rectangle;
-  private var window:Rectangle;
-  private var xmax:int, ymax:int;
-
-  // TileMap(map, blocks, blocksize, width, height)
-  public function TileMap(map:BitmapData, 
-			  blocks:BitmapData,
-			  blocksize:int)
-  {
-    this.map = map;
-    this.blocks = blocks;
-    this.blocksize = blocksize;
-    this.prevrect = new Rectangle(-1,-1,0,0);
-  }
-
-  // setSize(width, height, margin)
-  public function setSize(width:int, height:int):void
-  {
-    this.window = new Rectangle(0, 0, width, height);
-    this.xmax = map.width*blocksize - width;
-    this.ymax = map.height*blocksize - height;
-  }
-
-  // setCenter(p)
-  public function setCenter(p:Point, margin:int):void
-  {
-    if (p.x-margin < window.x) {
-      window.x = p.x-margin;
-    } else if (window.x+window.width < p.x+margin) {
-      window.x = p.x+margin-window.width;
-    }
-    if (window.x < 0) {
-      window.x = 0;
-    } else if (xmax < window.x) {
-      window.x = xmax;
-    }
-    if (p.y-margin < window.y) {
-      window.y = p.y-margin;
-    } else if (window.y+window.height < p.y+margin) {
-      window.y = p.y+margin-window.height;
-    }    
-    if (window.y < 0) {
-      window.y = 0;
-    } else if (ymax < window.y) {
-      window.y = ymax;
-    }
-  }
-
-  // translatePoint(p)
-  public function translatePoint(p:Point):Point
-  {
-    return new Point(p.x-window.x, p.y-window.y);
-  }
-
-  // getBlock(x, y)
-  public function getBlock(x:int, y:int):int
-  {
-    var c:uint = map.getPixel(x, y);
-    return pixelToBlockId(c);
-  }
-
-  // hasObstacle(x, y)
-  public function hasObstacle(x:int, y:int):Boolean
-  {
-    switch (getBlock(x, y)) {
-    case 1:
-      return true;
-    default:
-      return false;
-    }
-  }
-
-  // getCollisionY(r)
-  public function getCollisionY(src:Rectangle, vy:int):int
-  {
-    var x0:int = src.x/blocksize;
-    var x1:int = (src.x+src.width-1)/blocksize;
-    var y0:int, y1:int;
-    var x:int, y:int;
-    if (vy < 0) {
-      y0 = src.y/blocksize;
-      y1 = (src.y+vy)/blocksize;
-      for (y = y0; y1 <= y; y--) {
-	for (x = x0; x <= x1; x++) {
-	  if (hasObstacle(x, y)) {
-	    return src.y-(y+1)*blocksize;
-	  }
-	}
-      }
-    } else if (0 < vy) {
-      y0 = (src.y+src.height-1)/blocksize;
-      y1 = (src.y+src.height+vy-1)/blocksize;
-      for (y = y0; y <= y1; y++) {
-	for (x = x0; x <= x1; x++) {
-	  if (hasObstacle(x, y)) {
-	    return y*blocksize-(src.y+src.height);
-	  }
-	}
-      }
-    }
-    return vy;
-  }
-
-  // getCollisionX(r)
-  public function getCollisionX(src:Rectangle, vx:int):int
-  {
-    var y0:int = src.y/blocksize;
-    var y1:int = (src.y+src.height-1)/blocksize;
-    var x0:int, x1:int;
-    var x:int, y:int;
-    if (vx < 0) {
-      x0 = src.x/blocksize;
-      x1 = (src.x+vx)/blocksize;
-      for (x = x0; x1 <= x; x--) {
-	for (y = y0; y <= y1; y++) {
-	  if (hasObstacle(x, y)) {
-	    return src.x-(x+1)*blocksize;
-	  }
-	}
-      }
-    } else if (0 < vx) {
-      x0 = (src.x+src.width-1)/blocksize;
-      x1 = (src.x+src.width+vx-1)/blocksize;
-      for (x = x0; x <= x1; x++) {
-	for (y = y0; y <= y1; y++) {
-	  if (hasObstacle(x, y)) {
-	    return x*blocksize-(src.x+src.width);
-	  }
-	}
-      }
-    }
-    return vx;
-  }
-
-  // repaint()
-  public function repaint():void
-  {
-    var x:int = int(window.x/blocksize);
-    var y:int = int(window.y/blocksize);
-    var mw:int = int(window.width/blocksize)+1;
-    var mh:int = int(window.height/blocksize)+1;
-    renderBlocks(x, y, mw, mh);
-    this.x = (x*blocksize)-window.x;
-    this.y = (y*blocksize)-window.y;
-  }
-
-  // renderBlocks(x, y)
-  protected function renderBlocks(x0:int, y0:int, mw:int, mh:int):void
-  {
-    if (prevrect.x == x0 && prevrect.y == y0 &&
-	prevrect.width == mw && prevrect.height == mh) return;
-    if (bitmapData == null) {
-      bitmapData = new BitmapData(mw*blocksize, 
-				  mh*blocksize, 
-				  true, 0x00000000);
-    }
-    for (var dy:int = 0; dy < mh; dy++) {
-      for (var dx:int = 0; dx < mw; dx++) {
-	var i:int = getBlock(x0+dx, y0+dy);
-	var src:Rectangle = 
-	  new Rectangle(i*blocksize, 0, blocksize, blocksize);
-	var dst:Point = 
-	  new Point(dx*blocksize, dy*blocksize);
-	bitmapData.copyPixels(blocks, src, dst);
-      }
-    }
-    prevrect.x = x0;
-    prevrect.y = y0;
-    prevrect.width = mw;
-    prevrect.height = mh;
-  }
-
-  // pixelToBlockId(c)
-  protected function pixelToBlockId(c:uint):int
-  {
-    switch (c) {
-    case 0x000000: // 0
-      return 0;
-    case 0x404040: // 1
-      return 1;
-    case 0xff0000: // 2
-      return 2;
-    case 0xff6a00: // 3
-      return 3;
-    case 0xffd800: // 4
-      return 4;
-    case 0xb6ff00: // 5
-      return 5;
-    case 0x4cff00: // 6
-      return 6;
-    case 0x00ff21: // 7
-      return 7;
-    case 0x00ff90: // 8
-      return 8;
-    case 0x00ffff: // 9
-      return 9;
-    case 0x0094ff: // 10
-      return 10;
-    case 0x0026ff: // 11
-      return 11;
-    case 0x4800ff: // 12
-      return 12;
-    case 0xb200ff: // 13
-      return 13;
-    case 0xff00dc: // 14
-      return 14;
-    case 0xff006e: // 15
-      return 15;
-    case 0xffffff: // 16
-      return 16;
-    case 0x808080: // 17
-      return 17;
-    case 0x7f0000: // 18
-      return 18;
-    case 0x7f3300: // 19
-      return 19;
-    case 0x7f6a00: // 20
-      return 20;
-    case 0x5b7f00: // 21
-      return 21;
-    case 0x267f00: // 22
-      return 22;
-    case 0x007f0e: // 23
-      return 23;
-    case 0x007f46: // 24
-      return 24;
-    case 0x007f7f: // 25
-      return 25;
-    case 0x004a7f: // 26
-      return 26;
-    case 0x00137f: // 27
-      return 27;
-    case 0x21007f: // 28
-      return 28;
-    case 0x57007f: // 29
-      return 29;
-    case 0x7f006e: // 30
-      return 30;
-    case 0x7f0037: // 31
-      return 31;
-    default:
-      return 0;
-    }
-  }
-}
 
 
 //  Shape3D
@@ -728,13 +463,15 @@ class MCSkin extends Shape3D
 //
 class Actor
 {
+  protected var scene:Scene;
   protected var skin:MCSkin;
   protected var pos:Point;
 
   // Actor(image)
-  public function Actor(image:BitmapData)
+  public function Actor(scene:Scene, image:BitmapData)
   {
-    skin = new MCSkin(image);
+    this.scene = scene;
+    this.skin = new MCSkin(image);
   }
 
   // getSkin()
@@ -756,13 +493,335 @@ class Actor
     pos = p;
   }
 
-  // update(tilemap)
-  public virtual function update(tilemap:TileMap):void
+  // update()
+  public virtual function update():void
   {
-    var p:Point = tilemap.translatePoint(pos);
+    var p:Point = scene.translatePoint(pos);
     skin.x = p.x;
     skin.y = p.y;
     skin.repaint();
+  }
+}
+
+
+//  TileMap
+//
+class TileMap extends Bitmap
+{
+  public var map:BitmapData;
+  public var blocks:BitmapData;
+  public var blocksize:int;
+
+  private var prevrect:Rectangle;
+
+  // TileMap(map, blocks, blocksize, width, height)
+  public function TileMap(map:BitmapData, 
+			  blocks:BitmapData,
+			  blocksize:int)
+  {
+    this.map = map;
+    this.blocks = blocks;
+    this.blocksize = blocksize;
+    this.prevrect = new Rectangle(-1,-1,0,0);
+  }
+
+  // getSize()
+  public function getSize():Point
+  {
+    return new Point(map.width*blocksize, map.height*blocksize);
+  }
+
+  // getBlock(x, y)
+  public function getBlock(x:int, y:int):int
+  {
+    var c:uint = map.getPixel(x, y);
+    return pixelToBlockId(c);
+  }
+
+  // scanBlockX(r)
+  public function scanBlockX(r:Rectangle, f:Function):int
+  {
+    var y0:int = r.y/blocksize;
+    var y1:int = (r.y+r.height-1)/blocksize;
+    var x0:int, x1:int;
+    var x:int, y:int;
+    if (r.width < 0) {
+      x0 = (r.x-1)/blocksize;
+      x1 = (r.x+r.width)/blocksize;
+      for (x = x0; x1 <= x; x--) {
+	for (y = y0; y <= y1; y++) {
+	  if (f(getBlock(x, y))) {
+	    return (x+1)*blocksize;
+	  }
+	}
+      }
+    } else if (0 < r.height) {
+      x0 = r.x/blocksize;
+      x1 = (r.x+r.width-1)/blocksize;
+      for (x = x0; x <= x1; x++) {
+	for (y = y0; y <= y1; y++) {
+	  if (f(getBlock(x, y))) {
+	    return x*blocksize;
+	  }
+	}
+      }
+    }
+    return -1;
+  }
+
+  // scanBlockY(r)
+  public function scanBlockY(r:Rectangle, f:Function):int
+  {
+    var x0:int = r.x/blocksize;
+    var x1:int = (r.x+r.width-1)/blocksize;
+    var y0:int, y1:int;
+    var x:int, y:int;
+    if (r.height < 0) {
+      y0 = (r.y-1)/blocksize;
+      y1 = (r.y+r.height)/blocksize;
+      for (y = y0; y1 <= y; y--) {
+	for (x = x0; x <= x1; x++) {
+	  if (f(getBlock(x, y))) {
+	    return (y+1)*blocksize;
+	  }
+	}
+      }
+    } else if (0 < r.height) {
+      y0 = r.y/blocksize;
+      y1 = (r.y+r.height-1)/blocksize;
+      for (y = y0; y <= y1; y++) {
+	for (x = x0; x <= x1; x++) {
+	  if (f(getBlock(x, y))) {
+	    return y*blocksize;
+	  }
+	}
+      }
+    }
+    return -1;
+  }
+
+  // repaint(window)
+  public function repaint(window:Rectangle):void
+  {
+    var x:int = int(window.x/blocksize);
+    var y:int = int(window.y/blocksize);
+    var mw:int = int(window.width/blocksize)+1;
+    var mh:int = int(window.height/blocksize)+1;
+    renderBlocks(x, y, mw, mh);
+    this.x = (x*blocksize)-window.x;
+    this.y = (y*blocksize)-window.y;
+  }
+
+  // renderBlocks(x, y)
+  protected function renderBlocks(x0:int, y0:int, mw:int, mh:int):void
+  {
+    if (prevrect.x == x0 && prevrect.y == y0 &&
+	prevrect.width == mw && prevrect.height == mh) return;
+    if (bitmapData == null) {
+      bitmapData = new BitmapData(mw*blocksize, 
+				  mh*blocksize, 
+				  true, 0x00000000);
+    }
+    for (var dy:int = 0; dy < mh; dy++) {
+      for (var dx:int = 0; dx < mw; dx++) {
+	var i:int = getBlock(x0+dx, y0+dy);
+	var src:Rectangle = 
+	  new Rectangle(i*blocksize, 0, blocksize, blocksize);
+	var dst:Point = 
+	  new Point(dx*blocksize, dy*blocksize);
+	bitmapData.copyPixels(blocks, src, dst);
+      }
+    }
+    prevrect.x = x0;
+    prevrect.y = y0;
+    prevrect.width = mw;
+    prevrect.height = mh;
+  }
+
+  // pixelToBlockId(c)
+  protected function pixelToBlockId(c:uint):int
+  {
+    switch (c) {
+    case 0x000000: // 0
+      return 0;
+    case 0x404040: // 1
+      return 1;
+    case 0xff0000: // 2
+      return 2;
+    case 0xff6a00: // 3
+      return 3;
+    case 0xffd800: // 4
+      return 4;
+    case 0xb6ff00: // 5
+      return 5;
+    case 0x4cff00: // 6
+      return 6;
+    case 0x00ff21: // 7
+      return 7;
+    case 0x00ff90: // 8
+      return 8;
+    case 0x00ffff: // 9
+      return 9;
+    case 0x0094ff: // 10
+      return 10;
+    case 0x0026ff: // 11
+      return 11;
+    case 0x4800ff: // 12
+      return 12;
+    case 0xb200ff: // 13
+      return 13;
+    case 0xff00dc: // 14
+      return 14;
+    case 0xff006e: // 15
+      return 15;
+    case 0xffffff: // 16
+      return 16;
+    case 0x808080: // 17
+      return 17;
+    case 0x7f0000: // 18
+      return 18;
+    case 0x7f3300: // 19
+      return 19;
+    case 0x7f6a00: // 20
+      return 20;
+    case 0x5b7f00: // 21
+      return 21;
+    case 0x267f00: // 22
+      return 22;
+    case 0x007f0e: // 23
+      return 23;
+    case 0x007f46: // 24
+      return 24;
+    case 0x007f7f: // 25
+      return 25;
+    case 0x004a7f: // 26
+      return 26;
+    case 0x00137f: // 27
+      return 27;
+    case 0x21007f: // 28
+      return 28;
+    case 0x57007f: // 29
+      return 29;
+    case 0x7f006e: // 30
+      return 30;
+    case 0x7f0037: // 31
+      return 31;
+    default:
+      return 0;
+    }
+  }
+}
+
+
+//  Scene
+// 
+class Scene extends Sprite
+{
+  private var tilemap:TileMap;
+  private var window:Rectangle;
+  private var mapsize:Point;
+  private var actors:Array = [];
+
+  // Scene(width, height, tilemap)
+  public function Scene(width:int, height:int, tilemap:TileMap)
+  {
+    this.window = new Rectangle(0, 0, width, height);
+    this.tilemap = tilemap;
+    this.mapsize = tilemap.getSize();
+    this.mapsize.x -= width;
+    this.mapsize.y -= height;
+    addChild(tilemap);
+  }
+
+  // add(actor)
+  public function add(actor:Actor):void
+  {
+    addChild(actor.getSkin());
+    actors.push(actor);
+  }
+
+  // remove(actor)
+  public function remove(actor:Actor):void
+  {
+    removeChild(actor.getSkin());
+    actors.splice(actors.indexOf(actor), 1);
+  }
+
+  // update()
+  public function update():void
+  {
+    for each (var actor:Actor in actors) {
+      actor.update();
+    }
+    tilemap.repaint(window);
+  }
+
+  // setCenter(p)
+  public function setCenter(p:Point, margin:int):void
+  {
+    if (p.x-margin < window.x) {
+      window.x = p.x-margin;
+    } else if (window.x+window.width < p.x+margin) {
+      window.x = p.x+margin-window.width;
+    }
+    if (p.y-margin < window.y) {
+      window.y = p.y-margin;
+    } else if (window.y+window.height < p.y+margin) {
+      window.y = p.y+margin-window.height;
+    }
+    
+    if (window.x < 0) {
+      window.x = 0;
+    } else if (mapsize.x < window.x) {
+      window.x = mapsize.x;
+    }
+    if (window.y < 0) {
+      window.y = 0;
+    } else if (mapsize.y < window.y) {
+      window.y = mapsize.y;
+    }
+  }
+
+  // translatePoint(p)
+  public function translatePoint(p:Point):Point
+  {
+    return new Point(p.x-window.x, p.y-window.y);
+  }
+
+  // getCollisionX(r)
+  public function getCollisionX(src:Rectangle, vx:int, isobstacle:Function):int
+  {
+    var r:Rectangle; 
+    var x:int = -1;
+    if (vx < 0) {
+      r = new Rectangle(src.x, src.y, vx, src.height);
+      x = tilemap.scanBlockX(r, isobstacle);
+    } else if (0 < vx) {
+      r = new Rectangle(src.x+src.width, src.y, vx, src.height);
+      x = tilemap.scanBlockX(r, isobstacle);
+    }
+    if (x != -1) {
+      vx = x - r.x;
+    }
+    return vx;
+  }
+
+  // getCollisionY(r)
+  public function getCollisionY(src:Rectangle, vy:int, isobstacle:Function):int
+  {
+    var r:Rectangle; 
+    var y:int = -1;
+    if (vy < 0) {
+      r = new Rectangle(src.x, src.y, src.width, vy);
+      y = tilemap.scanBlockY(r, isobstacle);
+    } else if (0 < vy) {
+      r = new Rectangle(src.x, src.y+src.height, src.width, vy);
+      y = tilemap.scanBlockY(r, isobstacle);
+    }
+    if (y != -1) {
+      vy = y - r.y;
+    }
+    return vy;
   }
 }
 
@@ -776,9 +835,9 @@ class Person extends Actor
   private var jumping:int = 0;
 
   // Person(image)
-  public function Person(image:BitmapData)
+  public function Person(scene:Scene, image:BitmapData)
   {
-    super(image);
+    super(scene, image);
     speed = int(Math.random()*10)+2;
   }
 
@@ -789,7 +848,7 @@ class Person extends Actor
   }
   
   // update()
-  public override function update(tilemap:TileMap):void
+  public override function update():void
   {
     skin.setPhase(Math.cos(phase)*0.5);
     skin.setDirection(speed);
@@ -816,7 +875,7 @@ class Person extends Actor
       skin.setPhase(Math.cos(phase)*0.5);
     }
     pos.x += speed;
-    super.update(tilemap);
+    super.update();
   }
 }
 
@@ -834,9 +893,9 @@ class Player extends Actor
   private const jumpacc:int = -36;
 
   // Player(image)
-  public function Player(image:BitmapData)
+  public function Player(scene:Scene, image:BitmapData)
   {
-    super(image);
+    super(scene, image);
     skin.setDirection(+1);
   }
 
@@ -849,8 +908,8 @@ class Player extends Actor
     }
   }
 
-  // jump(tilemap)
-  public function jump(tilemap:TileMap):void
+  // jump()
+  public function jump():void
   {
     jumping = true;
   }
@@ -861,12 +920,14 @@ class Player extends Actor
     return (800 < pos.y);
   }
 
-  // update(tilemap)
-  public override function update(tilemap:TileMap):void
+  // update()
+  public override function update():void
   {
+    var fy:Function = (function (b:int):Boolean { return b != 0; });
+    var fx:Function = (function (b:int):Boolean { return b == 1; });
     vy += gravity;
     var vy0:int = vy;
-    vy = tilemap.getCollisionY(getBounds(), vy0);
+    vy = scene.getCollisionY(getBounds(), vy0, fy);
     pos.y += vy;
     if (jumping) {
       if (0 < vy0 && vy == 0) {
@@ -874,12 +935,12 @@ class Player extends Actor
       }
       jumping = false;
     }
-    pos.x += tilemap.getCollisionX(getBounds(), vx);
-    tilemap.setCenter(pos, 200);
+    pos.x += scene.getCollisionX(getBounds(), vx, fx);
+    scene.setCenter(pos, 200);
     if (vx != 0) {
       phase += Math.abs(vx)*0.1;
       skin.setPhase(Math.cos(phase)*0.5);
     }
-    super.update(tilemap);
+    super.update();
   }
 }
