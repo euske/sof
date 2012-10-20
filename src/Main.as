@@ -22,6 +22,7 @@ import flash.media.Sound;
 import flash.ui.Keyboard;
 import flash.utils.ByteArray;
 import flash.text.TextField;
+import flash.text.TextFormat;
 import flash.text.TextFieldType;
 import flash.geom.Point;
 import flash.geom.Matrix;
@@ -33,7 +34,9 @@ import flash.geom.Rectangle;
 public class Main extends Sprite
 {
   // Skin image: http://www.minecraft.net/skin/USERNAME
-  [Embed(source="../../skins/FFSTV.png", mimeType="image/png")]
+  //[Embed(source="../../skins/FFSTV.png", mimeType="image/png")]
+  //[Embed(source="../../skins/skinzones.png", mimeType="image/png")]
+  [Embed(source="../../skins/mrchrismad.png", mimeType="image/png")]
   private static const Image0Cls:Class;
   private static const image0:Bitmap = new Image0Cls();
   [Embed(source="../../skins/MissBlow.png", mimeType="image/png")]
@@ -49,6 +52,7 @@ public class Main extends Sprite
   // Font
   [Embed(source="../assets/awesomefont.ttf", fontName="AwesomeFont")]
   private static const AwesomeFontCls:Class;
+  //private static const awesomefont:Font = new AwesomeFontCls();  
 
   // Video
   [Embed(source="../assets/Frage1.flv", mimeType="application/octet-stream")]
@@ -145,7 +149,7 @@ public class Main extends Sprite
     for (var i:int = 0; i < images.length; i++) {
       var p:Person = new Person(scene, images[i].bitmapData);
       p.setPosition(new Point(i*100+200, i*100+200));
-      p.move(+1);
+      p.move(+1, 0);
       scene.add(p);
     }
 
@@ -160,20 +164,22 @@ public class Main extends Sprite
     case Keyboard.LEFT:
     case 65:			// A
     case 72:			// H
-      player.move(-1);
+      player.move(-1, 0);
       break;
     case Keyboard.RIGHT:
     case 68:			// D
     case 76:			// L
-      player.move(+1);
+      player.move(+1, 0);
       break;
     case Keyboard.UP:
     case 87:			// W
     case 75:			// K
+      player.move(0, -1);
       break;
     case Keyboard.DOWN:
     case 83:			// S
     case 74:			// J
+      player.move(0, +1);
       break;
     case Keyboard.SPACE:
     case 88:			// X
@@ -193,7 +199,7 @@ public class Main extends Sprite
     case 68:			// D
     case 72:			// H
     case 76:			// L
-      player.move(0);
+      player.move(0, 0);
       break;
     case Keyboard.UP:
     case Keyboard.DOWN:
@@ -201,6 +207,7 @@ public class Main extends Sprite
     case 75:			// K
     case 83:			// S
     case 74:			// J
+      player.move(0, 0);
       break;
     }
   }
@@ -257,6 +264,7 @@ import flash.events.MouseEvent;
 import flash.media.Sound;
 import flash.ui.Keyboard;
 import flash.text.TextField;
+import flash.text.TextFormat;
 import flash.text.TextFieldType;
 import flash.geom.Point;
 import flash.geom.Matrix;
@@ -281,6 +289,7 @@ class Shape3D extends Shape
   // p3d(x,y,z)
   protected function p3d(x:int, y:int, z:int):Point
   {
+    // +Z: toward the screen, -Z: toward the user.
     return new Point(x+z*VX, y-z*VY);
   }
 
@@ -323,13 +332,14 @@ class MCSkin extends Shape3D
     q1 = -q0;
   }
 
-  // setDirection(v)
-  public function setDirection(v:int):void
+  // setDirection(vx, vy)
+  public function setDirection(vx:int, vy:int):void
   {
-    vx = v;
+    this.vx = vx;
+    this.vy = vy;
   }
 
-  private var vx:int;
+  private var vx:int = 0, vy:int = 0;
   private var p0:Number = 1.0;
   private var q0:Number = 0.0;
   private var p1:Number = 1.0;
@@ -347,110 +357,189 @@ class MCSkin extends Shape3D
     // Skin format: http://www.minecraftwiki.net/wiki/File:Skinzones.png
     graphics.clear();
 
-    // L-arm
-    if (0 < vx) {
-      quad(new Rectangle(44, 20, 4, 12), // front
-	   p3d(+N*p0,-N*6-N*q0,N*3), p3d(0,0,N*2), p3d(N*6*q0,N*6*p0,0));    
-      quad(new Rectangle(40, 20, 4, 12), // right
-	   p3d(-N*p0,-N*6+N*q0,N*3), p3d(N*2*p0,-N*2*q0,0), p3d(N*6*q0,N*6*p0,0));    
-    } else {
-      quad(new Rectangle(52, 20, 4, 12), // back
-	   p3d(+N*p0,-N*6+N*q0,N*3), p3d(0,0,N*2), p3d(-N*6*q0,N*6*p0,0));    
-      quad(new Rectangle(48, 20, 4, 12), // left
-	   p3d(-N*p0,-N*6-N*q0,N*3), p3d(N*2*p0,+N*2*q0,0), p3d(-N*6*q0,N*6*p0,0));    
-    }
-    // L-leg
-    if (0 < vx) {
-      quad(new Rectangle(4, 20, 4, 12), // front
-	   p3d(+N*p1,-N*q1,+N), p3d(0,0,N*2), p3d(N*6*q1,N*6*p1,0));    
-      quad(new Rectangle(0, 20, 4, 12), // right
-	   p3d(-N*p1,+N*q1,+N), p3d(N*2*p1,-N*2*q1,0), p3d(N*6*q1,N*6*p1,0));    
-      quad(new Rectangle(4, 16, 4, 4), // top
-	   p3d(-N*p1,+N*q1,+N), p3d(0,0,N*2), p3d(N*2*p1,-N*2*q1,0));
-    } else {
-      quad(new Rectangle(12, 20, 4, 12), // back
-	   p3d(+N*p1,+N*q1,+N), p3d(0,0,N*2), p3d(-N*6*q1,N*6*p1,0));    
-      quad(new Rectangle(8, 20, 4, 12), // left
-	   p3d(-N*p1,-N*q1,+N), p3d(N*2*p1,N*2*q1,0), p3d(-N*6*q1,N*6*p1,0));    
-      quad(new Rectangle(4, 16, 4, 4), // top
-	   p3d(-N*p1,-N*q1,+N), p3d(0,0,N*2), p3d(N*2*p1,+N*2*q1,0));
-    }
-    // R-leg
-    if (0 < vx) {
-      quad(new Rectangle(4, 20, 4, 12), // front
-	   p3d(+N*p0,-N*q0,-N), p3d(0,0,N*2), p3d(N*6*q0,N*6*p0,0));    
-      quad(new Rectangle(0, 20, 4, 12), // right
-	   p3d(-N*p0,+N*q0,-N), p3d(N*2*p0,-N*2*q0,0), p3d(N*6*q0,N*6*p0,0));
-      quad(new Rectangle(4, 16, 4, 4), // top
-	   p3d(-N*p0,+N*q0,-N), p3d(0,0,N*2), p3d(N*2*p0,-N*2*q0,0));
-    } else {
-      quad(new Rectangle(12, 20, 4, 12), // back
-	   p3d(+N*p0,+N*q0,-N), p3d(0,0,N*2), p3d(-N*6*q0,N*6*p0,0));    
-      quad(new Rectangle(8, 20, 4, 12), // left
-	   p3d(-N*p0,-N*q0,-N), p3d(N*2*p0,N*2*q0,0), p3d(-N*6*q0,N*6*p0,0));    
-      quad(new Rectangle(4, 16, 4, 4), // top
-	   p3d(-N*p0,-N*q0,-N), p3d(0,0,N*2), p3d(N*2*p0,+N*2*q0,0));
-    }
-    // body
-    if (0 < vx) {
-      quad(new Rectangle(20, 20, 8, 12), // front
-	   p3d(+N,-N*6,-N), p3d(0,0,N*4), p3d(0,N*6,0));
-      quad(new Rectangle(16, 20, 4, 12), // right
-	   p3d(-N,-N*6,-N), p3d(N*2,0,0), p3d(0,N*6,0));
-    } else {
-      quad(new Rectangle(32, 20, 8, 12), // back
-	   p3d(+N,-N*6,-N), p3d(0,0,N*4), p3d(0,N*6,0));
-      quad(new Rectangle(28, 20, 4, 12), // left
-	   p3d(-N,-N*6,-N), p3d(N*2,0,0), p3d(0,N*6,0));
-    }
+    if (vy == 0) {
+      // L-arm
+      if (0 < vx) {
+	quad(new Rectangle(44, 20, 4, 12), // front
+	     p3d(+N*p0,-N*6-N*q0,N*3), p3d(0,0,N*2), p3d(N*6*q0,N*6*p0,0));    
+	quad(new Rectangle(40, 20, 4, 12), // right
+	     p3d(-N*p0,-N*6+N*q0,N*3), p3d(N*2*p0,-N*2*q0,0), p3d(N*6*q0,N*6*p0,0));    
+      } else {
+	quad(new Rectangle(52, 20, 4, 12), // back
+	     p3d(+N*p0,-N*6+N*q0,N*3), p3d(0,0,N*2), p3d(-N*6*q0,N*6*p0,0));    
+	quad(new Rectangle(48, 20, 4, 12), // left
+	     p3d(-N*p0,-N*6-N*q0,N*3), p3d(N*2*p0,+N*2*q0,0), p3d(-N*6*q0,N*6*p0,0));    
+      }
+      // L-leg
+      if (0 < vx) {
+	quad(new Rectangle(4, 20, 4, 12), // front
+	     p3d(+N*p1,-N*q1,+N), p3d(0,0,N*2), p3d(N*6*q1,N*6*p1,0));    
+	quad(new Rectangle(0, 20, 4, 12), // right
+	     p3d(-N*p1,+N*q1,+N), p3d(N*2*p1,-N*2*q1,0), p3d(N*6*q1,N*6*p1,0));    
+	quad(new Rectangle(4, 16, 4, 4), // top
+	     p3d(-N*p1,+N*q1,+N), p3d(0,0,N*2), p3d(N*2*p1,-N*2*q1,0));
+      } else {
+	quad(new Rectangle(12, 20, 4, 12), // back
+	     p3d(+N*p1,+N*q1,+N), p3d(0,0,N*2), p3d(-N*6*q1,N*6*p1,0));    
+	quad(new Rectangle(8, 20, 4, 12), // left
+	     p3d(-N*p1,-N*q1,+N), p3d(N*2*p1,N*2*q1,0), p3d(-N*6*q1,N*6*p1,0));    
+	quad(new Rectangle(4, 16, 4, 4), // top
+	     p3d(-N*p1,-N*q1,+N), p3d(0,0,N*2), p3d(N*2*p1,+N*2*q1,0));
+      }
+      // R-leg
+      if (0 < vx) {
+	quad(new Rectangle(4, 20, 4, 12), // front
+	     p3d(+N*p0,-N*q0,-N), p3d(0,0,N*2), p3d(N*6*q0,N*6*p0,0));    
+	quad(new Rectangle(0, 20, 4, 12), // right
+	     p3d(-N*p0,+N*q0,-N), p3d(N*2*p0,-N*2*q0,0), p3d(N*6*q0,N*6*p0,0));
+	quad(new Rectangle(4, 16, 4, 4), // top
+	     p3d(-N*p0,+N*q0,-N), p3d(0,0,N*2), p3d(N*2*p0,-N*2*q0,0));
+      } else {
+	quad(new Rectangle(12, 20, 4, 12), // back
+	     p3d(+N*p0,+N*q0,-N), p3d(0,0,N*2), p3d(-N*6*q0,N*6*p0,0));    
+	quad(new Rectangle(8, 20, 4, 12), // left
+	     p3d(-N*p0,-N*q0,-N), p3d(N*2*p0,N*2*q0,0), p3d(-N*6*q0,N*6*p0,0));    
+	quad(new Rectangle(4, 16, 4, 4), // top
+	     p3d(-N*p0,-N*q0,-N), p3d(0,0,N*2), p3d(N*2*p0,+N*2*q0,0));
+      }
+      // body
+      if (0 < vx) {
+	quad(new Rectangle(20, 20, 8, 12), // front
+	     p3d(+N,-N*6,-N), p3d(0,0,N*4), p3d(0,N*6,0));
+	quad(new Rectangle(16, 20, 4, 12), // right
+	     p3d(-N,-N*6,-N), p3d(N*2,0,0), p3d(0,N*6,0));
+      } else {
+	quad(new Rectangle(32, 20, 8, 12), // back
+	     p3d(+N,-N*6,-N), p3d(0,0,N*4), p3d(0,N*6,0));
+	quad(new Rectangle(28, 20, 4, 12), // left
+	     p3d(-N,-N*6,-N), p3d(N*2,0,0), p3d(0,N*6,0));
+      }
 
-    // head
-    if (0 < vx) {
+      // head
+      if (0 < vx) {
+	quad(new Rectangle(8, 8, 8, 8), // front
+	     p3d(+N*2,-N*10,-N), p3d(0,0,N*4), p3d(0,N*4,0));
+	quad(new Rectangle(0, 8, 8, 8), // right
+	     p3d(-N*2,-N*10,-N), p3d(N*4,0,0), p3d(0,N*4,0));
+	quad(new Rectangle(8, 0, 8, 8), // top
+	     p3d(-N*2,-N*10,-N), p3d(0,0,N*4), p3d(N*4,0,0));
+      } else {
+	quad(new Rectangle(24, 8, 8, 8), // back
+	     p3d(+N*2,-N*10,-N), p3d(0,0,N*4), p3d(0,N*4,0));
+	quad(new Rectangle(16, 8, 8, 8), // left
+	     p3d(-N*2,-N*10,-N), p3d(N*4,0,0), p3d(0,N*4,0));
+	quad(new Rectangle(8, 0, 8, 8), // top
+	     p3d(+N*2,-N*10,-N), p3d(0,0,N*4), p3d(-N*4,0,0));
+      }
+      // mask
+      if (0 < vx) {
+	quad(new Rectangle(40, 8, 8, 8), // front
+	     p3d(+N*2+M,-N*10-M,-N-M), p3d(0,0,N*4+M*2), p3d(0,N*4+M*2,0));
+	quad(new Rectangle(32, 8, 8, 8), // right
+	     p3d(-N*2-M,-N*10-M,-N-M), p3d(N*4+M*2,0,0), p3d(0,N*4+M*2,0));
+	quad(new Rectangle(40, 0, 8, 8), // top
+	     p3d(-N*2-M,-N*10-M,-N-M), p3d(0,0,N*4+M*2), p3d(N*4+M*2,0,0));
+      } else {
+	quad(new Rectangle(56, 8, 8, 8), // back
+	     p3d(+N*2+M,-N*10-M,-N-M), p3d(0,0,N*4+M*2), p3d(0,N*4+M*2,0));
+	quad(new Rectangle(48, 8, 8, 8), // left
+	     p3d(-N*2-M,-N*10-M,-N-M), p3d(N*4+M*2,0,0), p3d(0,N*4+M*2,0));
+	quad(new Rectangle(40, 0, 8, 8), // top
+	     p3d(+N*2+M,-N*10-M,-N-M), p3d(0,0,N*4+M*2), p3d(-N*4-M*2,0,0));
+      }
+      // R-arm
+      if (0 < vx) {
+	quad(new Rectangle(44, 20, 4, 12), // front
+	     p3d(+N*p1,-N*6-N*q1,-N*3), p3d(0,0,N*2), p3d(N*6*q1,N*6*p1,0));    
+	quad(new Rectangle(40, 20, 4, 12), // right
+	     p3d(-N*p1,-N*6+N*q1,-N*3), p3d(N*2*p1,-N*2*q1,0), p3d(N*6*q1,N*6*p1,0));    
+	quad(new Rectangle(44, 16, 4, 4), // top
+	     p3d(-N*p1,-N*6+N*q1,-N*3), p3d(0,0,N*2), p3d(N*2*p1,-N*2*q1,0));
+      } else {
+	quad(new Rectangle(52, 20, 4, 12), // back
+	     p3d(+N*p1,-N*6+N*q1,-N*3), p3d(0,0,N*2), p3d(-N*6*q1,N*6*p1,0));    
+	quad(new Rectangle(48, 20, 4, 12), // left
+	     p3d(-N*p1,-N*6-N*q1,-N*3), p3d(N*2*p1,+N*2*q1,0), p3d(-N*6*q1,N*6*p1,0));    
+	quad(new Rectangle(44, 16, 4, 4), // top
+	     p3d(-N*p1,-N*6-N*q1,-N*3), p3d(0,0,N*2), p3d(N*2*p1,N*2*q1,0));
+      }
+    } else if (0 < vy) {
+      // R-leg
+      quad(new Rectangle(4, 20, 4, 12), // front
+	   p3d(-N*2,0,-N), p3d(N*2,0,0), p3d(0,N*6,0));    
+      // L-leg
+      quad(new Rectangle(4, 20, 4, 12), // front
+	   p3d(0,0,-N), p3d(N*2,0,0), p3d(0,N*6,0));    
+      quad(new Rectangle(8, 20, 4, 12), // right
+	   p3d(+N*2,0,-N), p3d(0,0,N*2), p3d(0,N*6,0));
+      // R-arm
+      quad(new Rectangle(44, 20, 4, 12), // front
+	   p3d(-N*4,-N*6,-N), p3d(N*2,0,0), p3d(0,N*6,0));    
+      quad(new Rectangle(44, 16, 4, 4), // top
+	   p3d(-N*4,-N*6,-N), p3d(N*2,0,0), p3d(0,0,N*2));
+      // body
+      quad(new Rectangle(20, 20, 8, 12), // front
+	   p3d(-N*2,-N*6,-N), p3d(N*4,0,0), p3d(0,N*6,0));
+      // L-arm
+      quad(new Rectangle(44, 20, 4, 12), // front
+	   p3d(+N*2,-N*6,-N), p3d(N*2,0,0), p3d(0,N*6,0));    	   
+      quad(new Rectangle(48, 20, 4, 12), // right
+	   p3d(+N*4,-N*6,-N), p3d(0,0,N*2), p3d(0,N*6,0));    
+      quad(new Rectangle(44, 16, 4, 4), // top
+	   p3d(+N*2,-N*6,-N), p3d(N*2,0,0), p3d(0,0,N*2));
+      // head
       quad(new Rectangle(8, 8, 8, 8), // front
-	   p3d(+N*2,-N*10,-N), p3d(0,0,N*4), p3d(0,N*4,0));
-      quad(new Rectangle(0, 8, 8, 8), // right
-	   p3d(-N*2,-N*10,-N), p3d(N*4,0,0), p3d(0,N*4,0));
+	   p3d(-N*2,-N*10,-N*2), p3d(N*4,0,0), p3d(0,N*4,0));
+      quad(new Rectangle(16, 8, 8, 8), // right
+	   p3d(+N*2,-N*10,-N*2), p3d(0,0,N*4), p3d(0,N*4,0));
       quad(new Rectangle(8, 0, 8, 8), // top
-	   p3d(-N*2,-N*10,-N), p3d(0,0,N*4), p3d(N*4,0,0));
-    } else {
-      quad(new Rectangle(24, 8, 8, 8), // back
-	   p3d(+N*2,-N*10,-N), p3d(0,0,N*4), p3d(0,N*4,0));
-      quad(new Rectangle(16, 8, 8, 8), // left
-	   p3d(-N*2,-N*10,-N), p3d(N*4,0,0), p3d(0,N*4,0));
-      quad(new Rectangle(8, 0, 8, 8), // top
-	   p3d(+N*2,-N*10,-N), p3d(0,0,N*4), p3d(-N*4,0,0));
-    }
-    // mask
-    if (0 < vx) {
+	   p3d(-N*2,-N*10,-N*2), p3d(0,0,N*4), p3d(N*4,0,0));
+      // mask
       quad(new Rectangle(40, 8, 8, 8), // front
-	   p3d(+N*2+M,-N*10-M,-N-M), p3d(0,0,N*4+M*2), p3d(0,N*4+M*2,0));
-      quad(new Rectangle(32, 8, 8, 8), // right
-	   p3d(-N*2-M,-N*10-M,-N-M), p3d(N*4+M*2,0,0), p3d(0,N*4+M*2,0));
+	   p3d(-N*2-M,-N*10-M,-N*2-M), p3d(N*4+M*2,0,0), p3d(0,N*4+M*2,0));
+      quad(new Rectangle(48, 8, 8, 8), // right
+	   p3d(+N*2+M,-N*10-M,-N*2-M), p3d(0,0,N*4+M*2), p3d(0,N*4+M*2,0));
       quad(new Rectangle(40, 0, 8, 8), // top
 	   p3d(-N*2-M,-N*10-M,-N-M), p3d(0,0,N*4+M*2), p3d(N*4+M*2,0,0));
-    } else {
-      quad(new Rectangle(56, 8, 8, 8), // back
-	   p3d(+N*2+M,-N*10-M,-N-M), p3d(0,0,N*4+M*2), p3d(0,N*4+M*2,0));
-      quad(new Rectangle(48, 8, 8, 8), // left
-	   p3d(-N*2-M,-N*10-M,-N-M), p3d(N*4+M*2,0,0), p3d(0,N*4+M*2,0));
-      quad(new Rectangle(40, 0, 8, 8), // top
-	   p3d(+N*2+M,-N*10-M,-N-M), p3d(0,0,N*4+M*2), p3d(-N*4-M*2,0,0));
-    }
-    // R-arm
-    if (0 < vx) {
-      quad(new Rectangle(44, 20, 4, 12), // front
-	   p3d(+N*p1,-N*6-N*q1,-N*3), p3d(0,0,N*2), p3d(N*6*q1,N*6*p1,0));    
+      
+    } else if (vy < 0) {
+      // L-leg
+      quad(new Rectangle(12, 20, 4, 12), // front
+	   p3d(-N*2,0,-N), p3d(N*2,0,0), p3d(0,N*6,0));    
+      // R-leg
+      quad(new Rectangle(12, 20, 4, 12), // front
+	   p3d(0,0,-N), p3d(N*2,0,0), p3d(0,N*6,0));    
+      quad(new Rectangle(0, 20, 4, 12), // right
+	   p3d(+N*2,0,-N), p3d(0,0,N*2), p3d(0,N*6,0));
+      // L-arm
+      quad(new Rectangle(52, 20, 4, 12), // front
+	   p3d(-N*4,-N*6,-N), p3d(N*2,0,0), p3d(0,N*6,0));    
+      quad(new Rectangle(44, 16, 4, 4), // top
+	   p3d(-N*4,-N*6,-N), p3d(N*2,0,0), p3d(0,0,N*2));
+      // body
+      quad(new Rectangle(32, 20, 8, 12), // front
+	   p3d(-N*2,-N*6,-N), p3d(N*4,0,0), p3d(0,N*6,0));
+      // R-arm
+      quad(new Rectangle(52, 20, 4, 12), // front
+	   p3d(+N*2,-N*6,-N), p3d(N*2,0,0), p3d(0,N*6,0));    	   
       quad(new Rectangle(40, 20, 4, 12), // right
-	   p3d(-N*p1,-N*6+N*q1,-N*3), p3d(N*2*p1,-N*2*q1,0), p3d(N*6*q1,N*6*p1,0));    
+	   p3d(+N*4,-N*6,-N), p3d(0,0,N*2), p3d(0,N*6,0));    
       quad(new Rectangle(44, 16, 4, 4), // top
-	   p3d(-N*p1,-N*6+N*q1,-N*3), p3d(0,0,N*2), p3d(N*2*p1,-N*2*q1,0));
-    } else {
-      quad(new Rectangle(52, 20, 4, 12), // back
-	   p3d(+N*p1,-N*6+N*q1,-N*3), p3d(0,0,N*2), p3d(-N*6*q1,N*6*p1,0));    
-      quad(new Rectangle(48, 20, 4, 12), // left
-	   p3d(-N*p1,-N*6-N*q1,-N*3), p3d(N*2*p1,+N*2*q1,0), p3d(-N*6*q1,N*6*p1,0));    
-      quad(new Rectangle(44, 16, 4, 4), // top
-	   p3d(-N*p1,-N*6-N*q1,-N*3), p3d(0,0,N*2), p3d(N*2*p1,N*2*q1,0));
+	   p3d(+N*2,-N*6,-N), p3d(N*2,0,0), p3d(0,0,N*2));      
+      // head
+      quad(new Rectangle(24, 8, 8, 8), // front
+	   p3d(-N*2,-N*10,-N*2), p3d(N*4,0,0), p3d(0,N*4,0));
+      quad(new Rectangle(0, 8, 8, 8), // right
+	   p3d(+N*2,-N*10,-N*2), p3d(0,0,N*4), p3d(0,N*4,0));
+      quad(new Rectangle(8, 0, 8, 8), // top
+	   p3d(-N*2,-N*10,-N*2), p3d(0,0,N*4), p3d(N*4,0,0));
+      // mask
+      quad(new Rectangle(56, 8, 8, 8), // front
+	   p3d(-N*2-M,-N*10-M,-N*2-M), p3d(N*4+M*2,0,0), p3d(0,N*4+M*2,0));
+      quad(new Rectangle(32, 8, 8, 8), // right
+	   p3d(+N*2+M,-N*10-M,-N*2-M), p3d(0,0,N*4+M*2), p3d(0,N*4+M*2,0));
+      quad(new Rectangle(40, 0, 8, 8), // top
+	   p3d(-N*2-M,-N*10-M,-N-M), p3d(0,0,N*4+M*2), p3d(N*4+M*2,0,0));
     }
 
     graphics.lineStyle(0, 0xffff0000);
@@ -841,17 +930,17 @@ class Person extends Actor
     speed = int(Math.random()*10)+2;
   }
 
-  // move(dx)
-  public function move(dx:int):void
+  // move(dx, dy)
+  public function move(dx:int, dy:int):void
   {
-    skin.setDirection(dx);
+    skin.setDirection(dx, dy);
   }
   
   // update()
   public override function update():void
   {
     skin.setPhase(Math.cos(phase)*0.5);
-    skin.setDirection(speed);
+    skin.setDirection(speed, 0);
     if (pos.x < 0 && speed < 0) {
       speed = int(Math.random()*10)+2;
     } else if (500 < pos.x && 0 < speed) {
@@ -892,19 +981,24 @@ class Player extends Actor
   private const speed:int = 8;
   private const jumpacc:int = -36;
 
+  // Jump sound
+  [Embed(source="../assets/jump.mp3")]
+  private static const JumpSoundCls:Class;
+  private static const jumpsound:Sound = new JumpSoundCls();
+
   // Player(image)
   public function Player(scene:Scene, image:BitmapData)
   {
     super(scene, image);
-    skin.setDirection(+1);
+    skin.setDirection(+1, 0);
   }
 
-  // move(dx)
-  public function move(dx:int):void
+  // move(dx, dy)
+  public function move(dx:int, dy:int):void
   {
     vx = dx*speed;
-    if (dx != 0) {
-      skin.setDirection(dx);
+    if (dx != 0 || dy != 0) {
+      skin.setDirection(dx, dy);
     }
   }
 
@@ -932,6 +1026,7 @@ class Player extends Actor
     if (jumping) {
       if (0 < vy0 && vy == 0) {
 	vy = jumpacc;
+	jumpsound.play();
       }
       jumping = false;
     }
