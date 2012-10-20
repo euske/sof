@@ -8,7 +8,7 @@ MKDIR=mkdir -p
 SSHON=sshon
 
 TARGET=main.swf
-JAVA=java -Duser.country=US
+JAVA=java
 FLEX_HOME=../flex_sdk4
 AS3COMPILE=$(JAVA) -jar $(FLEX_HOME)/lib/mxmlc.jar +flexlib=$(FLEX_HOME)/frameworks -static-rsls
 WEBDIR=www
