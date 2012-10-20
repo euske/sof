@@ -4,6 +4,7 @@ RSYNC=rsync -av
 ZIP=zip
 RM=rm -f
 CP=cp -f
+MKDIR=mkdir -p
 SSHON=sshon
 
 TARGET=main.swf
@@ -21,12 +22,13 @@ clean:
 $(TARGET): src/Main.as
 	$(AS3COMPILE) -o $@ src/Main.as
 
-push: $(TARGET)
+live: $(TARGET)
 	$(SSHON)
 	$(RSYNC) $(TARGET) tabesugi.net:/cgi/host/live.tabesugi.net/live.swf
 
-pushwww: $(WEBDIR)
+$(WEBDIR):
 	$(SSHON)
+	-$(MKDIR) $(WEBDIR)
 	$(CP) $(TARGET) $(WEBDIR)/
 	$(CP) src/Main.as $(WEBDIR)/
 	$(RM) $(WEBDIR)/src.zip
