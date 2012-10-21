@@ -53,6 +53,11 @@ public class Main extends Sprite
   [Embed(source="../assets/awesomefont.ttf", fontName="AwesomeFont")]
   private static const AwesomeFontCls:Class;
   //private static const awesomefont:Font = new AwesomeFontCls();  
+  
+  // Jump sound
+  [Embed(source="../assets/jump.mp3")]
+  private static const JumpSoundCls:Class;
+  private static const jump:Sound = new JumpSoundCls();
 
   // Video
   [Embed(source="../assets/Frage1.flv", mimeType="application/octet-stream")]
@@ -144,6 +149,7 @@ public class Main extends Sprite
 
     player = new Player(scene, image0.bitmapData);
     player.setPosition(new Point(100, 100));
+    player.addEventListener(Player.JUMP, onPlayerJump);
     scene.add(player);
 
     for (var i:int = 0; i < images.length; i++) {
@@ -223,6 +229,12 @@ public class Main extends Sprite
     }
   }
 
+  // onPlayerJump()
+  private function onPlayerJump(e:Event):void
+  {
+    jump.play();
+  }
+
   // popupVideo(bytes)
   private function popupVideo(bytes:ByteArray):void
   {
@@ -259,6 +271,7 @@ import flash.display.Bitmap;
 import flash.display.BitmapData;
 import flash.display.DisplayObjectContainer;
 import flash.events.Event;
+import flash.events.EventDispatcher;
 import flash.events.KeyboardEvent;
 import flash.events.MouseEvent;
 import flash.media.Sound;
@@ -550,7 +563,7 @@ class MCSkin extends Shape3D
 
 //  Actor
 //
-class Actor
+class Actor extends EventDispatcher
 {
   protected var scene:Scene;
   protected var skin:MCSkin;
@@ -981,10 +994,7 @@ class Player extends Actor
   private const speed:int = 8;
   private const jumpacc:int = -36;
 
-  // Jump sound
-  [Embed(source="../assets/jump.mp3")]
-  private static const JumpSoundCls:Class;
-  private static const jumpsound:Sound = new JumpSoundCls();
+  public static const JUMP:String = "JUMP";
 
   // Player(image)
   public function Player(scene:Scene, image:BitmapData)
@@ -1026,7 +1036,7 @@ class Player extends Actor
     if (jumping) {
       if (0 < vy0 && vy == 0) {
 	vy = jumpacc;
-	jumpsound.play();
+	dispatchEvent(new Event(JUMP));
       }
       jumping = false;
     }
