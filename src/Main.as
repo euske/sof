@@ -149,14 +149,15 @@ public class Main extends Sprite
 
     player = new Player(scene, image0.bitmapData);
     player.setPosition(new Point(100, 100));
-    player.addEventListener(Player.JUMP, onPlayerJump);
+    player.addEventListener(ActorActionEvent.ACTION, onActorAction);
+    player.addEventListener(ActorActionEvent.ACTION, onPlayerAction);
     scene.add(player);
 
     for (var i:int = 0; i < images.length; i++) {
-      var p:Person = new Person(scene, images[i].bitmapData);
-      p.setPosition(new Point(i*100+200, i*100+200));
-      p.move(+1, 0);
-      scene.add(p);
+      var actor:Person = new Person(scene, images[i].bitmapData);
+      actor.setPosition(new Point(i*100+200, i*100+200));
+      actor.addEventListener(ActorActionEvent.ACTION, onActorAction);
+      scene.add(actor);
     }
 
     addChild(scene);
@@ -222,17 +223,28 @@ public class Main extends Sprite
   private function update():void
   {
     scene.update();
-    if (state == 0 && player.isAlive()) {
-      state = 1;
-      popupVideo(new Frage1VideoCls());
-      scene.remove(player);
+    scene.repaint();
+  }
+
+  // onActorAction()
+  private function onActorAction(e:ActorActionEvent):void
+  {
+    if (e.arg == Actor.DIE) {
+      scene.remove(Actor(e.currentTarget));
     }
   }
 
-  // onPlayerJump()
-  private function onPlayerJump(e:Event):void
+  // onPlayerAction()
+  private function onPlayerAction(e:ActorActionEvent):void
   {
-    jump.play();
+    if (e.arg == Actor.JUMP) {
+      jump.play();
+    } else if (e.arg == Actor.DIE) {
+      if (state == 0) {
+	state = 1;
+	popupVideo(new Frage1VideoCls());
+      }
+    }
   }
 
   // popupVideo(bytes)
@@ -561,51 +573,6 @@ class MCSkin extends Shape3D
 }
 
 
-//  Actor
-//
-class Actor extends EventDispatcher
-{
-  protected var scene:Scene;
-  protected var skin:MCSkin;
-  protected var pos:Point;
-
-  // Actor(image)
-  public function Actor(scene:Scene, image:BitmapData)
-  {
-    this.scene = scene;
-    this.skin = new MCSkin(image);
-  }
-
-  // getSkin()
-  public function getSkin():Shape
-  {
-    return skin;
-  }
-
-  // getBounds()
-  public function getBounds():Rectangle
-  {
-    var r:Rectangle = skin.get2DBounds();
-    return new Rectangle(pos.x+r.x, pos.y+r.y, r.width, r.height);
-  }
-
-  // setPosition()
-  public function setPosition(p:Point):void
-  {
-    pos = p;
-  }
-
-  // update()
-  public virtual function update():void
-  {
-    var p:Point = scene.translatePoint(pos);
-    skin.x = p.x;
-    skin.y = p.y;
-    skin.repaint();
-  }
-}
-
-
 //  TileMap
 //
 class TileMap extends Bitmap
@@ -633,11 +600,18 @@ class TileMap extends Bitmap
     return new Point(map.width*blocksize, map.height*blocksize);
   }
 
-  // getBlock(x, y)
-  public function getBlock(x:int, y:int):int
+  // getBlockAt(x, y)
+  public function getBlockAt(x:int, y:int):int
   {
     var c:uint = map.getPixel(x, y);
     return pixelToBlockId(c);
+  }
+
+  // getBlock(r)
+  public function getBlock(r:Rectangle):int
+  {
+    return getBlockAt((r.x+r.width/2)/blocksize,
+		      (r.y+r.height/2)/blocksize);
   }
 
   // scanBlockX(r)
@@ -652,7 +626,7 @@ class TileMap extends Bitmap
       x1 = (r.x+r.width)/blocksize;
       for (x = x0; x1 <= x; x--) {
 	for (y = y0; y <= y1; y++) {
-	  if (f(getBlock(x, y))) {
+	  if (f(getBlockAt(x, y))) {
 	    return (x+1)*blocksize;
 	  }
 	}
@@ -662,7 +636,7 @@ class TileMap extends Bitmap
       x1 = (r.x+r.width-1)/blocksize;
       for (x = x0; x <= x1; x++) {
 	for (y = y0; y <= y1; y++) {
-	  if (f(getBlock(x, y))) {
+	  if (f(getBlockAt(x, y))) {
 	    return x*blocksize;
 	  }
 	}
@@ -683,7 +657,7 @@ class TileMap extends Bitmap
       y1 = (r.y+r.height)/blocksize;
       for (y = y0; y1 <= y; y--) {
 	for (x = x0; x <= x1; x++) {
-	  if (f(getBlock(x, y))) {
+	  if (f(getBlockAt(x, y))) {
 	    return (y+1)*blocksize;
 	  }
 	}
@@ -693,7 +667,7 @@ class TileMap extends Bitmap
       y1 = (r.y+r.height-1)/blocksize;
       for (y = y0; y <= y1; y++) {
 	for (x = x0; x <= x1; x++) {
-	  if (f(getBlock(x, y))) {
+	  if (f(getBlockAt(x, y))) {
 	    return y*blocksize;
 	  }
 	}
@@ -726,7 +700,7 @@ class TileMap extends Bitmap
     }
     for (var dy:int = 0; dy < mh; dy++) {
       for (var dx:int = 0; dx < mw; dx++) {
-	var i:int = getBlock(x0+dx, y0+dy);
+	var i:int = getBlockAt(x0+dx, y0+dy);
 	var src:Rectangle = 
 	  new Rectangle(i*blocksize, 0, blocksize, blocksize);
 	var dst:Point = 
@@ -815,6 +789,131 @@ class TileMap extends Bitmap
 }
 
 
+//  ActorActionEvent
+// 
+class ActorActionEvent extends Event
+{
+  public static const ACTION:String = "ACTION";
+
+  public var arg:String;
+
+  public function ActorActionEvent(arg:String)
+  {
+    super(ACTION);
+    this.arg = arg;
+  }
+}
+
+
+//  Actor
+//
+class Actor extends EventDispatcher
+{
+  protected var scene:Scene;
+  protected var skin:MCSkin;
+  protected var pos:Point;
+
+  protected var vx:int = 0, vy:int = 0;
+  protected var phase:Number = 0;
+  protected var jumping:Boolean;
+
+  public const gravity:int = 4;
+  public const speed:int = 8;
+  public const jumpacc:int = -36;
+
+  public static const JUMP:String = "JUMP";
+  public static const DIE:String = "DIE";
+
+  // Actor(image)
+  public function Actor(scene:Scene, image:BitmapData)
+  {
+    this.scene = scene;
+    this.skin = new MCSkin(image);
+    this.skin.setDirection(+1, 0);
+  }
+
+  // getSkin()
+  public function getSkin():Shape
+  {
+    return skin;
+  }
+
+  // getBounds()
+  public function getBounds():Rectangle
+  {
+    var r:Rectangle = skin.get2DBounds();
+    return new Rectangle(pos.x+r.x, pos.y+r.y, r.width, r.height);
+  }
+
+  // setPosition()
+  public function setPosition(p:Point):void
+  {
+    pos = p;
+  }
+
+  // move(dx, dy)
+  public function move(dx:int, dy:int):void
+  {
+    vx = dx*speed;
+    if (dx != 0 || dy != 0) {
+      skin.setDirection(dx, dy);
+    }
+  }
+
+  // jump()
+  public function jump():void
+  {
+    jumping = true;
+  }
+
+  // getCollisionX(vx, f)
+  public function getCollisionX(vx:int, f:Function):int
+  {
+    return scene.getCollisionX(getBounds(), vx, f);
+  }
+  
+  // getCollisionY(vy, f)
+  public function getCollisionY(vy:int, f:Function):int
+  {
+    return scene.getCollisionY(getBounds(), vy, f);
+  }
+
+  // update()
+  public virtual function update():void
+  {
+    var fy:Function = (function (b:int):Boolean { return b != 0; });
+    var fx:Function = (function (b:int):Boolean { return b == 1; });
+    vy += gravity;
+    var vy1:int = getCollisionY(vy, fy);
+    pos.y += vy1;
+    if (jumping) {
+      if (0 < vy && vy1 == 0 && getCollisionY(jumpacc, fy) != 0) {
+	vy = jumpacc;
+	dispatchEvent(new ActorActionEvent(JUMP));
+      }
+      jumping = false;
+    }
+    if (0 <= vy) {
+      vy = vy1;
+    }
+    pos.x += getCollisionX(vx, fx);
+    if (vx != 0) {
+      phase += Math.abs(vx)*0.1;
+      skin.setPhase(Math.cos(phase)*0.5);
+    }
+  }
+
+  // repaint()
+  public virtual function repaint():void
+  {
+    var p:Point = scene.translatePoint(pos);
+    skin.x = p.x;
+    skin.y = p.y;
+    skin.repaint();
+  }
+}
+
+
 //  Scene
 // 
 class Scene extends Sprite
@@ -854,6 +953,14 @@ class Scene extends Sprite
   {
     for each (var actor:Actor in actors) {
       actor.update();
+    }
+  }
+
+  // repaint()
+  public function repaint():void
+  {
+    for each (var actor:Actor in actors) {
+      actor.repaint();
     }
     tilemap.repaint(window);
   }
@@ -932,52 +1039,22 @@ class Scene extends Sprite
 //
 class Person extends Actor
 {
-  private var phase:Number = 0;
-  private var speed:int = 0;
-  private var jumping:int = 0;
-
   // Person(image)
   public function Person(scene:Scene, image:BitmapData)
   {
     super(scene, image);
-    speed = int(Math.random()*10)+2;
+    move(int(Math.random()*3)-1, 0);
   }
 
-  // move(dx, dy)
-  public function move(dx:int, dy:int):void
-  {
-    skin.setDirection(dx, dy);
-  }
-  
   // update()
   public override function update():void
   {
-    skin.setPhase(Math.cos(phase)*0.5);
-    skin.setDirection(speed, 0);
-    if (pos.x < 0 && speed < 0) {
-      speed = int(Math.random()*10)+2;
-    } else if (500 < pos.x && 0 < speed) {
-      speed = -(int(Math.random()*10)+2);
-    }
-    if (8 < jumping) {
-      jumping--;
-      pos.y -= 10;
-      phase = 0;
-      skin.setPhase(0.7);
-    } else if (0 < jumping) {
-      jumping--;
-      pos.y += 10;
-      phase = 0;
-      skin.setPhase(0.7);
-    } else {
-      if (Math.random() < 0.05) {
-	jumping = 16;
-      }
-      phase += Math.abs(speed)*0.1;
-      skin.setPhase(Math.cos(phase)*0.5);
-    }
-    pos.x += speed;
     super.update();
+    if (Math.random() < 0.05) {
+      move(int(Math.random()*3)-1, 0);
+    } else if (Math.random() < 0.1) {
+      jump();
+    }
   }
 }
 
@@ -986,66 +1063,19 @@ class Person extends Actor
 //
 class Player extends Actor
 {
-  private var phase:Number = 0;
-  private var vx:int = 0, vy:int = 0;
-  private var jumping:Boolean;
-
-  private const gravity:int = 4;
-  private const speed:int = 8;
-  private const jumpacc:int = -36;
-
-  public static const JUMP:String = "JUMP";
-
   // Player(image)
   public function Player(scene:Scene, image:BitmapData)
   {
     super(scene, image);
-    skin.setDirection(+1, 0);
-  }
-
-  // move(dx, dy)
-  public function move(dx:int, dy:int):void
-  {
-    vx = dx*speed;
-    if (dx != 0 || dy != 0) {
-      skin.setDirection(dx, dy);
-    }
-  }
-
-  // jump()
-  public function jump():void
-  {
-    jumping = true;
-  }
-
-  // isAlive()
-  public function isAlive():Boolean
-  {
-    return (800 < pos.y);
   }
 
   // update()
   public override function update():void
   {
-    var fy:Function = (function (b:int):Boolean { return b != 0; });
-    var fx:Function = (function (b:int):Boolean { return b == 1; });
-    vy += gravity;
-    var vy0:int = vy;
-    vy = scene.getCollisionY(getBounds(), vy0, fy);
-    pos.y += vy;
-    if (jumping) {
-      if (0 < vy0 && vy == 0) {
-	vy = jumpacc;
-	dispatchEvent(new Event(JUMP));
-      }
-      jumping = false;
-    }
-    pos.x += scene.getCollisionX(getBounds(), vx, fx);
-    scene.setCenter(pos, 200);
-    if (vx != 0) {
-      phase += Math.abs(vx)*0.1;
-      skin.setPhase(Math.cos(phase)*0.5);
-    }
     super.update();
+    scene.setCenter(pos, 200);
+    if (800 < pos.y) {
+      dispatchEvent(new ActorActionEvent(DIE));
+    }
   }
 }
