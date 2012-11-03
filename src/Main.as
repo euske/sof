@@ -22,7 +22,6 @@ import flash.media.Sound;
 import flash.ui.Keyboard;
 import flash.utils.ByteArray;
 import flash.text.TextField;
-import flash.text.TextFormat;
 import flash.text.TextFieldType;
 import flash.geom.Point;
 import flash.geom.Matrix;
@@ -49,11 +48,6 @@ public class Main extends Sprite
   private static const Image3Cls:Class;
   private static const image3:Bitmap = new Image3Cls();
 
-  // Font
-  [Embed(source="../assets/awesomefont.ttf", fontName="AwesomeFont")]
-  private static const AwesomeFontCls:Class;
-  //private static const awesomefont:Font = new AwesomeFontCls();  
-  
   // Jump sound
   [Embed(source="../assets/jump.mp3")]
   private static const JumpSoundCls:Class;
@@ -157,6 +151,7 @@ public class Main extends Sprite
       var actor:Person = new Person(scene, images[i].bitmapData);
       actor.setPosition(new Point(i*100+200, i*100+200));
       actor.addEventListener(ActorActionEvent.ACTION, onActorAction);
+      actor.setTarget(player);
       scene.add(actor);
     }
 
@@ -288,9 +283,6 @@ import flash.events.KeyboardEvent;
 import flash.events.MouseEvent;
 import flash.media.Sound;
 import flash.ui.Keyboard;
-import flash.text.TextField;
-import flash.text.TextFormat;
-import flash.text.TextFieldType;
 import flash.geom.Point;
 import flash.geom.Matrix;
 import flash.geom.Rectangle;
@@ -309,13 +301,13 @@ class Shape3D extends Shape
   }
 
   public const VX:Number = 0.4;
-  public const VY:Number = 0.2;
+  public const VZ:Number = 0.2;
 
   // p3d(x,y,z)
   protected function p3d(x:int, y:int, z:int):Point
   {
     // +Z: toward the screen, -Z: toward the user.
-    return new Point(x+z*VX, y-z*VY);
+    return new Point(x+z*VX, y-z*VZ);
   }
 
   // quad(r, p, a, b)
@@ -357,14 +349,14 @@ class MCSkin extends Shape3D
     q1 = -q0;
   }
 
-  // setDirection(vx, vy)
-  public function setDirection(vx:int, vy:int):void
+  // setDirection(vx, vz)
+  public function setDirection(vx:int, vz:int):void
   {
     this.vx = vx;
-    this.vy = vy;
+    this.vz = vz;
   }
 
-  private var vx:int = 0, vy:int = 0;
+  private var vx:int = 1, vz:int = 0;
   private var p0:Number = 1.0;
   private var q0:Number = 0.0;
   private var p1:Number = 1.0;
@@ -382,7 +374,7 @@ class MCSkin extends Shape3D
     // Skin format: http://www.minecraftwiki.net/wiki/File:Skinzones.png
     graphics.clear();
 
-    if (vy == 0) {
+    if (vz == 0) {
       // L-arm
       if (0 < vx) {
 	quad(new Rectangle(44, 20, 4, 12), // front
@@ -488,7 +480,7 @@ class MCSkin extends Shape3D
 	quad(new Rectangle(44, 16, 4, 4), // top
 	     p3d(-N*p1,-N*6-N*q1,-N*3), p3d(0,0,N*2), p3d(N*2*p1,N*2*q1,0));
       }
-    } else if (0 < vy) {
+    } else if (0 < vz) {
       // R-leg
       quad(new Rectangle(4, 20, 4, 12), // front
 	   p3d(-N*2,0,-N), p3d(N*2,0,0), p3d(0,N*6,0));    
@@ -527,7 +519,7 @@ class MCSkin extends Shape3D
       quad(new Rectangle(40, 0, 8, 8), // top
 	   p3d(-N*2-M,-N*10-M,-N-M), p3d(0,0,N*4+M*2), p3d(N*4+M*2,0,0));
       
-    } else if (vy < 0) {
+    } else if (vz < 0) {
       // L-leg
       quad(new Rectangle(12, 20, 4, 12), // front
 	   p3d(-N*2,0,-N), p3d(N*2,0,0), p3d(0,N*6,0));    
@@ -789,131 +781,6 @@ class TileMap extends Bitmap
 }
 
 
-//  ActorActionEvent
-// 
-class ActorActionEvent extends Event
-{
-  public static const ACTION:String = "ACTION";
-
-  public var arg:String;
-
-  public function ActorActionEvent(arg:String)
-  {
-    super(ACTION);
-    this.arg = arg;
-  }
-}
-
-
-//  Actor
-//
-class Actor extends EventDispatcher
-{
-  protected var scene:Scene;
-  protected var skin:MCSkin;
-  protected var pos:Point;
-
-  protected var vx:int = 0, vy:int = 0;
-  protected var phase:Number = 0;
-  protected var jumping:Boolean;
-
-  public const gravity:int = 4;
-  public const speed:int = 8;
-  public const jumpacc:int = -36;
-
-  public static const JUMP:String = "JUMP";
-  public static const DIE:String = "DIE";
-
-  // Actor(image)
-  public function Actor(scene:Scene, image:BitmapData)
-  {
-    this.scene = scene;
-    this.skin = new MCSkin(image);
-    this.skin.setDirection(+1, 0);
-  }
-
-  // getSkin()
-  public function getSkin():Shape
-  {
-    return skin;
-  }
-
-  // getBounds()
-  public function getBounds():Rectangle
-  {
-    var r:Rectangle = skin.get2DBounds();
-    return new Rectangle(pos.x+r.x, pos.y+r.y, r.width, r.height);
-  }
-
-  // setPosition()
-  public function setPosition(p:Point):void
-  {
-    pos = p;
-  }
-
-  // move(dx, dy)
-  public function move(dx:int, dy:int):void
-  {
-    vx = dx*speed;
-    if (dx != 0 || dy != 0) {
-      skin.setDirection(dx, dy);
-    }
-  }
-
-  // jump()
-  public function jump():void
-  {
-    jumping = true;
-  }
-
-  // getCollisionX(vx, f)
-  public function getCollisionX(vx:int, f:Function):int
-  {
-    return scene.getCollisionX(getBounds(), vx, f);
-  }
-  
-  // getCollisionY(vy, f)
-  public function getCollisionY(vy:int, f:Function):int
-  {
-    return scene.getCollisionY(getBounds(), vy, f);
-  }
-
-  // update()
-  public virtual function update():void
-  {
-    var fy:Function = (function (b:int):Boolean { return b != 0; });
-    var fx:Function = (function (b:int):Boolean { return b == 1; });
-    vy += gravity;
-    var vy1:int = getCollisionY(vy, fy);
-    pos.y += vy1;
-    if (jumping) {
-      if (0 < vy && vy1 == 0 && getCollisionY(jumpacc, fy) != 0) {
-	vy = jumpacc;
-	dispatchEvent(new ActorActionEvent(JUMP));
-      }
-      jumping = false;
-    }
-    if (0 <= vy) {
-      vy = vy1;
-    }
-    pos.x += getCollisionX(vx, fx);
-    if (vx != 0) {
-      phase += Math.abs(vx)*0.1;
-      skin.setPhase(Math.cos(phase)*0.5);
-    }
-  }
-
-  // repaint()
-  public virtual function repaint():void
-  {
-    var p:Point = scene.translatePoint(pos);
-    skin.x = p.x;
-    skin.y = p.y;
-    skin.repaint();
-  }
-}
-
-
 //  Scene
 // 
 class Scene extends Sprite
@@ -1035,15 +902,147 @@ class Scene extends Sprite
 }
 
 
+//  ActorActionEvent
+// 
+class ActorActionEvent extends Event
+{
+  public static const ACTION:String = "ACTION";
+
+  public var arg:String;
+
+  public function ActorActionEvent(arg:String)
+  {
+    super(ACTION);
+    this.arg = arg;
+  }
+}
+
+
+//  Actor
+//
+class Actor extends EventDispatcher
+{
+  protected var scene:Scene;
+  protected var skin:MCSkin;
+  protected var pos:Point;
+
+  protected var vx:int = 0, vy:int = 0;
+  protected var phase:Number = 0;
+  protected var jumping:Boolean;
+
+  public const gravity:int = 4;
+  public const speed:int = 8;
+  public const jumpacc:int = -36;
+
+  public static const JUMP:String = "JUMP";
+  public static const DIE:String = "DIE";
+
+  // Actor(image)
+  public function Actor(scene:Scene, image:BitmapData)
+  {
+    this.scene = scene;
+    this.skin = new MCSkin(image);
+  }
+
+  // getSkin()
+  public function getSkin():Shape
+  {
+    return skin;
+  }
+
+  // getBounds()
+  public function getBounds():Rectangle
+  {
+    var r:Rectangle = skin.get2DBounds();
+    return new Rectangle(pos.x+r.x, pos.y+r.y, r.width, r.height);
+  }
+
+  // setPosition()
+  public function setPosition(p:Point):void
+  {
+    pos = p;
+  }
+
+  // move(dx, dy)
+  public function move(dx:int, dy:int):void
+  {
+    vx = dx*speed;
+    if (dx != 0 || dy != 0) {
+      skin.setDirection(dx, dy);
+    }
+  }
+
+  // jump()
+  public function jump():void
+  {
+    jumping = true;
+  }
+
+  // getCollisionX(vx, f)
+  public function getCollisionX(vx:int, f:Function):int
+  {
+    return scene.getCollisionX(getBounds(), vx, f);
+  }
+  
+  // getCollisionY(vy, f)
+  public function getCollisionY(vy:int, f:Function):int
+  {
+    return scene.getCollisionY(getBounds(), vy, f);
+  }
+
+  // update()
+  public virtual function update():void
+  {
+    var fy:Function = (function (b:int):Boolean { return b != 0; });
+    var fx:Function = (function (b:int):Boolean { return b == 1; });
+    vy += gravity;
+    var vy1:int = getCollisionY(vy, fy);
+    pos.y += vy1;
+    if (jumping) {
+      if (0 < vy && vy1 == 0 && getCollisionY(jumpacc, fy) != 0) {
+	vy = jumpacc;
+	dispatchEvent(new ActorActionEvent(JUMP));
+      }
+      jumping = false;
+    }
+    if (0 <= vy) {
+      vy = vy1;
+    }
+    pos.x += getCollisionX(vx, fx);
+    if (vx != 0) {
+      phase += Math.abs(vx)*0.1;
+      skin.setPhase(Math.cos(phase)*0.5);
+    }
+  }
+
+  // repaint()
+  public virtual function repaint():void
+  {
+    var p:Point = scene.translatePoint(pos);
+    skin.x = p.x;
+    skin.y = p.y;
+    skin.repaint();
+  }
+}
+
+
 //  Person
 //
 class Person extends Actor
 {
+  private var target:Actor;
+
   // Person(image)
   public function Person(scene:Scene, image:BitmapData)
   {
     super(scene, image);
     move(int(Math.random()*3)-1, 0);
+  }
+
+  // setTarget(actor)
+  public function setTarget(actor:Actor):void
+  {
+    target = actor;
   }
 
   // update()
