@@ -27,6 +27,7 @@ import flash.geom.Point;
 import flash.geom.Matrix;
 import flash.geom.Rectangle;
 
+
 //  Main 
 //
 [SWF(width="640", height="480", backgroundColor="#ffffff", frameRate=24)]
@@ -48,6 +49,28 @@ public class Main extends Sprite
   private static const Image3Cls:Class;
   private static const image3:Bitmap = new Image3Cls();
 
+  // Font
+  [Embed(source="../assets/awesomefont.png", mimeType="image/png")]
+  private static const AwesomeFontGlyphsCls:Class;
+  private static const awesomefontglyphs:Bitmap = new AwesomeFontGlyphsCls();
+  private static const awesomefontwidths:Array = [
+      0, 0, 0, 0, 0, 0, 0, 0,						  
+      0, 0, 0, 0, 0, 0, 0, 0,						  
+      0, 0, 0, 0, 0, 0, 0, 0,						  
+      0, 0, 0, 0, 0, 0, 0, 0,						  
+      0, 4, 6, 10, 16, 20, 29, 36, 
+      38, 42, 46, 52, 58, 61, 67, 69, 
+      76, 80, 84, 88, 92, 96, 100, 104, 
+      108, 112, 116, 118, 121, 126, 132, 137, 
+      141, 149, 155, 161, 167, 173, 178, 184, 
+      190, 196, 202, 208, 214, 220, 228, 234, 
+      240, 246, 253, 259, 265, 273, 279, 285, 
+      293, 301, 307, 313, 315, 322, 326, 332, 
+      338, 348, 353, 357, 362, 366, 371, 376, 
+      380, 384, 386, 390, 394, 396, 402, 406, 
+      411, 415, 420, 425, 429, 433, 438, 442, 
+      448, 452, 456, 461, 465, 474, 479, 489];
+  
   // Jump sound
   [Embed(source="../assets/jump.mp3")]
   private static const JumpSoundCls:Class;
@@ -68,6 +91,8 @@ public class Main extends Sprite
 
   private static const images:Array = [ image1, image2, image3 ];
   
+  private static var awesomefont:BitmapFont;
+
   // Main()
   public function Main()
   {
@@ -77,6 +102,8 @@ public class Main extends Sprite
     stage.addEventListener(Event.ENTER_FRAME, OnEnterFrame);
     stage.scaleMode = StageScaleMode.NO_SCALE;
     init();
+    awesomefont = new BitmapFont(awesomefontglyphs.bitmapData, awesomefontwidths);
+    addChild(awesomefont.render("Video Games Awesome", 0xffff0000));
   }
 
   /// Logging functions
@@ -286,12 +313,18 @@ import flash.ui.Keyboard;
 import flash.geom.Point;
 import flash.geom.Matrix;
 import flash.geom.Rectangle;
+import flash.geom.ColorTransform;
 
 
 //  Shape3D
 // 
 class Shape3D extends Shape
 {
+  // VX:
+  public const VX:Number = 0.4;
+  // VZ:
+  public const VZ:Number = 0.2;
+
   private var skin:BitmapData;
 
   // Shape3D(image)
@@ -299,9 +332,6 @@ class Shape3D extends Shape
   {
     skin = image;
   }
-
-  public const VX:Number = 0.4;
-  public const VZ:Number = 0.2;
 
   // p3d(x,y,z)
   protected function p3d(x:int, y:int, z:int):Point
@@ -1077,4 +1107,64 @@ class Player extends Actor
       dispatchEvent(new ActorActionEvent(DIE));
     }
   }
+}
+
+
+//  BitmapFont
+// 
+class BitmapFont
+{
+  private var glyphs:BitmapData;
+  private var widths:Array;
+
+  // height
+  //   The height of this font.
+  public var height:int;
+
+  // BitmapFont(glyphs, widths)
+  public function BitmapFont(glyphs:BitmapData, widths:Array)
+  {
+    this.glyphs = glyphs;
+    this.height = glyphs.height;
+    this.widths = widths;
+  }
+
+  // getTextWidth(text)
+  //   Returns a width of a given string.
+  public function getTextWidth(text:String):int
+  {
+    var w:int = 0;
+    for (var i:int = 0; i < text.length; i++) {
+      w += getCharWidth(text.charCodeAt(i));
+    }
+    return w;
+  }
+
+  // render(text, color)
+  //   Creates a Bitmap with a given string rendered.
+  public function render(text:String, color:uint=0xffffffff):Bitmap
+  {
+    var width:int = getTextWidth(text);
+    var data:BitmapData = new BitmapData(width, height, true, 0xffffffff);
+    var x:int = 0;
+    for (var i:int = 0; i < text.length; i++) {
+      var c:int = text.charCodeAt(i);
+      if (widths.length <= c+1) continue;
+      var w:int = getCharWidth(c);
+      var src:Rectangle = new Rectangle(widths[c], 0, w, height);
+      data.copyPixels(glyphs, src, new Point(x, 0));
+      x += w;
+    }
+    var ct:ColorTransform = new ColorTransform();
+    ct.color = color;
+    data.colorTransform(data.rect, ct);
+    return new Bitmap(data);
+  }
+
+  private function getCharWidth(c:int):int
+  {
+    if (widths.length <= c+1) return 0;
+    return widths[c+1] - widths[c];
+  }
+
 }
