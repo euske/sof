@@ -34,9 +34,8 @@ import flash.geom.Rectangle;
 public class Main extends Sprite
 {
   // Skin image: http://www.minecraft.net/skin/USERNAME
-  //[Embed(source="../../skins/FFSTV.png", mimeType="image/png")]
   //[Embed(source="../../skins/skinzones.png", mimeType="image/png")]
-  [Embed(source="../../skins/mrchrismad.png", mimeType="image/png")]
+  [Embed(source="../../skins/FFSTV.png", mimeType="image/png")]
   private static const Image0Cls:Class;
   private static const image0:Bitmap = new Image0Cls();
   [Embed(source="../../skins/MissBlow.png", mimeType="image/png")]
@@ -616,10 +615,15 @@ class TileMap extends Bitmap
     this.prevrect = new Rectangle(-1,-1,0,0);
   }
 
-  // getSize()
-  public function getSize():Point
+  // mapwidth
+  public function get mapwidth():int
   {
-    return new Point(map.width*blocksize, map.height*blocksize);
+    return map.width;
+  }
+  // mapheight
+  public function get mapheight():int
+  {
+    return map.height;
   }
 
   // getBlockAt(x, y)
@@ -647,16 +651,18 @@ class TileMap extends Bitmap
       x0 = (r.x-1)/blocksize;
       x1 = (r.x+r.width)/blocksize;
       for (x = x0; x1 <= x; x--) {
+	if (x <= 0) return 0;
 	for (y = y0; y <= y1; y++) {
 	  if (f(getBlockAt(x, y))) {
 	    return (x+1)*blocksize;
 	  }
 	}
       }
-    } else if (0 < r.height) {
+    } else if (0 < r.width) {
       x0 = r.x/blocksize;
       x1 = (r.x+r.width-1)/blocksize;
       for (x = x0; x <= x1; x++) {
+	if (map.width <= x) return map.width*blocksize;
 	for (y = y0; y <= y1; y++) {
 	  if (f(getBlockAt(x, y))) {
 	    return x*blocksize;
@@ -678,6 +684,7 @@ class TileMap extends Bitmap
       y0 = (r.y-1)/blocksize;
       y1 = (r.y+r.height)/blocksize;
       for (y = y0; y1 <= y; y--) {
+	if (y <= 0) return 0;
 	for (x = x0; x <= x1; x++) {
 	  if (f(getBlockAt(x, y))) {
 	    return (y+1)*blocksize;
@@ -688,6 +695,7 @@ class TileMap extends Bitmap
       y0 = r.y/blocksize;
       y1 = (r.y+r.height-1)/blocksize;
       for (y = y0; y <= y1; y++) {
+	if (map.height <= y) return map.height*blocksize;
 	for (x = x0; x <= x1; x++) {
 	  if (f(getBlockAt(x, y))) {
 	    return y*blocksize;
@@ -825,9 +833,8 @@ class Scene extends Sprite
   {
     this.window = new Rectangle(0, 0, width, height);
     this.tilemap = tilemap;
-    this.mapsize = tilemap.getSize();
-    this.mapsize.x -= width;
-    this.mapsize.y -= height;
+    this.mapsize = new Point(tilemap.mapwidth*tilemap.blocksize,
+			     tilemap.mapheight*tilemap.blocksize);
     addChild(tilemap);
   }
 
@@ -878,13 +885,13 @@ class Scene extends Sprite
     
     if (window.x < 0) {
       window.x = 0;
-    } else if (mapsize.x < window.x) {
-      window.x = mapsize.x;
+    } else if (mapsize.x < window.x+window.width) {
+      window.x = mapsize.x-window.width;
     }
     if (window.y < 0) {
       window.y = 0;
-    } else if (mapsize.y < window.y) {
-      window.y = mapsize.y;
+    } else if (mapsize.y < window.y+window.height) {
+      window.y = mapsize.y-window.height;
     }
   }
 
