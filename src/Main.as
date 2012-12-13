@@ -71,7 +71,7 @@ public class Main extends Sprite
       448, 452, 456, 461, 465, 474, 479, 489];
   
   // Jump sound
-  [Embed(source="../assets/jump.mp3")]
+  [Embed(source="../assets/jump1.mp3")]
   private static const JumpSoundCls:Class;
   private static const jump:Sound = new JumpSoundCls();
 
@@ -96,6 +96,7 @@ public class Main extends Sprite
   public function Main()
   {
     //loginit();
+    //Main.log("foo!");
     stage.addEventListener(KeyboardEvent.KEY_DOWN, OnKeyDown);
     stage.addEventListener(KeyboardEvent.KEY_UP, OnKeyUp);
     stage.addEventListener(Event.ENTER_FRAME, OnEnterFrame);
@@ -313,6 +314,66 @@ import flash.geom.Point;
 import flash.geom.Matrix;
 import flash.geom.Rectangle;
 import flash.geom.ColorTransform;
+
+
+//  BitmapFont
+// 
+class BitmapFont
+{
+  private var glyphs:BitmapData;
+  private var widths:Array;
+
+  // height
+  //   The height of this font.
+  public var height:int;
+
+  // BitmapFont(glyphs, widths)
+  public function BitmapFont(glyphs:BitmapData, widths:Array)
+  {
+    this.glyphs = glyphs;
+    this.height = glyphs.height;
+    this.widths = widths;
+  }
+
+  // getTextWidth(text)
+  //   Returns a width of a given string.
+  public function getTextWidth(text:String):int
+  {
+    var w:int = 0;
+    for (var i:int = 0; i < text.length; i++) {
+      w += getCharWidth(text.charCodeAt(i));
+    }
+    return w;
+  }
+
+  // render(text, color)
+  //   Creates a Bitmap with a given string rendered.
+  public function render(text:String, color:uint=0xffffffff):Bitmap
+  {
+    var width:int = getTextWidth(text);
+    var data:BitmapData = new BitmapData(width, height, true, 0xffffffff);
+    var x:int = 0;
+    for (var i:int = 0; i < text.length; i++) {
+      var c:int = text.charCodeAt(i);
+      if (widths.length <= c+1) continue;
+      var w:int = getCharWidth(c);
+      var src:Rectangle = new Rectangle(widths[c], 0, w, height);
+      data.copyPixels(glyphs, src, new Point(x, 0));
+      x += w;
+    }
+    var ct:ColorTransform = new ColorTransform();
+    ct.color = color;
+    data.colorTransform(data.rect, ct);
+    return new Bitmap(data);
+  }
+
+  private function getCharWidth(c:int):int
+  {
+    if (widths.length <= c+1) return 0;
+    return widths[c+1] - widths[c];
+  }
+
+}
 
 
 //  Shape3D
@@ -640,6 +701,22 @@ class TileMap extends Bitmap
 		      (r.y+r.height/2)/blocksize);
   }
 
+  // scanBlock(r)
+  public function scanBlock(r:Rectangle, f:Function):Boolean
+  {
+    var x0:int = r.x/blocksize;
+    var x1:int = (r.x+r.width-1)/blocksize;
+    var y0:int = r.y/blocksize;
+    var y1:int = (r.y+r.height-1)/blocksize;
+    var x:int, y:int;
+    for (y = y0; y <= y1; y++) {
+      for (x = x0; x <= x1; x++) {
+	if (f(getBlockAt(x, y))) return true;
+      }
+    }
+    return false;
+  }
+
   // scanBlockX(r)
   public function scanBlockX(r:Rectangle, f:Function):int
   {
@@ -901,6 +978,12 @@ class Scene extends Sprite
     return new Point(p.x-window.x, p.y-window.y);
   }
 
+  // scanBlock(r)
+  public function scanBlock(r:Rectangle, f:Function):Boolean
+  {
+    return tilemap.scanBlock(r, f);
+  }
+
   // getCollisionX(r)
   public function getCollisionX(src:Rectangle, vx:int, isobstacle:Function):int
   {
@@ -963,7 +1046,7 @@ class Actor extends EventDispatcher
   protected var skin:MCSkin;
   protected var pos:Point;
 
-  protected var vx:int = 0, vy:int = 0;
+  protected var vx:int = 0, vy:int = 0, vh:int = 0;
   protected var phase:Number = 0;
   protected var jumping:Boolean;
 
@@ -1003,10 +1086,11 @@ class Actor extends EventDispatcher
   // move(dx, dy)
   public function move(dx:int, dy:int):void
   {
-    vx = dx*speed;
     if (dx != 0 || dy != 0) {
       skin.setDirection(dx, dy);
     }
+    vx = dx*speed;
+    vh = dy*speed;
   }
 
   // jump()
@@ -1030,22 +1114,28 @@ class Actor extends EventDispatcher
   // update()
   public virtual function update():void
   {
-    var fy:Function = (function (b:int):Boolean { return b != 0; });
-    var fx:Function = (function (b:int):Boolean { return b == 1; });
-    vy += gravity;
-    var vy1:int = getCollisionY(vy, fy);
-    pos.y += vy1;
-    if (jumping) {
-      if (0 < vy && vy1 == 0 && getCollisionY(jumpacc, fy) != 0) {
+    var isobstacle:Function = (function (b:int):Boolean { return b == 1; });
+    var isgrabbable:Function = (function (b:int):Boolean { return b == 3; });
+    var isstoppable:Function = (function (b:int):Boolean { return b != 0; });
+    if (scene.scanBlock(getBounds(), isgrabbable)) {
+      // climbing
+      vy = getCollisionY(vh, isobstacle);
+    } else {
+      // falling
+      var vy1:int = vy+gravity;
+      if (jumping && 0 < vy1 && 
+	  getCollisionY(vy1, isstoppable) == 0 &&
+	  getCollisionY(jumpacc, isstoppable) < 0) {
 	vy = jumpacc;
 	dispatchEvent(new ActorActionEvent(JUMP));
+      } else {
+	vy = vy1;
       }
-      jumping = false;
+      vy = getCollisionY(vy, isstoppable);
     }
-    if (0 <= vy) {
-      vy = vy1;
-    }
-    pos.x += getCollisionX(vx, fx);
+    jumping = false;
+    pos.y += vy;
+    pos.x += getCollisionX(vx, isobstacle);
     if (vx != 0) {
       phase += Math.abs(vx)*0.1;
       skin.setPhase(Math.cos(phase)*0.5);
@@ -1114,64 +1204,4 @@ class Player extends Actor
       dispatchEvent(new ActorActionEvent(DIE));
     }
   }
-}
-
-
-//  BitmapFont
-// 
-class BitmapFont
-{
-  private var glyphs:BitmapData;
-  private var widths:Array;
-
-  // height
-  //   The height of this font.
-  public var height:int;
-
-  // BitmapFont(glyphs, widths)
-  public function BitmapFont(glyphs:BitmapData, widths:Array)
-  {
-    this.glyphs = glyphs;
-    this.height = glyphs.height;
-    this.widths = widths;
-  }
-
-  // getTextWidth(text)
-  //   Returns a width of a given string.
-  public function getTextWidth(text:String):int
-  {
-    var w:int = 0;
-    for (var i:int = 0; i < text.length; i++) {
-      w += getCharWidth(text.charCodeAt(i));
-    }
-    return w;
-  }
-
-  // render(text, color)
-  //   Creates a Bitmap with a given string rendered.
-  public function render(text:String, color:uint=0xffffffff):Bitmap
-  {
-    var width:int = getTextWidth(text);
-    var data:BitmapData = new BitmapData(width, height, true, 0xffffffff);
-    var x:int = 0;
-    for (var i:int = 0; i < text.length; i++) {
-      var c:int = text.charCodeAt(i);
-      if (widths.length <= c+1) continue;
-      var w:int = getCharWidth(c);
-      var src:Rectangle = new Rectangle(widths[c], 0, w, height);
-      data.copyPixels(glyphs, src, new Point(x, 0));
-      x += w;
-    }
-    var ct:ColorTransform = new ColorTransform();
-    ct.color = color;
-    data.colorTransform(data.rect, ct);
-    return new Bitmap(data);
-  }
-
-  private function getCharWidth(c:int):int
-  {
-    if (widths.length <= c+1) return 0;
-    return widths[c+1] - widths[c];
-  }
-
 }
