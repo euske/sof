@@ -169,7 +169,7 @@ public class Main extends Sprite
     scene = new Scene(stage.stageWidth, stage.stageHeight, tilemap);
 
     player = new Player(scene, image0.bitmapData);
-    player.setPosition(new Point(100, 100));
+    player.setPosition(new Point(100, 120));
     player.addEventListener(ActorActionEvent.ACTION, onActorAction);
     player.addEventListener(ActorActionEvent.ACTION, onPlayerAction);
     scene.add(player);
@@ -821,6 +821,13 @@ class TileMap extends Bitmap
     prevrect.height = mh;
   }
 
+  public static var isobstacle:Function = 
+    (function (b:int):Boolean { return b == 1; });
+  public static var isgrabbable:Function = 
+    (function (b:int):Boolean { return b == 3; });
+  public static var isstoppable:Function = 
+    (function (b:int):Boolean { return b != 0; });
+  
   // pixelToBlockId(c)
   protected function pixelToBlockId(c:uint):int
   {
@@ -1046,7 +1053,7 @@ class Actor extends EventDispatcher
   protected var skin:MCSkin;
   protected var pos:Point;
 
-  protected var vx:int = 0, vy:int = 0, vh:int = 0;
+  protected var vx:int = 0, vy:int = 0, vg:int = 0;
   protected var phase:Number = 0;
   protected var jumping:Boolean;
 
@@ -1090,7 +1097,7 @@ class Actor extends EventDispatcher
       skin.setDirection(dx, dy);
     }
     vx = dx*speed;
-    vh = dy*speed;
+    vy = dy*speed;
   }
 
   // jump()
@@ -1114,28 +1121,23 @@ class Actor extends EventDispatcher
   // update()
   public virtual function update():void
   {
-    var isobstacle:Function = (function (b:int):Boolean { return b == 1; });
-    var isgrabbable:Function = (function (b:int):Boolean { return b == 3; });
-    var isstoppable:Function = (function (b:int):Boolean { return b != 0; });
-    if (scene.scanBlock(getBounds(), isgrabbable)) {
+    if (scene.scanBlock(getBounds(), TileMap.isgrabbable)) {
       // climbing
-      vy = getCollisionY(vh, isobstacle);
+      pos.y += getCollisionY(vy, TileMap.isobstacle);
+      vg = 0;
     } else {
       // falling
-      var vy1:int = vy+gravity;
-      if (jumping && 0 < vy1 && 
-	  getCollisionY(vy1, isstoppable) == 0 &&
-	  getCollisionY(jumpacc, isstoppable) < 0) {
-	vy = jumpacc;
+      var v:int = vg+gravity;
+      if (jumping && 0 < v && getCollisionY(v, TileMap.isstoppable) == 0) {
 	dispatchEvent(new ActorActionEvent(JUMP));
+	vg = getCollisionY(jumpacc, TileMap.isstoppable);
       } else {
-	vy = vy1;
+	vg = getCollisionY(v, TileMap.isstoppable);
       }
-      vy = getCollisionY(vy, isstoppable);
+      pos.y += vg;
     }
+    pos.x += getCollisionX(vx, TileMap.isobstacle);
     jumping = false;
-    pos.y += vy;
-    pos.x += getCollisionX(vx, isobstacle);
     if (vx != 0) {
       phase += Math.abs(vx)*0.1;
       skin.setPhase(Math.cos(phase)*0.5);
