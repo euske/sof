@@ -95,8 +95,6 @@ public class Main extends Sprite
   // Main()
   public function Main()
   {
-    //loginit();
-    //Main.log("foo!");
     stage.addEventListener(KeyboardEvent.KEY_DOWN, OnKeyDown);
     stage.addEventListener(KeyboardEvent.KEY_UP, OnKeyUp);
     stage.addEventListener(Event.ENTER_FRAME, OnEnterFrame);
@@ -104,6 +102,9 @@ public class Main extends Sprite
     init();
     awesomefont = new BitmapFont(awesomefontglyphs.bitmapData, awesomefontwidths);
     addChild(awesomefont.render("Video Games Awesome", 0xffff0000));
+    // 
+    loginit();
+    Main.log("foo!");
   }
 
   /// Logging functions
@@ -158,6 +159,8 @@ public class Main extends Sprite
   private var player:Player;
   private var state:int = 0;
 
+  private var visualizer:ActionVisualizer;
+
   // init()
   private function init():void
   {
@@ -169,7 +172,7 @@ public class Main extends Sprite
     scene = new Scene(stage.stageWidth, stage.stageHeight, tilemap);
 
     player = new Player(scene, image0.bitmapData);
-    player.setPosition(new Point(100, 120));
+    player.setPosition(new Point(768, 192));
     player.addEventListener(ActorActionEvent.ACTION, onActorAction);
     player.addEventListener(ActorActionEvent.ACTION, onPlayerAction);
     scene.add(player);
@@ -184,6 +187,9 @@ public class Main extends Sprite
 
     addChild(scene);
     //playVideo(new Frage1VideoCls());
+    
+    visualizer = new ActionVisualizer();
+    addChild(visualizer);
   }
 
   // keydown(keycode)
@@ -246,6 +252,7 @@ public class Main extends Sprite
   {
     scene.update();
     scene.repaint();
+    visualizer.update(tilemap.computePlan(player.getBounds(), 10, 10), 10, 10);
   }
 
   // onActorAction()
@@ -314,6 +321,70 @@ import flash.geom.Point;
 import flash.geom.Matrix;
 import flash.geom.Rectangle;
 import flash.geom.ColorTransform;
+
+
+//  AmountVisualizer
+// 
+class AmountVisualizer extends Shape
+{
+  public function update(map:ValueMap, maxvalue:int):void
+  {
+    graphics.clear();
+    for (var y:int = 0; y < map.height; y++) {
+      for (var x:int = 0; x < map.width; x++) {
+	var c:int = map.getvalue(x, y);
+	c = 255 * c / maxvalue;
+	graphics.lineStyle(0, 0x0000ff | (c << 8));
+	graphics.drawRect(x*10, y*10, 10, 10);
+      }
+    }
+  }
+}
+
+
+//  ActionVisualizer
+// 
+class ActionVisualizer extends Shape
+{
+  public function update(map:ValueMap, x0:int, y0:int):void
+  {
+    graphics.clear();
+    graphics.beginFill(0xffffff);
+    graphics.drawRect(x0*10, y0*10, 10, 10);
+    graphics.endFill();
+    for (var y:int = 0; y < map.height; y++) {
+      for (var x:int = 0; x < map.width; x++) {
+	var c:int = map.getvalue(x, y);
+	switch (c) {
+	case 1:			// red
+	  graphics.lineStyle(0, 0xffff0000);
+	  graphics.drawRect(x*10, y*10, 10, 10);
+	  break;
+	case 2:			// green
+	  graphics.lineStyle(0, 0xff00ff00);
+	  graphics.drawRect(x*10, y*10, 10, 10);
+	  break;
+	case 3:			// blue
+	  graphics.lineStyle(0, 0xff0000ff);
+	  graphics.drawRect(x*10, y*10, 10, 10);
+	  break;
+	case 4:			// yellow
+	  graphics.lineStyle(0, 0xffffff00);
+	  graphics.drawRect(x*10, y*10, 10, 10);
+	  break;
+	case 5:			// magenta
+	  graphics.lineStyle(0, 0xffff00ff);
+	  graphics.drawRect(x*10, y*10, 10, 10);
+	  break;
+	case 6:			// cyan
+	  graphics.lineStyle(0, 0xff00ffff);
+	  graphics.drawRect(x*10, y*10, 10, 10);
+	  break;
+	}
+      }
+    }
+  }
+}
 
 
 //  BitmapFont
@@ -419,6 +490,7 @@ class Shape3D extends Shape
 
 
 //  MCSkin
+//  Draw a Minecraft skin centered at (0,0)
 // 
 class MCSkin extends Shape3D
 {
@@ -657,6 +729,46 @@ class MCSkin extends Shape3D
 
 //  TileMap
 //
+class Entry
+{
+  public var c:int;
+  public var x:int;
+  public var y:int;
+  public function Entry(c:int, x:int, y:int)
+  {
+    this.c = c;
+    this.x = x;
+    this.y = y;
+  }
+}
+class ValueMap
+{
+  public var width:int;
+  public var height:int;
+  private var a:Array;
+
+  public function ValueMap(width:int, height:int, v0:int)
+  {
+    this.width = width;
+    this.height = height;
+    this.a = new Array();
+    for (var i:int = 0; i < height; i++) {
+      for (var j:int = 0; j < width; j++) {
+	a.push(v0);
+      }
+    }
+  }
+
+  public function getvalue(x:int, y:int):int
+  {
+    return a[y*width+x];
+  }
+
+  public function putvalue(x:int, y:int, v:int):void
+  {
+    a[y*width+x] = v;
+  }
+}
 class TileMap extends Bitmap
 {
   public var map:BitmapData;
@@ -900,6 +1012,104 @@ class TileMap extends Bitmap
       return 0;
     }
   }
+
+  // hasBlockX(r)
+  private function hasBlockX(x:int, y:int, w:int, f:Function):Boolean
+  {
+    for (var i:int = 0; i < w; i++) {
+      if (f(getBlockAt(x+i, y))) return true;
+    }
+    return false;
+  }
+
+  // hasBlockY(r)
+  private function hasBlockY(x:int, y:int, h:int, f:Function):Boolean
+  {
+    for (var i:int = 0; i < h; i++) {
+      if (f(getBlockAt(x, y+i))) return true;
+    }
+    return false;
+  }
+
+  // computePath(r0, r1, w, h)
+  public function computePath(r0:Rectangle, r1:Rectangle, width:int, height:int):int
+  {
+    var dx:int = ((r0.x+r1.width-1) - (r1.x+r1.width-1))/blocksize;
+    var dy:int = ((r0.y+r1.height-1) - (r1.y+r1.height-1))/blocksize;
+    var plan:ValueMap = computePlan(r1, width, height);
+    if (dx < -width) {
+      dx = -width;
+    } else if (width < dx) {
+      dx = +width;
+    }
+    if (dy < -height) {
+      dy = -height;
+    } else if (height < dy) {
+      dy = +height;
+    }
+    return plan.getvalue(dx+width, dy+height);
+  }
+
+  // computePlan(r:Rectangle)
+  public function computePlan(r:Rectangle, width:int, height:int):ValueMap
+  {
+    var x0:int = (r.x+r.width-1)/blocksize;
+    var y0:int = (r.y+r.height-1)/blocksize;
+    var sw:int = (r.width+blocksize-1)/blocksize;
+    var sh:int = (r.height+blocksize-1)/blocksize;
+    var queue:Array = [];
+    var costmap:ValueMap = new ValueMap(width*2+1, height*2+1, width+height+1);
+    var routemap:ValueMap = new ValueMap(width*2+1, height*2+1, 0);
+    queue.push(new Entry(0, 0, 0));
+    costmap.putvalue(width, height, 0);
+    while (0 < queue.length) {
+      //for (var i:int = 0; i < 10; i++) {
+      var e:Entry = queue.pop();
+      var c:int = e.c+1;
+      var tx:int = x0+e.x;
+      var ty:int = y0+e.y;
+      //Main.log("e.p=("+e.x+","+e.y+") ("+tx+","+ty+")");
+      if (isstoppable(getBlockAt(tx, ty+1))) {
+	// try left. (go right = 1:red)
+	if (-width < e.x && !hasBlockY(tx-1, ty-sh, sh, isobstacle)) {
+	  if (c < costmap.getvalue(e.x-1+width, e.y+height)) {
+	    costmap.putvalue(e.x-1+width, e.y+height, c);
+	    routemap.putvalue(e.x-1+width, e.y+height, 1);
+	    queue.push(new Entry(c, e.x-1, e.y));
+	  }
+	}
+	// try right. (go left = 2:green)
+	if (e.x < width && !hasBlockY(tx+1, ty-sh, sh, isobstacle)) {
+	  if (c < costmap.getvalue(e.x+1+width, e.y+height)) {
+	    costmap.putvalue(e.x+1+width, e.y+height, c);
+	    routemap.putvalue(e.x+1+width, e.y+height, 2);
+	    queue.push(new Entry(c, e.x+1, e.y));
+	  }
+	}
+      }
+      // try up. (go down = 3:blue)
+      if (-height < e.y && !hasBlockX(tx-sw, ty-sh-1, sw, isobstacle)) {
+	if (c < costmap.getvalue(e.x+width, e.y-1+height)) {
+	  costmap.putvalue(e.x+width, e.y-1+height, c);
+	  routemap.putvalue(e.x+width, e.y-1+height, 3);
+	  queue.push(new Entry(c, e.x, e.y-1));
+      	  }
+      }
+      if (isgrabbable(getBlockAt(tx, ty+1))) {
+	//Main.log("try down ("+tx+","+ty+1+")");
+	// try down. (go up = 4:yellow)
+	if (e.y < height && !hasBlockX(tx-sw, ty+1, sw, isobstacle)) { 
+	  if (c < costmap.getvalue(e.x+width, e.y+1+height)) {
+	    costmap.putvalue(e.x+width, e.y+1+height, c);
+	    routemap.putvalue(e.x+width, e.y+1+height, 4);
+	    queue.push(new Entry(c, e.x, e.y+1));
+	  }
+	}
+      }
+      queue.sortOn("c", Array.DESCENDING);
+    }
+    return routemap;
+  }
 }
 
 
@@ -942,6 +1152,12 @@ class Scene extends Sprite
     for each (var actor:Actor in actors) {
       actor.update();
     }
+  }
+
+  // computePath()
+  public function computePath(r0:Rectangle, r1:Rectangle):int
+  {
+    return tilemap.computePath(r0, r1, 10, 10);
   }
 
   // repaint()
@@ -1121,7 +1337,8 @@ class Actor extends EventDispatcher
   // update()
   public virtual function update():void
   {
-    if (scene.scanBlock(getBounds(), TileMap.isgrabbable)) {
+    if (scene.scanBlock(getBounds(), TileMap.isgrabbable) ||
+	0 < vy && getCollisionY(vy, TileMap.isgrabbable) == 0) {
       // climbing
       pos.y += getCollisionY(vy, TileMap.isobstacle);
       vg = 0;
@@ -1178,10 +1395,28 @@ class Person extends Actor
   public override function update():void
   {
     super.update();
-    if (Math.random() < 0.05) {
-      move(int(Math.random()*3)-1, 0);
-    } else if (Math.random() < 0.1) {
-      jump();
+    if (target != null) {
+      var a:int = scene.computePath(getBounds(), target.getBounds());
+      switch (a) {
+      case 1:
+	move(+1, 0);
+	break;
+      case 2:
+	move(-1, 0);
+	break;
+      case 3:
+	move(0, +1);
+	break;
+      case 4:
+	move(0, -1);
+	break;
+      }
+    } else {
+      if (Math.random() < 0.05) {
+	move(int(Math.random()*3)-1, 0);
+      } else if (Math.random() < 0.1) {
+	jump();
+      }
     }
   }
 }
