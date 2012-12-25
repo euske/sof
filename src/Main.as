@@ -102,9 +102,9 @@ public class Main extends Sprite
     init();
     awesomefont = new BitmapFont(awesomefontglyphs.bitmapData, awesomefontwidths);
     addChild(awesomefont.render("Video Games Awesome", 0xffff0000));
-    // 
-    loginit();
-    Main.log("foo!");
+     
+    //loginit();
+    //Main.log("foo!");
   }
 
   /// Logging functions
@@ -149,11 +149,14 @@ public class Main extends Sprite
   // OnEnterFrame(e)
   protected function OnEnterFrame(e:Event):void
   {
-    update();
+    if (!paused) {
+      update();
+    }
   }
 
   /// Game-related functions
 
+  private var paused:Boolean = false;
   private var scene:Scene;
   private var tilemap:TileMap;
   private var player:Player;
@@ -179,7 +182,7 @@ public class Main extends Sprite
 
     for (var i:int = 0; i < images.length; i++) {
       var actor:Person = new Person(scene, images[i].bitmapData);
-      actor.setPosition(new Point(i*100+200, i*100+200));
+      actor.setPosition(new Point(i*64+128, i*64+128));
       actor.addEventListener(ActorActionEvent.ACTION, onActorAction);
       actor.setTarget(player);
       scene.add(actor);
@@ -189,6 +192,8 @@ public class Main extends Sprite
     //playVideo(new Frage1VideoCls());
     
     visualizer = new ActionVisualizer();
+    visualizer.x = 100;
+    visualizer.y = 100;
     addChild(visualizer);
   }
 
@@ -221,6 +226,10 @@ public class Main extends Sprite
     case 90:			// Z
       player.jump();
       break;
+
+    case 80:			// P
+      paused = !paused;
+      break;
     }
   }
 
@@ -252,7 +261,7 @@ public class Main extends Sprite
   {
     scene.update();
     scene.repaint();
-    visualizer.update(tilemap.computePlan(player.getBounds(), 10, 10), 10, 10);
+    visualizer.update(scene.pathplan);
   }
 
   // onActorAction()
@@ -330,8 +339,8 @@ class AmountVisualizer extends Shape
   public function update(map:ValueMap, maxvalue:int):void
   {
     graphics.clear();
-    for (var y:int = 0; y < map.height; y++) {
-      for (var x:int = 0; x < map.width; x++) {
+    for (var y:int = -map.height; y <= map.height; y++) {
+      for (var x:int = -map.width; x <= map.width; x++) {
 	var c:int = map.getvalue(x, y);
 	c = 255 * c / maxvalue;
 	graphics.lineStyle(0, 0x0000ff | (c << 8));
@@ -346,14 +355,14 @@ class AmountVisualizer extends Shape
 // 
 class ActionVisualizer extends Shape
 {
-  public function update(map:ValueMap, x0:int, y0:int):void
+  public function update(map:ValueMap):void
   {
     graphics.clear();
     graphics.beginFill(0xffffff);
-    graphics.drawRect(x0*10, y0*10, 10, 10);
+    graphics.drawRect(0, 0, 10, 10);
     graphics.endFill();
-    for (var y:int = 0; y < map.height; y++) {
-      for (var x:int = 0; x < map.width; x++) {
+    for (var y:int = -map.height; y <= map.height; y++) {
+      for (var x:int = -map.width; x <= map.width; x++) {
 	var c:int = map.getvalue(x, y);
 	switch (c) {
 	case 1:			// red
@@ -752,21 +761,26 @@ class ValueMap
     this.width = width;
     this.height = height;
     this.a = new Array();
-    for (var i:int = 0; i < height; i++) {
-      for (var j:int = 0; j < width; j++) {
+    for (var i:int = 0; i < 2*height+1; i++) {
+      for (var j:int = 0; j < 2*width+1; j++) {
 	a.push(v0);
       }
     }
   }
 
+  private function getindex(x:int, y:int):int
+  {
+    return (y+height)*(2*width+1)+(x+width);
+  }
+
   public function getvalue(x:int, y:int):int
   {
-    return a[y*width+x];
+    return a[getindex(x,y)];
   }
 
   public function putvalue(x:int, y:int, v:int):void
   {
-    a[y*width+x] = v;
+    a[getindex(x,y)] = v;
   }
 }
 class TileMap extends Bitmap
@@ -1013,41 +1027,15 @@ class TileMap extends Bitmap
     }
   }
 
-  // hasBlockX(r)
-  private function hasBlockX(x:int, y:int, w:int, f:Function):Boolean
-  {
-    for (var i:int = 0; i < w; i++) {
-      if (f(getBlockAt(x+i, y))) return true;
-    }
-    return false;
-  }
-
-  // hasBlockY(r)
-  private function hasBlockY(x:int, y:int, h:int, f:Function):Boolean
+  // hasBlock(r)
+  private function hasBlock(x:int, y:int, w:int, h:int, f:Function):Boolean
   {
     for (var i:int = 0; i < h; i++) {
-      if (f(getBlockAt(x, y+i))) return true;
+      for (var j:int = 0; j < w; j++) {
+	if (f(getBlockAt(x+j, y+i))) return true;
+      }
     }
     return false;
-  }
-
-  // computePath(r0, r1, w, h)
-  public function computePath(r0:Rectangle, r1:Rectangle, width:int, height:int):int
-  {
-    var dx:int = ((r0.x+r1.width-1) - (r1.x+r1.width-1))/blocksize;
-    var dy:int = ((r0.y+r1.height-1) - (r1.y+r1.height-1))/blocksize;
-    var plan:ValueMap = computePlan(r1, width, height);
-    if (dx < -width) {
-      dx = -width;
-    } else if (width < dx) {
-      dx = +width;
-    }
-    if (dy < -height) {
-      dy = -height;
-    } else if (height < dy) {
-      dy = +height;
-    }
-    return plan.getvalue(dx+width, dy+height);
   }
 
   // computePlan(r:Rectangle)
@@ -1058,52 +1046,51 @@ class TileMap extends Bitmap
     var sw:int = (r.width+blocksize-1)/blocksize;
     var sh:int = (r.height+blocksize-1)/blocksize;
     var queue:Array = [];
-    var costmap:ValueMap = new ValueMap(width*2+1, height*2+1, width+height+1);
-    var routemap:ValueMap = new ValueMap(width*2+1, height*2+1, 0);
+    var costmap:ValueMap = new ValueMap(width, height, 2*(width+height)+1);
+    var routemap:ValueMap = new ValueMap(width, height, 0);
     queue.push(new Entry(0, 0, 0));
-    costmap.putvalue(width, height, 0);
+    costmap.putvalue(0, 0, 0);
     while (0 < queue.length) {
       //for (var i:int = 0; i < 10; i++) {
       var e:Entry = queue.pop();
       var c:int = e.c+1;
       var tx:int = x0+e.x;
       var ty:int = y0+e.y;
-      //Main.log("e.p=("+e.x+","+e.y+") ("+tx+","+ty+")");
-      if (isstoppable(getBlockAt(tx, ty+1))) {
-	// try left. (go right = 1:red)
-	if (-width < e.x && !hasBlockY(tx-1, ty-sh, sh, isobstacle)) {
-	  if (c < costmap.getvalue(e.x-1+width, e.y+height)) {
-	    costmap.putvalue(e.x-1+width, e.y+height, c);
-	    routemap.putvalue(e.x-1+width, e.y+height, 1);
-	    queue.push(new Entry(c, e.x-1, e.y));
-	  }
-	}
-	// try right. (go left = 2:green)
-	if (e.x < width && !hasBlockY(tx+1, ty-sh, sh, isobstacle)) {
-	  if (c < costmap.getvalue(e.x+1+width, e.y+height)) {
-	    costmap.putvalue(e.x+1+width, e.y+height, c);
-	    routemap.putvalue(e.x+1+width, e.y+height, 2);
-	    queue.push(new Entry(c, e.x+1, e.y));
-	  }
+      if (hasBlock(tx-sw+1, ty-sh+1, sw, sh, isobstacle)) continue;
+
+      // try walking right. (1:red)
+      if (-width < e.x &&
+	  isstoppable(getBlockAt(tx-1, ty+1))) {
+	if (c < costmap.getvalue(e.x-1, e.y)) {
+	  costmap.putvalue(e.x-1, e.y, c);
+	  routemap.putvalue(e.x-1, e.y, 1);
+	  queue.push(new Entry(c, e.x-1, e.y));
 	}
       }
-      // try up. (go down = 3:blue)
-      if (-height < e.y && !hasBlockX(tx-sw, ty-sh-1, sw, isobstacle)) {
-	if (c < costmap.getvalue(e.x+width, e.y-1+height)) {
-	  costmap.putvalue(e.x+width, e.y-1+height, c);
-	  routemap.putvalue(e.x+width, e.y-1+height, 3);
+      // try walking left. (2:green)
+      if (e.x < width &&
+	  isstoppable(getBlockAt(tx+1, ty+1))) {
+	if (c < costmap.getvalue(e.x+1, e.y)) {
+	  costmap.putvalue(e.x+1, e.y, c);
+	  routemap.putvalue(e.x+1, e.y, 2);
+	  queue.push(new Entry(c, e.x+1, e.y));
+	}
+      }
+      // try falling. (3:blue)
+      if (-height < e.y) {
+	if (c < costmap.getvalue(e.x, e.y-1)) {
+	  costmap.putvalue(e.x, e.y-1, c);
+	  routemap.putvalue(e.x, e.y-1, 3);
 	  queue.push(new Entry(c, e.x, e.y-1));
-      	  }
+	}
       }
-      if (isgrabbable(getBlockAt(tx, ty+1))) {
-	//Main.log("try down ("+tx+","+ty+1+")");
-	// try down. (go up = 4:yellow)
-	if (e.y < height && !hasBlockX(tx-sw, ty+1, sw, isobstacle)) { 
-	  if (c < costmap.getvalue(e.x+width, e.y+1+height)) {
-	    costmap.putvalue(e.x+width, e.y+1+height, c);
-	    routemap.putvalue(e.x+width, e.y+1+height, 4);
-	    queue.push(new Entry(c, e.x, e.y+1));
-	  }
+      // try climbing up. (4:yellow)
+      if (e.y < height &&
+	  isgrabbable(getBlockAt(tx, ty+1))) {
+	if (c < costmap.getvalue(e.x, e.y+1)) {
+	  costmap.putvalue(e.x, e.y+1, c);
+	  routemap.putvalue(e.x, e.y+1, 4);
+	  queue.push(new Entry(c, e.x, e.y+1));
 	}
       }
       queue.sortOn("c", Array.DESCENDING);
@@ -1119,8 +1106,10 @@ class Scene extends Sprite
 {
   private var tilemap:TileMap;
   private var window:Rectangle;
+  private var center:Rectangle;
   private var mapsize:Point;
   private var actors:Array = [];
+  public var pathplan:ValueMap;
 
   // Scene(width, height, tilemap)
   public function Scene(width:int, height:int, tilemap:TileMap)
@@ -1154,12 +1143,6 @@ class Scene extends Sprite
     }
   }
 
-  // computePath()
-  public function computePath(r0:Rectangle, r1:Rectangle):int
-  {
-    return tilemap.computePath(r0, r1, 10, 10);
-  }
-
   // repaint()
   public function repaint():void
   {
@@ -1169,20 +1152,24 @@ class Scene extends Sprite
     tilemap.repaint(window);
   }
 
-  // setCenter(p)
-  public function setCenter(p:Point, margin:int):void
+  // setCenter(r)
+  public function setCenter(r:Rectangle, hmargin:int, vmargin:int):void
   {
-    if (p.x-margin < window.x) {
-      window.x = p.x-margin;
-    } else if (window.x+window.width < p.x+margin) {
-      window.x = p.x+margin-window.width;
+    center = r;
+
+    // Center the window position.
+    if (center.x-hmargin < window.x) {
+      window.x = center.x-hmargin;
+    } else if (window.x+window.width < center.x+center.width+hmargin) {
+      window.x = center.x+center.width+hmargin-window.width;
     }
-    if (p.y-margin < window.y) {
-      window.y = p.y-margin;
-    } else if (window.y+window.height < p.y+margin) {
-      window.y = p.y+margin-window.height;
+    if (center.y-vmargin < window.y) {
+      window.y = center.y-vmargin;
+    } else if (window.y+window.height < center.y+center.height+vmargin) {
+      window.y = center.y+center.height+vmargin-window.height;
     }
     
+    // Adjust the window position to fit the world.
     if (window.x < 0) {
       window.x = 0;
     } else if (mapsize.x < window.x+window.width) {
@@ -1193,6 +1180,33 @@ class Scene extends Sprite
     } else if (mapsize.y < window.y+window.height) {
       window.y = mapsize.y-window.height;
     }
+
+    // Compute the path plan around the focus rectangle.
+    pathplan = tilemap.computePlan(center, 10, 10);
+  }
+
+  // isActionReady(r)
+  public function isActionReady(r:Rectangle):Boolean
+  {
+    return ((r.x % tilemap.blocksize) == 0 &&
+	    (r.y % tilemap.blocksize) == 0);
+  }
+  // getAction(r)
+  public function getAction(r:Rectangle):int
+  {
+    var dx:int = ((r.x+r.width-1) - (center.x+center.width-1))/tilemap.blocksize;
+    var dy:int = ((r.y+r.height-1) - (center.y+center.height-1))/tilemap.blocksize;
+    if (dx < -width) {
+      dx = -width;
+    } else if (width < dx) {
+      dx = +width;
+    }
+    if (dy < -height) {
+      dy = -height;
+    } else if (height < dy) {
+      dy = +height;
+    }
+    return pathplan.getvalue(dx, dy);
   }
 
   // translatePoint(p)
@@ -1267,11 +1281,11 @@ class Actor extends EventDispatcher
 {
   protected var scene:Scene;
   protected var skin:MCSkin;
-  protected var pos:Point;
 
-  protected var vx:int = 0, vy:int = 0, vg:int = 0;
-  protected var phase:Number = 0;
-  protected var jumping:Boolean;
+  private var pos:Point;
+  private var vx:int = 0, vy:int = 0, vg:int = 0;
+  private var phase:Number = 0;
+  private var jumping:Boolean;
 
   public const gravity:int = 4;
   public const speed:int = 8;
@@ -1392,12 +1406,15 @@ class Person extends Actor
   }
 
   // update()
+  private var action:int = 1;
   public override function update():void
   {
     super.update();
     if (target != null) {
-      var a:int = scene.computePath(getBounds(), target.getBounds());
-      switch (a) {
+      if (scene.isActionReady(getBounds())) {
+	action = scene.getAction(getBounds());
+      }
+      switch (action) {
       case 1:
 	move(+1, 0);
 	break;
@@ -1414,6 +1431,8 @@ class Person extends Actor
     } else {
       if (Math.random() < 0.05) {
 	move(int(Math.random()*3)-1, 0);
+      } else if (Math.random() < 0.05) {
+	move(0, int(Math.random()*3)-1);
       } else if (Math.random() < 0.1) {
 	jump();
       }
@@ -1436,8 +1455,9 @@ class Player extends Actor
   public override function update():void
   {
     super.update();
-    scene.setCenter(pos, 200);
-    if (800 < pos.y) {
+    var r:Rectangle = getBounds();
+    scene.setCenter(r, 200, 100);
+    if (800 < r.y) {
       dispatchEvent(new ActorActionEvent(DIE));
     }
   }
