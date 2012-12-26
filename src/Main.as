@@ -88,8 +88,7 @@ public class Main extends Sprite
   private static const MapImageCls:Class;
   private static const mapimage:Bitmap = new MapImageCls();
 
-  //private static const images:Array = [ image1, image2, image3 ];
-  private static const images:Array = [ ];
+  private static const images:Array = [ image1, image2, image3 ];
   
   private static var awesomefont:BitmapFont;
 
@@ -1274,9 +1273,8 @@ class Scene extends Sprite
 	return +1;
       }
     } else if (0 < vy) {
-      b0 = tilemap.getBlockAt(r.x-1, r.y+r.width);
-      b1 = tilemap.getBlockAt(r.x+r.width, r.y+r.width);
-      Main.log("r="+r+", b0="+b0+", b1="+b1);
+      b0 = tilemap.getBlockAt(r.x-1, r.y+r.height);
+      b1 = tilemap.getBlockAt(r.x+r.width, r.y+r.height);
       if (!TileMap.isobstacle(b0) && TileMap.isobstacle(b1)) {
 	return -1;
       } else if (TileMap.isobstacle(b0) && !TileMap.isobstacle(b1)) {
