@@ -88,7 +88,8 @@ public class Main extends Sprite
   private static const MapImageCls:Class;
   private static const mapimage:Bitmap = new MapImageCls();
 
-  private static const images:Array = [ image1, image2, image3 ];
+  //private static const images:Array = [ image1, image2, image3 ];
+  private static const images:Array = [ ];
   
   private static var awesomefont:BitmapFont;
 
@@ -103,8 +104,8 @@ public class Main extends Sprite
     awesomefont = new BitmapFont(awesomefontglyphs.bitmapData, awesomefontwidths);
     addChild(awesomefont.render("Video Games Awesome", 0xffff0000));
      
-    //loginit();
-    //Main.log("foo!");
+    loginit();
+    Main.log("foo!");
   }
 
   /// Logging functions
@@ -175,14 +176,14 @@ public class Main extends Sprite
     scene = new Scene(stage.stageWidth, stage.stageHeight, tilemap);
 
     player = new Player(scene, image0.bitmapData);
-    player.setPosition(new Point(768, 192));
+    player.setBounds(tilemap.getBlockRect(3, 3));
     player.addEventListener(ActorActionEvent.ACTION, onActorAction);
     player.addEventListener(ActorActionEvent.ACTION, onPlayerAction);
     scene.add(player);
 
     for (var i:int = 0; i < images.length; i++) {
       var actor:Person = new Person(scene, images[i].bitmapData);
-      actor.setPosition(new Point(i*64+128, i*64+128));
+      actor.setBounds(tilemap.getBlockRect(i+5, i+5));
       actor.addEventListener(ActorActionEvent.ACTION, onActorAction);
       actor.setTarget(player);
       scene.add(actor);
@@ -760,27 +761,24 @@ class ValueMap
   {
     this.width = width;
     this.height = height;
-    this.a = new Array();
-    for (var i:int = 0; i < 2*height+1; i++) {
-      for (var j:int = 0; j < 2*width+1; j++) {
-	a.push(v0);
+    this.a = new Array(2*height+1);
+    for (var i:int = 0; i < a.length; i++) {
+      var b:Array = new Array(2*width+1);
+      for (var j:int = 0; j < b.length; j++) {
+	b[j] = v0;
       }
+      a[i] = b;
     }
-  }
-
-  private function getindex(x:int, y:int):int
-  {
-    return (y+height)*(2*width+1)+(x+width);
   }
 
   public function getvalue(x:int, y:int):int
   {
-    return a[getindex(x,y)];
+    return a[y+height][x+width];
   }
 
   public function putvalue(x:int, y:int, v:int):void
   {
-    a[getindex(x,y)] = v;
+    a[y+height][x+width] = v;
   }
 }
 class TileMap extends Bitmap
@@ -813,18 +811,16 @@ class TileMap extends Bitmap
     return map.height;
   }
 
+  // getBlockRect(x, y)
+  public function getBlockRect(x:int, y:int):Rectangle
+  {
+    return new Rectangle(x*blocksize, y*blocksize, blocksize, blocksize);
+  }
+
   // getBlockAt(x, y)
   public function getBlockAt(x:int, y:int):int
   {
-    var c:uint = map.getPixel(x, y);
-    return pixelToBlockId(c);
-  }
-
-  // getBlock(r)
-  public function getBlock(r:Rectangle):int
-  {
-    return getBlockAt((r.x+r.width/2)/blocksize,
-		      (r.y+r.height/2)/blocksize);
+    return getBlock(x/blocksize, y/blocksize);
   }
 
   // scanBlock(r)
@@ -837,7 +833,7 @@ class TileMap extends Bitmap
     var x:int, y:int;
     for (y = y0; y <= y1; y++) {
       for (x = x0; x <= x1; x++) {
-	if (f(getBlockAt(x, y))) return true;
+	if (f(getBlock(x, y))) return true;
       }
     }
     return false;
@@ -856,7 +852,7 @@ class TileMap extends Bitmap
       for (x = x0; x1 <= x; x--) {
 	if (x <= 0) return 0;
 	for (y = y0; y <= y1; y++) {
-	  if (f(getBlockAt(x, y))) {
+	  if (f(getBlock(x, y))) {
 	    return (x+1)*blocksize;
 	  }
 	}
@@ -867,7 +863,7 @@ class TileMap extends Bitmap
       for (x = x0; x <= x1; x++) {
 	if (map.width <= x) return map.width*blocksize;
 	for (y = y0; y <= y1; y++) {
-	  if (f(getBlockAt(x, y))) {
+	  if (f(getBlock(x, y))) {
 	    return x*blocksize;
 	  }
 	}
@@ -889,7 +885,7 @@ class TileMap extends Bitmap
       for (y = y0; y1 <= y; y--) {
 	if (y <= 0) return 0;
 	for (x = x0; x <= x1; x++) {
-	  if (f(getBlockAt(x, y))) {
+	  if (f(getBlock(x, y))) {
 	    return (y+1)*blocksize;
 	  }
 	}
@@ -900,7 +896,7 @@ class TileMap extends Bitmap
       for (y = y0; y <= y1; y++) {
 	if (map.height <= y) return map.height*blocksize;
 	for (x = x0; x <= x1; x++) {
-	  if (f(getBlockAt(x, y))) {
+	  if (f(getBlock(x, y))) {
 	    return y*blocksize;
 	  }
 	}
@@ -933,7 +929,7 @@ class TileMap extends Bitmap
     }
     for (var dy:int = 0; dy < mh; dy++) {
       for (var dx:int = 0; dx < mw; dx++) {
-	var i:int = getBlockAt(x0+dx, y0+dy);
+	var i:int = getBlock(x0+dx, y0+dy);
 	var src:Rectangle = 
 	  new Rectangle(i*blocksize, 0, blocksize, blocksize);
 	var dst:Point = 
@@ -1027,12 +1023,19 @@ class TileMap extends Bitmap
     }
   }
 
+  // getBlock(x, y)
+  private function getBlock(x:int, y:int):int
+  {
+    var c:uint = map.getPixel(x, y);
+    return pixelToBlockId(c);
+  }
+
   // hasBlock(r)
   private function hasBlock(x:int, y:int, w:int, h:int, f:Function):Boolean
   {
     for (var i:int = 0; i < h; i++) {
       for (var j:int = 0; j < w; j++) {
-	if (f(getBlockAt(x+j, y+i))) return true;
+	if (f(getBlock(x+j, y+i))) return true;
       }
     }
     return false;
@@ -1060,7 +1063,7 @@ class TileMap extends Bitmap
 
       // try walking right. (1:red)
       if (-width < e.x &&
-	  isstoppable(getBlockAt(tx-1, ty+1))) {
+	  isstoppable(getBlock(tx-1, ty+1))) {
 	if (c < costmap.getvalue(e.x-1, e.y)) {
 	  costmap.putvalue(e.x-1, e.y, c);
 	  routemap.putvalue(e.x-1, e.y, 1);
@@ -1069,7 +1072,7 @@ class TileMap extends Bitmap
       }
       // try walking left. (2:green)
       if (e.x < width &&
-	  isstoppable(getBlockAt(tx+1, ty+1))) {
+	  isstoppable(getBlock(tx+1, ty+1))) {
 	if (c < costmap.getvalue(e.x+1, e.y)) {
 	  costmap.putvalue(e.x+1, e.y, c);
 	  routemap.putvalue(e.x+1, e.y, 2);
@@ -1086,7 +1089,7 @@ class TileMap extends Bitmap
       }
       // try climbing up. (4:yellow)
       if (e.y < height &&
-	  isgrabbable(getBlockAt(tx, ty+1))) {
+	  isgrabbable(getBlock(tx, ty+1))) {
 	if (c < costmap.getvalue(e.x, e.y+1)) {
 	  costmap.putvalue(e.x, e.y+1, c);
 	  routemap.putvalue(e.x, e.y+1, 4);
@@ -1256,6 +1259,32 @@ class Scene extends Sprite
     }
     return vy;
   }
+
+  // adjustDirectionX(r)
+  public function adjustDirectionX(r:Rectangle, vy:int):int
+  {
+    var b0:int;
+    var b1:int;
+    if (vy < 0) {
+      b0 = tilemap.getBlockAt(r.x-1, r.y);
+      b1 = tilemap.getBlockAt(r.x+r.width, r.y);
+      if (TileMap.isgrabbable(b0) && !TileMap.isgrabbable(b1)) {
+	return -1;
+      } else if (!TileMap.isgrabbable(b0) && TileMap.isgrabbable(b1)) {
+	return +1;
+      }
+    } else if (0 < vy) {
+      b0 = tilemap.getBlockAt(r.x-1, r.y+r.width);
+      b1 = tilemap.getBlockAt(r.x+r.width, r.y+r.width);
+      Main.log("r="+r+", b0="+b0+", b1="+b1);
+      if (!TileMap.isobstacle(b0) && TileMap.isobstacle(b1)) {
+	return -1;
+      } else if (TileMap.isobstacle(b0) && !TileMap.isobstacle(b1)) {
+	return +1;
+      }
+    }
+    return 0;
+  }
 }
 
 
@@ -1310,24 +1339,21 @@ class Actor extends EventDispatcher
   // getBounds()
   public function getBounds():Rectangle
   {
-    var r:Rectangle = skin.get2DBounds();
-    return new Rectangle(pos.x+r.x, pos.y+r.y, r.width, r.height);
+    var b:Rectangle = skin.get2DBounds();
+    return new Rectangle(pos.x+b.x, pos.y+b.y, b.width, b.height);
   }
 
-  // setPosition()
-  public function setPosition(p:Point):void
+  // setBounds()
+  public function setBounds(r:Rectangle):void
   {
-    pos = p;
+    pos = new Point(r.x+r.width/2, r.y+r.height/2);
   }
 
   // move(dx, dy)
   public function move(dx:int, dy:int):void
   {
-    if (dx != 0 || dy != 0) {
-      skin.setDirection(dx, dy);
-    }
-    vx = dx*speed;
-    vy = dy*speed;
+    vx = dx;
+    vy = dy;
   }
 
   // jump()
@@ -1351,10 +1377,17 @@ class Actor extends EventDispatcher
   // update()
   public virtual function update():void
   {
+    var vx1:int = scene.adjustDirectionX(getBounds(), vy);
+    var vy1:int = vy;
+    if (vx1 == 0) {
+      vx1 = vx;
+    } else {
+      vy1 = 0;
+    }
     if (scene.scanBlock(getBounds(), TileMap.isgrabbable) ||
-	0 < vy && getCollisionY(vy, TileMap.isgrabbable) == 0) {
+	0 < vy1 && getCollisionY(vy1, TileMap.isgrabbable) == 0) {
       // climbing
-      pos.y += getCollisionY(vy, TileMap.isobstacle);
+      pos.y += getCollisionY(speed*vy1, TileMap.isobstacle);
       vg = 0;
     } else {
       // falling
@@ -1367,10 +1400,13 @@ class Actor extends EventDispatcher
       }
       pos.y += vg;
     }
-    pos.x += getCollisionX(vx, TileMap.isobstacle);
+    pos.x += getCollisionX(speed*vx1, TileMap.isobstacle);
     jumping = false;
-    if (vx != 0) {
-      phase += Math.abs(vx)*0.1;
+    if (vx1 != 0 || vy1 != 0) {
+      skin.setDirection(vx1, vy1);
+    }
+    if (vx1 != 0) {
+      phase += Math.abs(vx1)*0.4;
       skin.setPhase(Math.cos(phase)*0.5);
     }
   }
