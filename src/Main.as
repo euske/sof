@@ -95,6 +95,7 @@ public class Main extends Sprite
   // Main()
   public function Main()
   {
+    loginit();
     stage.addEventListener(KeyboardEvent.KEY_DOWN, OnKeyDown);
     stage.addEventListener(KeyboardEvent.KEY_UP, OnKeyUp);
     stage.addEventListener(Event.ENTER_FRAME, OnEnterFrame);
@@ -102,9 +103,6 @@ public class Main extends Sprite
     init();
     awesomefont = new BitmapFont(awesomefontglyphs.bitmapData, awesomefontwidths);
     addChild(awesomefont.render("Video Games Awesome", 0xffff0000));
-     
-    loginit();
-    Main.log("foo!");
   }
 
   /// Logging functions
@@ -131,6 +129,7 @@ public class Main extends Sprite
     if (logger != null) {
       logger.appendText(x+"\n");
       logger.scrollV = logger.maxScrollV;
+      logger.parent.setChildIndex(logger, logger.parent.numChildren-1);
     }
   }
 
@@ -167,6 +166,8 @@ public class Main extends Sprite
   // init()
   private function init():void
   {
+    Main.log("init");
+
     graphics.beginFill(0xff000000);
     graphics.drawRect(0, 0, stage.stageWidth, stage.stageHeight);
     graphics.endFill();
@@ -175,14 +176,14 @@ public class Main extends Sprite
     scene = new Scene(stage.stageWidth, stage.stageHeight, tilemap);
 
     player = new Player(scene, image0.bitmapData);
-    player.setBounds(tilemap.getBlockRect(3, 3));
+    player.bounds = tilemap.getBlockRect(3, 3);
     player.addEventListener(ActorActionEvent.ACTION, onActorAction);
     player.addEventListener(ActorActionEvent.ACTION, onPlayerAction);
     scene.add(player);
 
     for (var i:int = 0; i < images.length; i++) {
       var actor:Person = new Person(scene, images[i].bitmapData);
-      actor.setBounds(tilemap.getBlockRect(i+5, i+5));
+      actor.bounds = tilemap.getBlockRect(i+5, i+5);
       actor.addEventListener(ActorActionEvent.ACTION, onActorAction);
       actor.setTarget(player);
       scene.add(actor);
@@ -504,6 +505,7 @@ class Shape3D extends Shape
 class MCSkin extends Shape3D
 {
   public const N:int = 8, M:int = 1;
+  public const bounds:Rectangle = new Rectangle(-16, -32*2-16, 32*1, 32*4);
 
   // MCSkin(image)
   public function MCSkin(image:BitmapData)
@@ -532,12 +534,6 @@ class MCSkin extends Shape3D
   private var q0:Number = 0.0;
   private var p1:Number = 1.0;
   private var q1:Number = 0.0;
-  private const bounds:Rectangle = new Rectangle(-16, -32*2-16, 32*1, 32*4);
-
-  public function get2DBounds():Rectangle
-  {
-    return bounds;
-  }
 
   // repaint()
   public function repaint():void
@@ -785,6 +781,7 @@ class TileMap extends Bitmap
   public var map:BitmapData;
   public var blocks:BitmapData;
   public var blocksize:int;
+  public const NOTFOUND:int = -999;
 
   private var prevrect:Rectangle;
 
@@ -819,16 +816,16 @@ class TileMap extends Bitmap
   // getBlockAt(x, y)
   public function getBlockAt(x:int, y:int):int
   {
-    return getBlock(x/blocksize, y/blocksize);
+    return getBlock(Math.floor(x/blocksize), Math.floor(y/blocksize));
   }
 
   // scanBlock(r)
   public function scanBlock(r:Rectangle, f:Function):Boolean
   {
-    var x0:int = r.x/blocksize;
-    var x1:int = (r.x+r.width-1)/blocksize;
-    var y0:int = r.y/blocksize;
-    var y1:int = (r.y+r.height-1)/blocksize;
+    var x0:int = Math.floor(r.x/blocksize);
+    var x1:int = Math.floor((r.x+r.width-1)/blocksize);
+    var y0:int = Math.floor(r.y/blocksize);
+    var y1:int = Math.floor((r.y+r.height-1)/blocksize);
     var x:int, y:int;
     for (y = y0; y <= y1; y++) {
       for (x = x0; x <= x1; x++) {
@@ -841,15 +838,14 @@ class TileMap extends Bitmap
   // scanBlockX(r)
   public function scanBlockX(r:Rectangle, f:Function):int
   {
-    var y0:int = r.y/blocksize;
-    var y1:int = (r.y+r.height-1)/blocksize;
+    var y0:int = Math.floor(r.y/blocksize);
+    var y1:int = Math.floor((r.y+r.height-1)/blocksize);
     var x0:int, x1:int;
     var x:int, y:int;
     if (r.width < 0) {
-      x0 = (r.x-1)/blocksize;
-      x1 = (r.x+r.width)/blocksize;
+      x0 = Math.floor((r.x-1)/blocksize);
+      x1 = Math.floor((r.x+r.width)/blocksize);
       for (x = x0; x1 <= x; x--) {
-	if (x <= 0) return 0;
 	for (y = y0; y <= y1; y++) {
 	  if (f(getBlock(x, y))) {
 	    return (x+1)*blocksize;
@@ -857,10 +853,9 @@ class TileMap extends Bitmap
 	}
       }
     } else if (0 < r.width) {
-      x0 = r.x/blocksize;
-      x1 = (r.x+r.width-1)/blocksize;
+      x0 = Math.floor(r.x/blocksize);
+      x1 = Math.floor((r.x+r.width-1)/blocksize);
       for (x = x0; x <= x1; x++) {
-	if (map.width <= x) return map.width*blocksize;
 	for (y = y0; y <= y1; y++) {
 	  if (f(getBlock(x, y))) {
 	    return x*blocksize;
@@ -868,21 +863,20 @@ class TileMap extends Bitmap
 	}
       }
     }
-    return -1;
+    return NOTFOUND;
   }
 
   // scanBlockY(r)
   public function scanBlockY(r:Rectangle, f:Function):int
   {
-    var x0:int = r.x/blocksize;
-    var x1:int = (r.x+r.width-1)/blocksize;
+    var x0:int = Math.floor(r.x/blocksize);
+    var x1:int = Math.floor((r.x+r.width-1)/blocksize);
     var y0:int, y1:int;
     var x:int, y:int;
     if (r.height < 0) {
-      y0 = (r.y-1)/blocksize;
-      y1 = (r.y+r.height)/blocksize;
+      y0 = Math.floor((r.y-1)/blocksize);
+      y1 = Math.floor((r.y+r.height)/blocksize);
       for (y = y0; y1 <= y; y--) {
-	if (y <= 0) return 0;
 	for (x = x0; x <= x1; x++) {
 	  if (f(getBlock(x, y))) {
 	    return (y+1)*blocksize;
@@ -890,10 +884,9 @@ class TileMap extends Bitmap
 	}
       }
     } else if (0 < r.height) {
-      y0 = r.y/blocksize;
-      y1 = (r.y+r.height-1)/blocksize;
+      y0 = Math.floor(r.y/blocksize);
+      y1 = Math.floor((r.y+r.height-1)/blocksize);
       for (y = y0; y <= y1; y++) {
-	if (map.height <= y) return map.height*blocksize;
 	for (x = x0; x <= x1; x++) {
 	  if (f(getBlock(x, y))) {
 	    return y*blocksize;
@@ -901,16 +894,16 @@ class TileMap extends Bitmap
 	}
       }
     }
-    return -1;
+    return NOTFOUND;
   }
 
   // repaint(window)
   public function repaint(window:Rectangle):void
   {
-    var x:int = int(window.x/blocksize);
-    var y:int = int(window.y/blocksize);
-    var mw:int = int(window.width/blocksize)+1;
-    var mh:int = int(window.height/blocksize)+1;
+    var x:int = Math.floor(window.x/blocksize);
+    var y:int = Math.floor(window.y/blocksize);
+    var mw:int = Math.floor(window.width/blocksize)+1;
+    var mh:int = Math.floor(window.height/blocksize)+1;
     renderBlocks(x, y, mw, mh);
     this.x = (x*blocksize)-window.x;
     this.y = (y*blocksize)-window.y;
@@ -943,7 +936,7 @@ class TileMap extends Bitmap
   }
 
   public static var isobstacle:Function = 
-    (function (b:int):Boolean { return b == 1; });
+    (function (b:int):Boolean { return b == 1 || b < 0; });
   public static var isgrabbable:Function = 
     (function (b:int):Boolean { return b == 3; });
   public static var isstoppable:Function = 
@@ -1025,6 +1018,9 @@ class TileMap extends Bitmap
   // getBlock(x, y)
   private function getBlock(x:int, y:int):int
   {
+    if (x < 0 || map.width <= x || y < 0 || map.height <= y) {
+      return -1;
+    }
     var c:uint = map.getPixel(x, y);
     return pixelToBlockId(c);
   }
@@ -1043,10 +1039,10 @@ class TileMap extends Bitmap
   // computePlan(r:Rectangle)
   public function computePlan(r:Rectangle, width:int, height:int):ValueMap
   {
-    var x0:int = (r.x+r.width-1)/blocksize;
-    var y0:int = (r.y+r.height-1)/blocksize;
-    var sw:int = (r.width+blocksize-1)/blocksize;
-    var sh:int = (r.height+blocksize-1)/blocksize;
+    var x0:int = Math.floor((r.x+r.width-1)/blocksize);
+    var y0:int = Math.floor((r.y+r.height-1)/blocksize);
+    var sw:int = Math.floor((r.width+blocksize-1)/blocksize);
+    var sh:int = Math.floor((r.height+blocksize-1)/blocksize);
     var queue:Array = [];
     var costmap:ValueMap = new ValueMap(width, height, 2*(width+height)+1);
     var routemap:ValueMap = new ValueMap(width, height, 0);
@@ -1126,14 +1122,14 @@ class Scene extends Sprite
   // add(actor)
   public function add(actor:Actor):void
   {
-    addChild(actor.getSkin());
+    addChild(actor.skin);
     actors.push(actor);
   }
 
   // remove(actor)
   public function remove(actor:Actor):void
   {
-    removeChild(actor.getSkin());
+    removeChild(actor.skin);
     actors.splice(actors.indexOf(actor), 1);
   }
 
@@ -1184,7 +1180,7 @@ class Scene extends Sprite
     }
 
     // Compute the path plan around the focus rectangle.
-    pathplan = tilemap.computePlan(center, 10, 10);
+    pathplan = tilemap.computePlan(center, tilemap.mapwidth, tilemap.mapheight);
   }
 
   // isActionReady(r)
@@ -1196,17 +1192,17 @@ class Scene extends Sprite
   // getAction(r)
   public function getAction(r:Rectangle):int
   {
-    var dx:int = ((r.x+r.width-1) - (center.x+center.width-1))/tilemap.blocksize;
-    var dy:int = ((r.y+r.height-1) - (center.y+center.height-1))/tilemap.blocksize;
-    if (dx < -width) {
-      dx = -width;
-    } else if (width < dx) {
-      dx = +width;
+    var dx:int = ((r.x+r.width-1) - Math.floor((center.x+center.width-1)/tilemap.blocksize));
+    var dy:int = ((r.y+r.height-1) - Math.floor((center.y+center.height-1)/tilemap.blocksize));
+    if (dx < -pathplan.width) {
+      dx = -pathplan.width;
+    } else if (pathplan.width < dx) {
+      dx = +pathplan.width;
     }
-    if (dy < -height) {
-      dy = -height;
-    } else if (height < dy) {
-      dy = +height;
+    if (dy < -pathplan.height) {
+      dy = -pathplan.height;
+    } else if (pathplan.height < dy) {
+      dy = +pathplan.height;
     }
     return pathplan.getvalue(dx, dy);
   }
@@ -1223,65 +1219,40 @@ class Scene extends Sprite
     return tilemap.scanBlock(r, f);
   }
 
-  // getCollisionX(r)
-  public function getCollisionX(src:Rectangle, vx:int, isobstacle:Function):int
+  // getDistanceX(r)
+  public function getDistanceX(src:Rectangle, vx:int, f:Function):int
   {
     var r:Rectangle; 
-    var x:int = -1;
+    var x:int = tilemap.NOTFOUND;
     if (vx < 0) {
       r = new Rectangle(src.x, src.y, vx, src.height);
-      x = tilemap.scanBlockX(r, isobstacle);
+      x = tilemap.scanBlockX(r, f);
     } else if (0 < vx) {
       r = new Rectangle(src.x+src.width, src.y, vx, src.height);
-      x = tilemap.scanBlockX(r, isobstacle);
+      x = tilemap.scanBlockX(r, f);
     }
-    if (x != -1) {
+    if (x != tilemap.NOTFOUND) {
       vx = x - r.x;
     }
     return vx;
   }
 
-  // getCollisionY(r)
-  public function getCollisionY(src:Rectangle, vy:int, isobstacle:Function):int
+  // getDistanceY(r)
+  public function getDistanceY(src:Rectangle, vy:int, f:Function):int
   {
     var r:Rectangle; 
-    var y:int = -1;
+    var y:int = tilemap.NOTFOUND;
     if (vy < 0) {
       r = new Rectangle(src.x, src.y, src.width, vy);
-      y = tilemap.scanBlockY(r, isobstacle);
+      y = tilemap.scanBlockY(r, f);
     } else if (0 < vy) {
       r = new Rectangle(src.x, src.y+src.height, src.width, vy);
-      y = tilemap.scanBlockY(r, isobstacle);
+      y = tilemap.scanBlockY(r, f);
     }
-    if (y != -1) {
+    if (y != tilemap.NOTFOUND) {
       vy = y - r.y;
     }
     return vy;
-  }
-
-  // adjustDirectionX(r)
-  public function adjustDirectionX(r:Rectangle, vy:int):int
-  {
-    var b0:int;
-    var b1:int;
-    if (vy < 0) {
-      b0 = tilemap.getBlockAt(r.x-1, r.y);
-      b1 = tilemap.getBlockAt(r.x+r.width, r.y);
-      if (TileMap.isgrabbable(b0) && !TileMap.isgrabbable(b1)) {
-	return -1;
-      } else if (!TileMap.isgrabbable(b0) && TileMap.isgrabbable(b1)) {
-	return +1;
-      }
-    } else if (0 < vy) {
-      b0 = tilemap.getBlockAt(r.x-1, r.y+r.height);
-      b1 = tilemap.getBlockAt(r.x+r.width, r.y+r.height);
-      if (!TileMap.isobstacle(b0) && TileMap.isobstacle(b1)) {
-	return -1;
-      } else if (TileMap.isobstacle(b0) && !TileMap.isobstacle(b1)) {
-	return +1;
-      }
-    }
-    return 0;
   }
 }
 
@@ -1306,17 +1277,16 @@ class ActorActionEvent extends Event
 //
 class Actor extends EventDispatcher
 {
-  protected var scene:Scene;
-  protected var skin:MCSkin;
+  public var scene:Scene;
+  public var skin:MCSkin;
 
   private var pos:Point;
   private var vx:int = 0, vy:int = 0, vg:int = 0;
   private var phase:Number = 0;
-  private var jumping:Boolean;
 
   public const gravity:int = 4;
   public const speed:int = 8;
-  public const jumpacc:int = -36;
+  public const jumpacc:int = -40;
 
   public static const JUMP:String = "JUMP";
   public static const DIE:String = "DIE";
@@ -1328,83 +1298,84 @@ class Actor extends EventDispatcher
     this.skin = new MCSkin(image);
   }
 
-  // getSkin()
-  public function getSkin():Shape
+  // bounds
+  public function get bounds():Rectangle
   {
-    return skin;
-  }
-
-  // getBounds()
-  public function getBounds():Rectangle
-  {
-    var b:Rectangle = skin.get2DBounds();
+    var b:Rectangle = skin.bounds;
     return new Rectangle(pos.x+b.x, pos.y+b.y, b.width, b.height);
   }
-
-  // setBounds()
-  public function setBounds(r:Rectangle):void
+  public function set bounds(r:Rectangle):void
   {
     pos = new Point(r.x+r.width/2, r.y+r.height/2);
   }
 
-  // move(dx, dy)
-  public function move(dx:int, dy:int):void
+  // move(vx, vy)
+  public function move(vx:int, vy:int):void
   {
-    vx = dx;
-    vy = dy;
+    this.vx = vx;
+    this.vy = vy;
   }
 
   // jump()
   public function jump():void
   {
-    jumping = true;
-  }
-
-  // getCollisionX(vx, f)
-  public function getCollisionX(vx:int, f:Function):int
-  {
-    return scene.getCollisionX(getBounds(), vx, f);
-  }
-  
-  // getCollisionY(vy, f)
-  public function getCollisionY(vy:int, f:Function):int
-  {
-    return scene.getCollisionY(getBounds(), vy, f);
+    var v:int = vg+gravity;
+    if (0 < v && scene.getDistanceY(bounds, v, TileMap.isstoppable) == 0) {
+      dispatchEvent(new ActorActionEvent(JUMP));
+      vg = scene.getDistanceY(bounds, jumpacc, TileMap.isstoppable);
+    }
   }
 
   // update()
   public virtual function update():void
   {
-    var vx1:int = scene.adjustDirectionX(getBounds(), vy);
+    var vx1:int = vx;
     var vy1:int = vy;
-    if (vx1 == 0) {
-      vx1 = vx;
-    } else {
-      vy1 = 0;
+    if (vy < 0) {
+      // move toward a nearby ladder.
+      var d0:int = scene.getDistanceX(bounds, -1, TileMap.isgrabbable);
+      var d1:int = scene.getDistanceX(bounds, +1, TileMap.isgrabbable);
+      if (0 < d0 && 0 < d1) {
+	vx1 = -1;
+	vy1 = 0;
+      } else if (d0 < 0 && d1 < 0) {
+	vx1 = +1;
+	vy1 = 0;
+      }
+    } else if (0 < vy) {
+      // move toward a nearby hole.
+      var r:Rectangle = new Rectangle(bounds.x-1, bounds.y+bounds.height, 1, 1);
+      var h0:Boolean = scene.scanBlock(r, TileMap.isobstacle);
+      r.x += 1+bounds.width;
+      var h1:Boolean = scene.scanBlock(r, TileMap.isobstacle);
+      if (h0 && !h1) {
+	vx1 = +1;
+	vy1 = 0;
+      } else if (!h0 && h1) {
+	vx1 = -1;
+	vy1 = 0;
+      }
     }
-    if (scene.scanBlock(getBounds(), TileMap.isgrabbable) ||
-	0 < vy1 && getCollisionY(vy1, TileMap.isgrabbable) == 0) {
+    var x:int = pos.x;
+    var y:int = pos.y;
+    if (scene.scanBlock(bounds, TileMap.isgrabbable) ||
+	0 < vy1 && scene.getDistanceY(bounds, vy1, TileMap.isgrabbable) == 0) {
       // climbing
-      pos.y += getCollisionY(speed*vy1, TileMap.isobstacle);
       vg = 0;
+      y += scene.getDistanceY(bounds, speed*vy1, TileMap.isobstacle);
     } else {
       // falling
-      var v:int = vg+gravity;
-      if (jumping && 0 < v && getCollisionY(v, TileMap.isstoppable) == 0) {
-	dispatchEvent(new ActorActionEvent(JUMP));
-	vg = getCollisionY(jumpacc, TileMap.isstoppable);
-      } else {
-	vg = getCollisionY(v, TileMap.isstoppable);
-      }
-      pos.y += vg;
+      vg = scene.getDistanceY(bounds, vg+gravity, TileMap.isstoppable);
+      y += vg;
     }
-    pos.x += getCollisionX(speed*vx1, TileMap.isobstacle);
-    jumping = false;
+    x += scene.getDistanceX(bounds, speed*vx1, TileMap.isobstacle);
+    pos.x = x;
+    pos.y = y;
     if (vx1 != 0 || vy1 != 0) {
       skin.setDirection(vx1, vy1);
     }
-    if (vx1 != 0) {
-      phase += Math.abs(vx1)*0.4;
+    if (vg == 0) {
+      phase += vx1;
       skin.setPhase(Math.cos(phase)*0.5);
     }
   }
@@ -1445,8 +1416,8 @@ class Person extends Actor
   {
     super.update();
     if (target != null) {
-      if (scene.isActionReady(getBounds())) {
-	action = scene.getAction(getBounds());
+      if (scene.isActionReady(bounds)) {
+	action = scene.getAction(bounds);
       }
       switch (action) {
       case 1:
@@ -1489,7 +1460,7 @@ class Player extends Actor
   public override function update():void
   {
     super.update();
-    var r:Rectangle = getBounds();
+    var r:Rectangle = bounds;
     scene.setCenter(r, 200, 100);
     if (800 < r.y) {
       dispatchEvent(new ActorActionEvent(DIE));
