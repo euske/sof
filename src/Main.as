@@ -102,7 +102,7 @@ public class Main extends Sprite
     stage.scaleMode = StageScaleMode.NO_SCALE;
     init();
     awesomefont = new BitmapFont(awesomefontglyphs.bitmapData, awesomefontwidths);
-    addChild(awesomefont.render("Video Games Awesome", 0xffff0000));
+    addChild(awesomefont.render("Video Games Awesome", 0xff0000));
   }
 
   /// Logging functions
@@ -161,14 +161,14 @@ public class Main extends Sprite
   private var player:Player;
   private var state:int = 0;
 
-  private var visualizer:AmountVisualizer;
+  private var visualizer:PlanVisualizer;
 
   // init()
   private function init():void
   {
     Main.log("init");
 
-    graphics.beginFill(0xff000000);
+    graphics.beginFill(0x000000);
     graphics.drawRect(0, 0, stage.stageWidth, stage.stageHeight);
     graphics.endFill();
     
@@ -192,7 +192,7 @@ public class Main extends Sprite
     addChild(scene);
     //playVideo(new Frage1VideoCls());
     
-    visualizer = new AmountVisualizer();
+    visualizer = new PlanVisualizer();
     visualizer.x = 100;
     visualizer.y = 100;
     addChild(visualizer);
@@ -333,9 +333,9 @@ import flash.geom.Rectangle;
 import flash.geom.ColorTransform;
 
 
-//  AmountVisualizer
+//  PlanVisualizer
 // 
-class AmountVisualizer extends Shape
+class PlanVisualizer extends Shape
 {
   public function update(map:PlanMap):void
   {
@@ -345,10 +345,15 @@ class AmountVisualizer extends Shape
     graphics.endFill();
     for (var y:int = -map.height; y <= map.height; y++) {
       for (var x:int = -map.width; x <= map.width; x++) {
-	var c:int = map.getvalue(x, y).cost;
-	c = 255 * c / map.maxcost;
+	var e:Entry = map.getentry(x, y);
+	var c:int = 255 * e.cost / map.maxcost;
 	graphics.lineStyle(0, 0x0000ff | (c << 8));
 	graphics.drawRect(x*10, y*10, 10, 10);
+	graphics.lineStyle(0, 0xffff00);
+	if (e.next != null) {
+	  graphics.moveTo(x*10+5, y*10+5);
+	  graphics.lineTo(e.next.x*10+5, e.next.y*10+5);
+	}
       }
     }
   }
@@ -387,7 +392,7 @@ class BitmapFont
 
   // render(text, color)
   //   Creates a Bitmap with a given string rendered.
-  public function render(text:String, color:uint=0xffffffff):Bitmap
+  public function render(text:String, color:uint=0xffffff):Bitmap
   {
     var width:int = getTextWidth(text);
     var data:BitmapData = new BitmapData(width, height, true, 0xffffffff);
@@ -684,7 +689,7 @@ class MCSkin extends Shape3D
 	   p3d(-N*2-M,-N*10-M,-N-M), p3d(0,0,N*4+M*2), p3d(N*4+M*2,0,0));
     }
 
-    graphics.lineStyle(0, 0xffff0000);
+    graphics.lineStyle(0, 0xff0000);
     graphics.drawRect(bounds.x, bounds.y, bounds.width, bounds.height);
   }
 }
@@ -725,16 +730,12 @@ class PlanMap
       }
       a[y+height] = b;
     }
+    a[height][width].cost = 0;
   }
 
-  public function getvalue(x:int, y:int):Entry
+  public function getentry(x:int, y:int):Entry
   {
     return a[y+height][x+width];
-  }
-
-  public function putvalue(x:int, y:int, v:Object):void
-  {
-    a[y+height][x+width] = v;
   }
 }
 class TileMap extends Bitmap
@@ -1005,9 +1006,7 @@ class TileMap extends Bitmap
     var sw:int = 1;
     var sh:int = 4;
     var plan:PlanMap = new PlanMap(width, height, (width+height+1)*2);
-    var queue:Array = [];
-    plan.getvalue(0, 0).cost = 0;
-    queue.push(plan.getvalue(0, 0));
+    var queue:Array = [ plan.getentry(0, 0) ];
     while (0 < queue.length) {
       //for (var i:int = 0; i < 10; i++) {
       var e0:Entry = queue.pop();
@@ -1019,7 +1018,7 @@ class TileMap extends Bitmap
 
       // try walking right. (1:red)
       if (-width < e0.x && isstoppable(getBlock(tx-1, ty+1))) {
-	e1 = plan.getvalue(e0.x-1, e0.y);
+	e1 = plan.getentry(e0.x-1, e0.y);
 	if (cost < e1.cost) {
 	  e1.cost = cost;
 	  e1.next = e0;
@@ -1028,7 +1027,7 @@ class TileMap extends Bitmap
       }
       // try walking left. (2:green)
       if (e0.x < width && isstoppable(getBlock(tx+1, ty+1))) {
-	e1 = plan.getvalue(e0.x+1, e0.y);
+	e1 = plan.getentry(e0.x+1, e0.y);
 	if (cost < e1.cost) {
 	  e1.cost = cost;
 	  e1.next = e0;
@@ -1037,7 +1036,7 @@ class TileMap extends Bitmap
       }
       // try falling. (3:blue)
       if (-height < e0.y) {
-	e1 = plan.getvalue(e0.x, e0.y-1);
+	e1 = plan.getentry(e0.x, e0.y-1);
 	if (cost < e1.cost) {
 	  e1.cost = cost;
 	  e1.next = e0;
@@ -1046,7 +1045,7 @@ class TileMap extends Bitmap
       }
       // try climbing up. (4:yellow)
       if (e0.y < height && isgrabbable(getBlock(tx, ty+1))) {
-	e1 = plan.getvalue(e0.x, e0.y+1);
+	e1 = plan.getentry(e0.x, e0.y+1);
 	if (cost < e1.cost) {
 	  e1.cost = cost;
 	  e1.next = e0;
@@ -1143,8 +1142,8 @@ class Scene extends Sprite
 
     // Compute the path plan around the focus rectangle.
     pathplan = tilemap.computePlan(center, 
-				   window.width/tilemap.blocksize, 
-				   window.height/tilemap.blocksize);
+				   window.width/2/tilemap.blocksize, 
+				   window.height/2/tilemap.blocksize);
   }
 
   // getDirection(p)
@@ -1162,7 +1161,7 @@ class Scene extends Sprite
     } else if (pathplan.height < y) {
       y = +pathplan.height;
     }
-    var e:Entry = pathplan.getvalue(x, y);
+    var e:Entry = pathplan.getentry(x, y);
     if (e.next == null) return new Point(0, 0);
     return new Point(e.next.x-x, e.next.y-y);
   }
