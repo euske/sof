@@ -262,7 +262,7 @@ public class Main extends Sprite
   {
     scene.update();
     scene.repaint();
-    visualizer.update(scene.pathplan);
+    visualizer.update(scene.plan);
   }
 
   // onActorAction()
@@ -712,16 +712,18 @@ class Entry
 }
 class PlanMap
 {
+  public var center:Point;
   public var width:int;
   public var height:int;
   public var maxcost:int;
   private var a:Array;
 
-  public function PlanMap(width:int, height:int, maxcost:int)
+  public function PlanMap(center:Point, width:int, height:int)
   {
+    this.center = center;
     this.width = width;
     this.height = height;
-    this.maxcost = maxcost;
+    this.maxcost = (width+height+1)*2;
     this.a = new Array(2*height+1);
     for (var y:int = -height; y <= height; y++) {
       var b:Array = new Array(2*width+1);
@@ -779,22 +781,6 @@ class TileMap extends Bitmap
   public function getBlockAt(x:int, y:int):int
   {
     return getBlock(Math.floor(x/blocksize), Math.floor(y/blocksize));
-  }
-
-  // scanBlock(r)
-  public function scanBlock(r:Rectangle, f:Function):Boolean
-  {
-    var x0:int = Math.floor(r.x/blocksize);
-    var x1:int = Math.floor((r.x+r.width-1)/blocksize);
-    var y0:int = Math.floor(r.y/blocksize);
-    var y1:int = Math.floor((r.y+r.height-1)/blocksize);
-    var x:int, y:int;
-    for (y = y0; y <= y1; y++) {
-      for (x = x0; x <= x1; x++) {
-	if (f(getBlock(x, y))) return true;
-      }
-    }
-    return false;
   }
 
   // scanBlockX(r)
@@ -998,26 +984,24 @@ class TileMap extends Bitmap
     return false;
   }
 
-  // computePlan(r:Rectangle)
-  public function computePlan(p:Point, width:int, height:int):PlanMap
+  // computePlan(p, b, width, height)
+  public function computePlan(p:Point, b:Rectangle, width:int, height:int):PlanMap
   {
-    var x0:int = Math.floor(p.x/blocksize);
-    var y0:int = Math.floor(p.y/blocksize);
-    var sw:int = 1;
-    var sh:int = 4;
-    var plan:PlanMap = new PlanMap(width, height, (width+height+1)*2);
+    var plan:PlanMap = new PlanMap(p, width, height);
     var queue:Array = [ plan.getentry(0, 0) ];
     while (0 < queue.length) {
       //for (var i:int = 0; i < 10; i++) {
       var e0:Entry = queue.pop();
-      var tx:int = x0+e0.x;
-      var ty:int = y0+e0.y;
       var cost:int = e0.cost+1;
-      if (hasBlock(tx-sw+1, ty-sh+1, sw, sh, isobstacle)) continue;
+      var x:int = p.x+b.x+e0.x*blocksize;
+      var y:int = p.y+b.y+e0.y*blocksize;
+      var r:Rectangle = new Rectangle(x, y, b.width, b.height);
+      if (scanBlockX(r, isobstacle) != NOTFOUND) continue;
       var e1:Entry;
 
-      // try walking right. (1:red)
-      if (-width < e0.x && isstoppable(getBlock(tx-1, ty+1))) {
+      // try walking right.
+      var r0:Rectangle = new Rectangle(x-blocksize, y+b.height, b.width, 1);
+      if (-width < e0.x && scanBlockX(r0, isstoppable) != NOTFOUND) {
 	e1 = plan.getentry(e0.x-1, e0.y);
 	if (cost < e1.cost) {
 	  e1.cost = cost;
@@ -1025,8 +1009,9 @@ class TileMap extends Bitmap
 	  queue.push(e1);
 	}
       }
-      // try walking left. (2:green)
-      if (e0.x < width && isstoppable(getBlock(tx+1, ty+1))) {
+      // try walking left.
+      var r1:Rectangle = new Rectangle(x+blocksize, y+b.height, b.width, 1);
+      if (e0.x < width && scanBlockX(r1, isstoppable) != NOTFOUND) {
 	e1 = plan.getentry(e0.x+1, e0.y);
 	if (cost < e1.cost) {
 	  e1.cost = cost;
@@ -1034,8 +1019,9 @@ class TileMap extends Bitmap
 	  queue.push(e1);
 	}
       }
-      // try falling. (3:blue)
-      if (-height < e0.y) {
+      // try falling.
+      var r2:Rectangle = new Rectangle(x, y-blocksize, b.width, b.height);
+      if (-height < e0.y && scanBlockX(r2, isobstacle) == NOTFOUND) {
 	e1 = plan.getentry(e0.x, e0.y-1);
 	if (cost < e1.cost) {
 	  e1.cost = cost;
@@ -1043,8 +1029,9 @@ class TileMap extends Bitmap
 	  queue.push(e1);
 	}
       }
-      // try climbing up. (4:yellow)
-      if (e0.y < height && isgrabbable(getBlock(tx, ty+1))) {
+      // try climbing up.
+      var r3:Rectangle = new Rectangle(x, y+blocksize, b.width, b.height);
+      if (e0.y < height && scanBlockX(r3, isgrabbable) != NOTFOUND) {
 	e1 = plan.getentry(e0.x, e0.y+1);
 	if (cost < e1.cost) {
 	  e1.cost = cost;
@@ -1065,10 +1052,9 @@ class Scene extends Sprite
 {
   private var tilemap:TileMap;
   private var window:Rectangle;
-  private var center:Point;
   private var mapsize:Point;
   private var actors:Array = [];
-  public var pathplan:PlanMap;
+  public var plan:PlanMap;
 
   // Scene(width, height, tilemap)
   public function Scene(width:int, height:int, tilemap:TileMap)
@@ -1114,18 +1100,16 @@ class Scene extends Sprite
   // setCenter(p)
   public function setCenter(p:Point, hmargin:int, vmargin:int):void
   {
-    center = p;
-
     // Center the window position.
-    if (center.x-hmargin < window.x) {
-      window.x = center.x-hmargin;
-    } else if (window.x+window.width < center.x+hmargin) {
-      window.x = center.x+hmargin-window.width;
+    if (p.x-hmargin < window.x) {
+      window.x = p.x-hmargin;
+    } else if (window.x+window.width < p.x+hmargin) {
+      window.x = p.x+hmargin-window.width;
     }
-    if (center.y-vmargin < window.y) {
-      window.y = center.y-vmargin;
-    } else if (window.y+window.height < center.y+vmargin) {
-      window.y = center.y+vmargin-window.height;
+    if (p.y-vmargin < window.y) {
+      window.y = p.y-vmargin;
+    } else if (window.y+window.height < p.y+vmargin) {
+      window.y = p.y+vmargin-window.height;
     }
     
     // Adjust the window position to fit the world.
@@ -1139,29 +1123,32 @@ class Scene extends Sprite
     } else if (mapsize.y < window.y+window.height) {
       window.y = mapsize.y-window.height;
     }
+  }
 
-    // Compute the path plan around the focus rectangle.
-    pathplan = tilemap.computePlan(center, 
-				   window.width/2/tilemap.blocksize, 
-				   window.height/2/tilemap.blocksize);
+  // setPlan(center, bounds)
+  public function setPlan(center:Point, bounds:Rectangle):void
+  {
+    plan = tilemap.computePlan(center, bounds,
+			       window.width/2/tilemap.blocksize, 
+			       window.height/2/tilemap.blocksize);
   }
 
   // getDirection(p)
   public function getDirection(p:Point):Point
   {
-    var x:int = Math.floor((p.x - center.x)/tilemap.blocksize);
-    var y:int = Math.floor((p.y - center.y)/tilemap.blocksize);
-    if (x < -pathplan.width) {
-      x = -pathplan.width;
-    } else if (pathplan.width < x) {
-      x = +pathplan.width;
+    var x:int = Math.floor((p.x - plan.center.x)/tilemap.blocksize);
+    var y:int = Math.floor((p.y - plan.center.y)/tilemap.blocksize);
+    if (x < -plan.width) {
+      x = -plan.width;
+    } else if (plan.width < x) {
+      x = +plan.width;
     }
-    if (y < -pathplan.height) {
-      y = -pathplan.height;
-    } else if (pathplan.height < y) {
-      y = +pathplan.height;
+    if (y < -plan.height) {
+      y = -plan.height;
+    } else if (plan.height < y) {
+      y = +plan.height;
     }
-    var e:Entry = pathplan.getentry(x, y);
+    var e:Entry = plan.getentry(x, y);
     if (e.next == null) return new Point(0, 0);
     return new Point(e.next.x-x, e.next.y-y);
   }
@@ -1172,10 +1159,16 @@ class Scene extends Sprite
     return new Point(p.x-window.x, p.y-window.y);
   }
 
-  // scanBlock(r)
-  public function scanBlock(r:Rectangle, f:Function):Boolean
+  // scanBlockX(r)
+  public function scanBlockX(r:Rectangle, f:Function):Boolean
   {
-    return tilemap.scanBlock(r, f);
+    return tilemap.scanBlockX(r, f) != tilemap.NOTFOUND;
+  }
+
+  // scanBlockY(r)
+  public function scanBlockY(r:Rectangle, f:Function):Boolean
+  {
+    return tilemap.scanBlockY(r, f) != tilemap.NOTFOUND;
   }
 
   // getDistanceX(r)
@@ -1303,10 +1296,13 @@ class Actor extends EventDispatcher
       }
     } else if (0 < vy) {
       // move toward a nearby hole.
-      var r:Rectangle = new Rectangle(bounds.x-1, bounds.y+bounds.height, 1, 1);
-      var h0:Boolean = scene.scanBlock(r, TileMap.isobstacle);
-      r.x += 1+bounds.width;
-      var h1:Boolean = scene.scanBlock(r, TileMap.isobstacle);
+      var r:Rectangle = bounds;
+      r.x += r.width/2;
+      r.y += r.height;
+      r.height = 1;
+      var h1:Boolean = scene.scanBlockX(r, TileMap.isobstacle);
+      r.width = -r.width;
+      var h0:Boolean = scene.scanBlockX(r, TileMap.isobstacle);
       if (h0 && !h1) {
 	vx1 = +1;
 	vy1 = 0;
@@ -1317,7 +1313,7 @@ class Actor extends EventDispatcher
     }
     var x:int = pos.x;
     var y:int = pos.y;
-    if (scene.scanBlock(bounds, TileMap.isgrabbable) ||
+    if (scene.scanBlockY(bounds, TileMap.isgrabbable) ||
 	0 < vy1 && scene.getDistanceY(bounds, vy1, TileMap.isgrabbable) == 0) {
       // climbing
       vg = 0;
@@ -1406,6 +1402,8 @@ class Player extends Actor
   {
     super.update();
     scene.setCenter(pos, 200, 100);
+    scene.setPlan(pos, skin.bounds);
+
     if (800 < bounds.y) {
       dispatchEvent(new ActorActionEvent(DIE));
     }
