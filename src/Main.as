@@ -262,7 +262,7 @@ public class Main extends Sprite
   {
     scene.update();
     scene.repaint();
-    visualizer.update(scene.plan);
+    visualizer.update(scene.actors[1].plan);
   }
 
   // onActorAction()
@@ -331,33 +331,6 @@ import flash.geom.Point;
 import flash.geom.Matrix;
 import flash.geom.Rectangle;
 import flash.geom.ColorTransform;
-
-
-//  PlanVisualizer
-// 
-class PlanVisualizer extends Shape
-{
-  public function update(map:PlanMap):void
-  {
-    graphics.clear();
-    graphics.beginFill(0xffffff);
-    graphics.drawRect(0, 0, 10, 10);
-    graphics.endFill();
-    for (var y:int = -map.height; y <= map.height; y++) {
-      for (var x:int = -map.width; x <= map.width; x++) {
-	var e:Entry = map.getentry(x, y);
-	var c:int = 255 * e.cost / map.maxcost;
-	graphics.lineStyle(0, 0x0000ff | (c << 8));
-	graphics.drawRect(x*10, y*10, 10, 10);
-	graphics.lineStyle(0, 0xffff00);
-	if (e.next != null) {
-	  graphics.moveTo(x*10+5, y*10+5);
-	  graphics.lineTo(e.next.x*10+5, e.next.y*10+5);
-	}
-      }
-    }
-  }
-}
 
 
 //  BitmapFont
@@ -695,51 +668,98 @@ class MCSkin extends Shape3D
 }
 
 
-//  TileMap
+//  Entry
 //
 class Entry
 {
+  public var x:int, y:int;
   public var cost:int;
   public var next:Entry;
-  public var x:int, y:int;
-  public function Entry(cost:int, next:Entry, x:int, y:int)
+  public function Entry(x:int, y:int, cost:int, next:Entry)
   {
-    this.cost = cost;
-    this.next = next;
     this.x = x;
     this.y = y;
+    this.cost = cost;
+    this.next = next;
   }
 }
+
+//  PlanMap
+// 
 class PlanMap
 {
+  public var blocksize:int;
   public var center:Point;
   public var width:int;
   public var height:int;
   public var maxcost:int;
   private var a:Array;
 
-  public function PlanMap(center:Point, width:int, height:int)
+  public function PlanMap(blocksize:int, center0:Point, width0:int, height0:int)
   {
-    this.center = center;
-    this.width = width;
-    this.height = height;
+    this.blocksize = blocksize;
+    this.center = getBlockCoords(center0);
+    this.width = Math.floor(width0/blocksize);
+    this.height = Math.floor(height0/blocksize);
     this.maxcost = (width+height+1)*2;
     this.a = new Array(2*height+1);
     for (var y:int = -height; y <= height; y++) {
       var b:Array = new Array(2*width+1);
       for (var x:int = -width; x <= width; x++) {
-	b[x+width] = new Entry(maxcost, null, x, y);
+	b[x+width] = new Entry(x, y, maxcost, null);
       }
       a[y+height] = b;
     }
-    a[height][width].cost = 0;
   }
 
-  public function getentry(x:int, y:int):Entry
+  public function getBlockCoords(p:Point):Point
   {
+    return new Point(Math.floor(p.x/blocksize), 
+		     Math.floor(p.y/blocksize));
+  }
+
+  public function getBlockRect(x:int, y:int):Rectangle
+  {
+    return new Rectangle((x+center.x)*blocksize, (y+center.y)*blocksize, 
+			 blocksize, blocksize);
+  }
+
+  public function getEntry(x:int, y:int):Entry
+  {
+    if (x < -width || width < x ||
+	y < -height || height < y) return null;
     return a[y+height][x+width];
   }
 }
+
+//  PlanVisualizer
+// 
+class PlanVisualizer extends Shape
+{
+  public function update(map:PlanMap):void
+  {
+    graphics.clear();
+    graphics.beginFill(0xffffff);
+    graphics.drawRect(0, 0, 10, 10);
+    graphics.endFill();
+    for (var y:int = -map.height; y <= map.height; y++) {
+      for (var x:int = -map.width; x <= map.width; x++) {
+	var e:Entry = map.getEntry(x, y);
+	var c:int = 255 * e.cost / map.maxcost;
+	graphics.lineStyle(0, 0x0000ff | (c << 8));
+	graphics.drawRect(x*10, y*10, 10, 10);
+	graphics.lineStyle(0, 0xffff00);
+	if (e.next != null) {
+	  graphics.moveTo(x*10+5, y*10+5);
+	  graphics.lineTo(e.next.x*10+5, e.next.y*10+5);
+	}
+      }
+    }
+  }
+}
+
+//  TileMap
+//
 class TileMap extends Bitmap
 {
   public var map:BitmapData;
@@ -771,97 +791,28 @@ class TileMap extends Bitmap
     return map.height;
   }
 
-  // getBlockRect(x, y)
-  public function getBlockRect(x:int, y:int):Rectangle
-  {
-    return new Rectangle(x*blocksize, y*blocksize, blocksize, blocksize);
-  }
-
-  // getBlockAt(x, y)
-  public function getBlockAt(x:int, y:int):int
-  {
-    return getBlock(Math.floor(x/blocksize), Math.floor(y/blocksize));
-  }
-
-  // scanBlockX(r)
-  public function scanBlockX(r:Rectangle, f:Function):int
-  {
-    var y0:int = Math.floor(r.y/blocksize);
-    var y1:int = Math.floor((r.y+r.height-1)/blocksize);
-    var x0:int, x1:int;
-    var x:int, y:int;
-    if (r.width < 0) {
-      x0 = Math.floor((r.x-1)/blocksize);
-      x1 = Math.floor((r.x+r.width)/blocksize);
-      for (x = x0; x1 <= x; x--) {
-	for (y = y0; y <= y1; y++) {
-	  if (f(getBlock(x, y))) {
-	    return (x+1)*blocksize;
-	  }
-	}
-      }
-    } else if (0 < r.width) {
-      x0 = Math.floor(r.x/blocksize);
-      x1 = Math.floor((r.x+r.width-1)/blocksize);
-      for (x = x0; x <= x1; x++) {
-	for (y = y0; y <= y1; y++) {
-	  if (f(getBlock(x, y))) {
-	    return x*blocksize;
-	  }
-	}
-      }
-    }
-    return NOTFOUND;
-  }
-
-  // scanBlockY(r)
-  public function scanBlockY(r:Rectangle, f:Function):int
-  {
-    var x0:int = Math.floor(r.x/blocksize);
-    var x1:int = Math.floor((r.x+r.width-1)/blocksize);
-    var y0:int, y1:int;
-    var x:int, y:int;
-    if (r.height < 0) {
-      y0 = Math.floor((r.y-1)/blocksize);
-      y1 = Math.floor((r.y+r.height)/blocksize);
-      for (y = y0; y1 <= y; y--) {
-	for (x = x0; x <= x1; x++) {
-	  if (f(getBlock(x, y))) {
-	    return (y+1)*blocksize;
-	  }
-	}
-      }
-    } else if (0 < r.height) {
-      y0 = Math.floor(r.y/blocksize);
-      y1 = Math.floor((r.y+r.height-1)/blocksize);
-      for (y = y0; y <= y1; y++) {
-	for (x = x0; x <= x1; x++) {
-	  if (f(getBlock(x, y))) {
-	    return y*blocksize;
-	  }
-	}
-      }
-    }
-    return NOTFOUND;
-  }
-
   // repaint(window)
   public function repaint(window:Rectangle):void
   {
-    var x:int = Math.floor(window.x/blocksize);
-    var y:int = Math.floor(window.y/blocksize);
+    var x0:int = Math.floor(window.x/blocksize);
+    var y0:int = Math.floor(window.y/blocksize);
     var mw:int = Math.floor(window.width/blocksize)+1;
     var mh:int = Math.floor(window.height/blocksize)+1;
-    renderBlocks(x, y, mw, mh);
-    this.x = (x*blocksize)-window.x;
-    this.y = (y*blocksize)-window.y;
+    if (prevrect.x != x0 || prevrect.y != y0 ||
+	prevrect.width != mw || prevrect.height != mh) {
+      renderBlocks(x0, y0, mw, mh);
+      prevrect.x = x0;
+      prevrect.y = y0;
+      prevrect.width = mw;
+      prevrect.height = mh;
+    }
+    this.x = (x0*blocksize)-window.x;
+    this.y = (y0*blocksize)-window.y;
   }
 
   // renderBlocks(x, y)
   protected function renderBlocks(x0:int, y0:int, mw:int, mh:int):void
   {
-    if (prevrect.x == x0 && prevrect.y == y0 &&
-	prevrect.width == mw && prevrect.height == mh) return;
     if (bitmapData == null) {
       bitmapData = new BitmapData(mw*blocksize, 
 				  mh*blocksize, 
@@ -870,26 +821,13 @@ class TileMap extends Bitmap
     for (var dy:int = 0; dy < mh; dy++) {
       for (var dx:int = 0; dx < mw; dx++) {
 	var i:int = getBlock(x0+dx, y0+dy);
-	var src:Rectangle = 
-	  new Rectangle(i*blocksize, 0, blocksize, blocksize);
-	var dst:Point = 
-	  new Point(dx*blocksize, dy*blocksize);
+	var src:Rectangle = new Rectangle(i*blocksize, 0, blocksize, blocksize);
+	var dst:Point = new Point(dx*blocksize, dy*blocksize);
 	bitmapData.copyPixels(blocks, src, dst);
       }
     }
-    prevrect.x = x0;
-    prevrect.y = y0;
-    prevrect.width = mw;
-    prevrect.height = mh;
   }
 
-  public static var isobstacle:Function = 
-    (function (b:int):Boolean { return b == 1 || b < 0; });
-  public static var isgrabbable:Function = 
-    (function (b:int):Boolean { return b == 3; });
-  public static var isstoppable:Function = 
-    (function (b:int):Boolean { return b != 0; });
-  
   // pixelToBlockId(c)
   protected function pixelToBlockId(c:uint):int
   {
@@ -966,43 +904,124 @@ class TileMap extends Bitmap
   // getBlock(x, y)
   private function getBlock(x:int, y:int):int
   {
-    if (x < 0 || map.width <= x || y < 0 || map.height <= y) {
+    if (x < 0 || map.width <= x || 
+	y < 0 || map.height <= y) {
       return -1;
     }
     var c:uint = map.getPixel(x, y);
     return pixelToBlockId(c);
   }
 
-  // hasBlock(r)
-  private function hasBlock(x:int, y:int, w:int, h:int, f:Function):Boolean
+  // getBlockRect(x, y)
+  public function getBlockRect(x:int, y:int):Rectangle
   {
-    for (var i:int = 0; i < h; i++) {
-      for (var j:int = 0; j < w; j++) {
-	if (f(getBlock(x+j, y+i))) return true;
+    return new Rectangle(x*blocksize, y*blocksize, blocksize, blocksize);
+  }
+
+  // isobstacle
+  public static var isobstacle:Function = 
+    (function (b:int):Boolean { return b == 1 || b < 0; });
+  // isgrabbable
+  public static var isgrabbable:Function = 
+    (function (b:int):Boolean { return b == 3; });
+  // isstoppable
+  public static var isstoppable:Function = 
+    (function (b:int):Boolean { return b != 0; });
+  
+  // scanBlockX(r)
+  public function scanBlockX(r:Rectangle, f:Function):int
+  {
+    var y0:int = Math.floor(r.y/blocksize);
+    var y1:int = Math.floor((r.y+r.height-1)/blocksize);
+    var x0:int, x1:int;
+    var x:int, y:int;
+    if (r.width < 0) {
+      x0 = Math.floor((r.x-1)/blocksize);
+      x1 = Math.floor((r.x+r.width)/blocksize);
+      for (x = x0; x1 <= x; x--) {
+	for (y = y0; y <= y1; y++) {
+	  if (f(getBlock(x, y))) {
+	    return (x+1)*blocksize;
+	  }
+	}
+      }
+    } else if (0 < r.width) {
+      x0 = Math.floor(r.x/blocksize);
+      x1 = Math.floor((r.x+r.width-1)/blocksize);
+      for (x = x0; x <= x1; x++) {
+	for (y = y0; y <= y1; y++) {
+	  if (f(getBlock(x, y))) {
+	    return x*blocksize;
+	  }
+	}
+      }
+    }
+    return NOTFOUND;
+  }
+
+  // scanBlockY(r)
+  public function scanBlockY(r:Rectangle, f:Function):int
+  {
+    var x0:int = Math.floor(r.x/blocksize);
+    var x1:int = Math.floor((r.x+r.width-1)/blocksize);
+    var y0:int, y1:int;
+    var x:int, y:int;
+    if (r.height < 0) {
+      y0 = Math.floor((r.y-1)/blocksize);
+      y1 = Math.floor((r.y+r.height)/blocksize);
+      for (y = y0; y1 <= y; y--) {
+	for (x = x0; x <= x1; x++) {
+	  if (f(getBlock(x, y))) {
+	    return (y+1)*blocksize;
+	  }
+	}
+      }
+    } else if (0 < r.height) {
+      y0 = Math.floor(r.y/blocksize);
+      y1 = Math.floor((r.y+r.height-1)/blocksize);
+      for (y = y0; y <= y1; y++) {
+	for (x = x0; x <= x1; x++) {
+	  if (f(getBlock(x, y))) {
+	    return y*blocksize;
+	  }
+	}
+      }
+    }
+    return NOTFOUND;
+  }
+
+  private function hasBlock(x0:int, y0:int, x1:int, y1:int, f:Function):Boolean
+  {
+    for (var y:int = y0; y <= y1; y++) {
+      for (var x:int = x0; x <= x1; x++) {
+	if (f(getBlock(x, y))) return true;
       }
     }
     return false;
   }
 
-  // computePlan(p, b, width, height)
-  public function computePlan(p:Point, b:Rectangle, width:int, height:int):PlanMap
+  // createPlan(dst, b, width, height)
+  public function createPlan(dst:Point, b:Rectangle, width:int, height:int):PlanMap
   {
-    var plan:PlanMap = new PlanMap(p, width, height);
-    var queue:Array = [ plan.getentry(0, 0) ];
+    var plan:PlanMap = new PlanMap(blocksize, dst, width, height);
+    var r0:Rectangle = plan.getBlockRect(0, 0);
+    var dx0:int = Math.floor((r0.width/2+b.x)/blocksize);
+    var dy0:int = Math.floor((r0.height/2+b.y)/blocksize);
+    var dx1:int = Math.floor((r0.width/2+b.x+b.width-1)/blocksize);
+    var dy1:int = Math.floor((r0.height/2+b.y+b.height-1)/blocksize);
+    var e1:Entry = plan.getEntry(0, 0);
+    e1.cost = 0;
+    var queue:Array = [ e1 ];
     while (0 < queue.length) {
-      //for (var i:int = 0; i < 10; i++) {
       var e0:Entry = queue.pop();
       var cost:int = e0.cost+1;
-      var x:int = p.x+b.x+e0.x*blocksize;
-      var y:int = p.y+b.y+e0.y*blocksize;
-      var r:Rectangle = new Rectangle(x, y, b.width, b.height);
-      if (scanBlockX(r, isobstacle) != NOTFOUND) continue;
-      var e1:Entry;
+      var x0:int = e0.x+plan.center.x;
+      var y0:int = e0.y+plan.center.y;
+      if (hasBlock(x0+dx0, y0+dy0, x0+dx1, y0+dy1, isobstacle)) continue;
 
       // try walking right.
-      var r0:Rectangle = new Rectangle(x-blocksize, y+b.height, b.width, 1);
-      if (-width < e0.x && scanBlockX(r0, isstoppable) != NOTFOUND) {
-	e1 = plan.getentry(e0.x-1, e0.y);
+      if (-plan.width < e0.x && isstoppable(getBlock(x0-1, y0+dy1+1))) {
+	e1 = plan.getEntry(e0.x-1, e0.y);
 	if (cost < e1.cost) {
 	  e1.cost = cost;
 	  e1.next = e0;
@@ -1010,9 +1029,8 @@ class TileMap extends Bitmap
 	}
       }
       // try walking left.
-      var r1:Rectangle = new Rectangle(x+blocksize, y+b.height, b.width, 1);
-      if (e0.x < width && scanBlockX(r1, isstoppable) != NOTFOUND) {
-	e1 = plan.getentry(e0.x+1, e0.y);
+      if (e0.x < plan.width && isstoppable(getBlock(x0+1, y0+dy1+1))) {
+	e1 = plan.getEntry(e0.x+1, e0.y);
 	if (cost < e1.cost) {
 	  e1.cost = cost;
 	  e1.next = e0;
@@ -1020,9 +1038,8 @@ class TileMap extends Bitmap
 	}
       }
       // try falling.
-      var r2:Rectangle = new Rectangle(x, y-blocksize, b.width, b.height);
-      if (-height < e0.y && scanBlockX(r2, isobstacle) == NOTFOUND) {
-	e1 = plan.getentry(e0.x, e0.y-1);
+      if (-plan.height < e0.y && !isobstacle(getBlock(x0, y0+dy0-1))) {
+	e1 = plan.getEntry(e0.x, e0.y-1);
 	if (cost < e1.cost) {
 	  e1.cost = cost;
 	  e1.next = e0;
@@ -1030,9 +1047,9 @@ class TileMap extends Bitmap
 	}
       }
       // try climbing up.
-      var r3:Rectangle = new Rectangle(x, y+blocksize, b.width, b.height);
-      if (e0.y < height && scanBlockX(r3, isgrabbable) != NOTFOUND) {
-	e1 = plan.getentry(e0.x, e0.y+1);
+      if (e0.y < plan.height && 
+	  hasBlock(x0+dx0, y0+dy0+1, x0+dx1, y0+dy1+1, isgrabbable)) {
+	e1 = plan.getEntry(e0.x, e0.y+1);
 	if (cost < e1.cost) {
 	  e1.cost = cost;
 	  e1.next = e0;
@@ -1053,8 +1070,7 @@ class Scene extends Sprite
   private var tilemap:TileMap;
   private var window:Rectangle;
   private var mapsize:Point;
-  private var actors:Array = [];
-  public var plan:PlanMap;
+  public var actors:Array = [];
 
   // Scene(width, height, tilemap)
   public function Scene(width:int, height:int, tilemap:TileMap)
@@ -1125,32 +1141,10 @@ class Scene extends Sprite
     }
   }
 
-  // setPlan(center, bounds)
-  public function setPlan(center:Point, bounds:Rectangle):void
+  // createPlan(dst, bounds)
+  public function createPlan(dst:Point, bounds:Rectangle):PlanMap
   {
-    plan = tilemap.computePlan(center, bounds,
-			       window.width/2/tilemap.blocksize, 
-			       window.height/2/tilemap.blocksize);
-  }
-
-  // getDirection(p)
-  public function getDirection(p:Point):Point
-  {
-    var x:int = Math.floor((p.x - plan.center.x)/tilemap.blocksize);
-    var y:int = Math.floor((p.y - plan.center.y)/tilemap.blocksize);
-    if (x < -plan.width) {
-      x = -plan.width;
-    } else if (plan.width < x) {
-      x = +plan.width;
-    }
-    if (y < -plan.height) {
-      y = -plan.height;
-    } else if (plan.height < y) {
-      y = +plan.height;
-    }
-    var e:Entry = plan.getentry(x, y);
-    if (e.next == null) return new Point(0, 0);
-    return new Point(e.next.x-x, e.next.y-y);
+    return tilemap.createPlan(dst, bounds, window.width/2, window.height/2);
   }
 
   // translatePoint(p)
@@ -1232,7 +1226,7 @@ class Actor extends EventDispatcher
   public var scene:Scene;
   public var skin:MCSkin;
 
-  protected var pos:Point;
+  public var pos:Point;
   private var vx:int = 0, vy:int = 0, vg:int = 0;
   private var phase:Number = 0;
 
@@ -1351,6 +1345,7 @@ class Actor extends EventDispatcher
 class Person extends Actor
 {
   private var target:Actor;
+  public var plan:PlanMap;
 
   // Person(image)
   public function Person(scene:Scene, image:BitmapData)
@@ -1371,9 +1366,26 @@ class Person extends Actor
   {
     super.update();
     if (target != null) {
-      var p:Point = scene.getDirection(pos);
-      Main.log("p="+p);
-      move(p.x, p.y);
+      plan = scene.createPlan(target.pos, skin.bounds);
+      var p:Point = plan.getBlockCoords(pos);
+      var e:Entry = plan.getEntry(p.x-plan.center.x, p.y-plan.center.y);
+      if (e != null) {
+	Main.log("e="+e.x+","+e.y);
+      	if (e.next != null) {
+	  var dx:int = e.next.x-e.x;
+	  var dy:int = e.next.y-e.y;
+	  if (dy < 0) { 
+	    dy = -1; 
+	  } else if (0 < dy) {
+	    dy = +1;
+	  } else if (dx < 0) { 
+	    dx = -1; 
+	  } else if (0 < dx) {
+	    dx = +1;
+	  }
+	  move(dx, dy);
+	}
+      }
     } else {
       if (Math.random() < 0.05) {
 	move(int(Math.random()*3)-1, 0);
@@ -1402,7 +1414,6 @@ class Player extends Actor
   {
     super.update();
     scene.setCenter(pos, 200, 100);
-    scene.setPlan(pos, skin.bounds);
 
     if (800 < bounds.y) {
       dispatchEvent(new ActorActionEvent(DIE));
