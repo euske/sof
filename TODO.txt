@@ -1,5 +1,4 @@
 TODO:
 
-* Use Chris' skin and credit him.
-  He's a mayor. Throwing taxes.
+* MrChris is a mayor. Throwing taxes.
   "Looks like you're, in DEAD-(debt)"

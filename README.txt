@@ -1,24 +1,33 @@
+Street of Frage
 README.txt
 
+Author: euske (Yusuke Shinyama)
+
+An in-development game prototype, VGA-themed.
+Requires Adobe Flash Player for playing.
+
+Credits: MrChrisMad for the crew skin images.
+
 --
-How to play it:
+How to run:
 
 1. Open the main.html file.
 
+
 --
-How to build it from the source:
+How to build:
 
 1. Download Adobe Flex SDK (free)
      http://www.adobe.com/devnet/flex/flex-sdk-download.html
    or its open source version (smaller)
-     http://opensource.adobe.com/wiki/display/flexsdk/Downloads
+     http://sourceforge.net/adobe/flexsdk/wiki/Downloads/
 
-2. Unzip it and rename the folder as "flex_sdk".
+2. Unzip it and rename the folder as "flex_sdk4".
 
 3. Put the folder under the parent folder of this folder, 
    so that two folders are in the same location, as in:
-     flex_sdk\
-     game1\ (or game2, game3, etc.)
+     flex_sdk4\
+     sof\
 
 4. Run build.bat file.
 
@@ -28,8 +37,10 @@ How to build it from the source:
      http://www.adobe.com/support/flashplayer/downloads.html
      http://helpx.adobe.com/flash-player/kb/configure-debugger-version-flash-player.html
 
+
 --
-Useful links:
+How to develop:
+
   ActionScript Technology Center:
     http://www.adobe.com/devnet/actionscript.html
 
@@ -41,6 +52,3 @@ Useful links:
   Tutorials:
     http://help.adobe.com/en_US/ActionScript/3.0_ProgrammingAS3/
     http://digitalmedia.oreilly.com/helpcenter/actionscript30cookbook/chapter1.html
-
--
-euske (Yusuke Shinyama)
