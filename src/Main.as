@@ -668,17 +668,24 @@ class MCSkin extends Shape3D
 }
 
 
-//  Entry
+//  PlanEntry
 //
-class Entry
+class PlanEntry
 {
+  public static const WALK:int = 1;
+  public static const FALL:int = 2;
+  public static const CLIMB:int = 3;
+  public static const JUMP:int = 4;
+
   public var x:int, y:int;
+  public var action:int;
   public var cost:int;
-  public var next:Entry;
-  public function Entry(x:int, y:int, cost:int, next:Entry)
+  public var next:PlanEntry;
+  public function PlanEntry(x:int, y:int, action:int, cost:int, next:PlanEntry)
   {
     this.x = x;
     this.y = y;
+    this.action = action;
     this.cost = cost;
     this.next = next;
   }
@@ -690,25 +697,28 @@ class PlanMap
 {
   public var blocksize:int;
   public var center:Point;
-  public var width:int;
-  public var height:int;
   public var maxcost:int;
+  public var x0:int, y0:int, x1:int, y1:int;
+  private var width:int;
   private var a:Array;
 
   public function PlanMap(blocksize:int, center0:Point, width0:int, height0:int)
   {
     this.blocksize = blocksize;
     this.center = getBlockCoords(center0);
-    this.width = Math.floor(width0/blocksize);
-    this.height = Math.floor(height0/blocksize);
-    this.maxcost = (width+height+1)*2;
-    this.a = new Array(2*height+1);
-    for (var y:int = -height; y <= height; y++) {
-      var b:Array = new Array(2*width+1);
-      for (var x:int = -width; x <= width; x++) {
-	b[x+width] = new Entry(x, y, maxcost, null);
+    this.maxcost = (width0+height0+1)*2;
+    this.x0 = -Math.floor(width0/blocksize);
+    this.y0 = -Math.floor(height0/blocksize);
+    this.x1 = +Math.floor(width0/blocksize);
+    this.y1 = +Math.floor(height0/blocksize);
+    this.width = (x1-x0+1);
+    this.a = new Array(y1-y0+1);
+    for (var y:int = y0; y <= y1; y++) {
+      var b:Array = new Array(width);
+      for (var x:int = x0; x <= x1; x++) {
+	b[x-x0] = new PlanEntry(x, y, 0, maxcost, null);
       }
-      a[y+height] = b;
+      a[y-y0] = b;
     }
   }
 
@@ -724,11 +734,10 @@ class PlanMap
 			 blocksize, blocksize);
   }
 
-  public function getEntry(x:int, y:int):Entry
+  public function getEntry(x:int, y:int):PlanEntry
   {
-    if (x < -width || width < x ||
-	y < -height || height < y) return null;
-    return a[y+height][x+width];
+    if (x < x0 || x1 < x || y < y0 || y1 < y) return null;
+    return a[y-y0][x-x0];
   }
 }
 
@@ -736,17 +745,33 @@ class PlanMap
 // 
 class PlanVisualizer extends Shape
 {
-  public function update(map:PlanMap):void
+  public function update(plan:PlanMap):void
   {
     graphics.clear();
     graphics.beginFill(0xffffff);
     graphics.drawRect(0, 0, 10, 10);
     graphics.endFill();
-    for (var y:int = -map.height; y <= map.height; y++) {
-      for (var x:int = -map.width; x <= map.width; x++) {
-	var e:Entry = map.getEntry(x, y);
-	var c:int = 255 * e.cost / map.maxcost;
-	graphics.lineStyle(0, 0x0000ff | (c << 8));
+    for (var y:int = plan.y0; y <= plan.y1; y++) {
+      for (var x:int = plan.x0; x <= plan.x1; x++) {
+	var e:PlanEntry = plan.getEntry(x, y);
+	var c:int = 0x0000ff;
+	switch (e.action) {
+	case PlanEntry.WALK:
+	  c = 0xffffff;
+	  break;
+	case PlanEntry.FALL:
+	  c = 0x0000ff;
+	  break;
+	case PlanEntry.CLIMB:
+	  c = 0x00ff00;
+	  break;
+	case PlanEntry.JUMP:
+	  c = 0xff00ff;
+	  break;
+	default:
+	  continue;
+	}
+	graphics.lineStyle(0, c);
 	graphics.drawRect(x*10, y*10, 10, 10);
 	graphics.lineStyle(0, 0xffff00);
 	if (e.next != null) {
@@ -990,7 +1015,7 @@ class TileMap extends Bitmap
     return NOTFOUND;
   }
 
-  private function hasBlock(x0:int, y0:int, x1:int, y1:int, f:Function):Boolean
+  private function hasBlock(x0:int, x1:int, y0:int, y1:int, f:Function):Boolean
   {
     for (var y:int = y0; y <= y1; y++) {
       for (var x:int = x0; x <= x1; x++) {
@@ -1009,54 +1034,68 @@ class TileMap extends Bitmap
     var dy0:int = Math.floor((r0.height/2+b.y)/blocksize);
     var dx1:int = Math.floor((r0.width/2+b.x+b.width-1)/blocksize);
     var dy1:int = Math.floor((r0.height/2+b.y+b.height-1)/blocksize);
-    var e1:Entry = plan.getEntry(0, 0);
+    var e1:PlanEntry = plan.getEntry(0, 0);
     e1.cost = 0;
     var queue:Array = [ e1 ];
     while (0 < queue.length) {
-      var e0:Entry = queue.pop();
+      var e0:PlanEntry = queue.pop();
       var cost:int = e0.cost+1;
       var x0:int = e0.x+plan.center.x;
       var y0:int = e0.y+plan.center.y;
-      if (hasBlock(x0+dx0, y0+dy0, x0+dx1, y0+dy1, isobstacle)) continue;
+      if (hasBlock(x0+dx0, x0+dx1, y0+dy0, y0+dy1, isobstacle)) continue;
 
       // try walking right.
-      if (-plan.width < e0.x && isstoppable(getBlock(x0-1, y0+dy1+1))) {
+      if (plan.x0 < e0.x && isstoppable(getBlock(x0-1, y0+dy1+1))) {
 	e1 = plan.getEntry(e0.x-1, e0.y);
 	if (cost < e1.cost) {
+	  e1.action = PlanEntry.WALK;
 	  e1.cost = cost;
 	  e1.next = e0;
 	  queue.push(e1);
 	}
       }
       // try walking left.
-      if (e0.x < plan.width && isstoppable(getBlock(x0+1, y0+dy1+1))) {
+      if (e0.x < plan.x1 && isstoppable(getBlock(x0+1, y0+dy1+1))) {
 	e1 = plan.getEntry(e0.x+1, e0.y);
 	if (cost < e1.cost) {
+	  e1.action = PlanEntry.WALK;
 	  e1.cost = cost;
 	  e1.next = e0;
 	  queue.push(e1);
 	}
       }
       // try falling.
-      if (-plan.height < e0.y && !isobstacle(getBlock(x0, y0+dy0-1))) {
+      if (plan.y0 < e0.y && !isstoppable(getBlock(x0, y0+dy1))) {
 	e1 = plan.getEntry(e0.x, e0.y-1);
 	if (cost < e1.cost) {
+	  e1.action = PlanEntry.FALL;
+	  e1.cost = cost;
+	  e1.next = e0;
+	  queue.push(e1);
+	}
+      }
+      // try climbing down.
+      if (plan.y0 < e0.y && isgrabbable(getBlock(x0, y0+dy1))) {
+	e1 = plan.getEntry(e0.x, e0.y-1);
+	if (cost < e1.cost) {
+	  e1.action = PlanEntry.JUMP;
 	  e1.cost = cost;
 	  e1.next = e0;
 	  queue.push(e1);
 	}
       }
       // try climbing up.
-      if (e0.y < plan.height && 
-	  hasBlock(x0+dx0, y0+dy0+1, x0+dx1, y0+dy1+1, isgrabbable)) {
+      if (e0.y < plan.y1 && 
+	  hasBlock(x0+dx0, x0+dx1, y0+dy0+1, y0+dy1+1, isgrabbable)) {
 	e1 = plan.getEntry(e0.x, e0.y+1);
 	if (cost < e1.cost) {
+	  e1.action = PlanEntry.CLIMB;
 	  e1.cost = cost;
 	  e1.next = e0;
 	  queue.push(e1);
 	}
       }
-      queue.sortOn("cost", Array.DESCENDING);
+      //queue.sortOn("cost", Array.DESCENDING);
     }
     return plan;
   }
@@ -1368,7 +1407,7 @@ class Person extends Actor
     if (target != null) {
       plan = scene.createPlan(target.pos, skin.bounds);
       var p:Point = plan.getBlockCoords(pos);
-      var e:Entry = plan.getEntry(p.x-plan.center.x, p.y-plan.center.y);
+      var e:PlanEntry = plan.getEntry(p.x-plan.center.x, p.y-plan.center.y);
       if (e != null) {
 	Main.log("e="+e.x+","+e.y);
       	if (e.next != null) {
