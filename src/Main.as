@@ -946,6 +946,9 @@ class TileMap extends Bitmap
   // isobstacle
   public static var isobstacle:Function = 
     (function (b:int):Boolean { return b == 1 || b < 0; });
+  // isnonobstacle
+  public static var isnonobstacle:Function = 
+    (function (b:int):Boolean { return !isobstacle(b); });
   // isgrabbable
   public static var isgrabbable:Function = 
     (function (b:int):Boolean { return b == 3; });
@@ -1239,6 +1242,38 @@ class Scene extends Sprite
     }
     return vy;
   }
+
+  // hasLadderNearby(r)
+  public function hasLadderNearby(r:Rectangle):int
+  {
+    var r0:Rectangle = new Rectangle(r.x, r.y, -tilemap.blocksize/2, r.height);
+    var r1:Rectangle = new Rectangle(r.x+r.width, r.y, +tilemap.blocksize/2, r.height);
+    var h0:Boolean = scanBlockX(r0, TileMap.isgrabbable);
+    var h1:Boolean = scanBlockX(r1, TileMap.isgrabbable);
+    if (!h0 && h1) {
+      return +1;
+    } else if (h0 && !h1) {
+      return -1;
+    } else {
+      return 0;
+    }
+  }
+
+  // hasHoleNearby(r)
+  public function hasHoleNearby(r:Rectangle):int
+  {
+    var r0:Rectangle = new Rectangle(r.x, r.y+r.height, -tilemap.blocksize/2, 1);
+    var r1:Rectangle = new Rectangle(r.x+r.width, r.y+r.height, +tilemap.blocksize/2, 1);
+    var h0:Boolean = scanBlockX(r0, TileMap.isnonobstacle);
+    var h1:Boolean = scanBlockX(r1, TileMap.isnonobstacle);
+    if (!h0 && h1) {
+      return +1;
+    } else if (h0 && !h1) {
+      return -1;
+    } else {
+      return 0;
+    }    
+  }
 }
 
 
@@ -1318,47 +1353,30 @@ class Actor extends EventDispatcher
     var vy1:int = vy;
     if (vy < 0) {
       // move toward a nearby ladder.
-      var d0:int = scene.getDistanceX(bounds, -1, TileMap.isgrabbable);
-      var d1:int = scene.getDistanceX(bounds, +1, TileMap.isgrabbable);
-      if (0 < d0 && 0 < d1) {
-	vx1 = -1;
-	vy1 = 0;
-      } else if (d0 < 0 && d1 < 0) {
-	vx1 = +1;
+      var vxladder:int = scene.hasLadderNearby(bounds);
+      if (vxladder != 0) {
+	vx1 = vxladder;
 	vy1 = 0;
       }
     } else if (0 < vy) {
       // move toward a nearby hole.
-      var r:Rectangle = bounds;
-      r.x += r.width/2;
-      r.y += r.height;
-      r.height = 1;
-      var h1:Boolean = scene.scanBlockX(r, TileMap.isobstacle);
-      r.width = -r.width;
-      var h0:Boolean = scene.scanBlockX(r, TileMap.isobstacle);
-      if (h0 && !h1) {
-	vx1 = +1;
-	vy1 = 0;
-      } else if (!h0 && h1) {
-	vx1 = -1;
+      var vxhole:int = scene.hasHoleNearby(bounds);
+      if (vxhole != 0) {
+	vx1 = vxhole;
 	vy1 = 0;
       }
     }
-    var x:int = pos.x;
-    var y:int = pos.y;
+    pos.x += scene.getDistanceX(bounds, speed*vx1, TileMap.isobstacle);
     if (scene.scanBlockY(bounds, TileMap.isgrabbable) ||
 	0 < vy1 && scene.getDistanceY(bounds, vy1, TileMap.isgrabbable) == 0) {
       // climbing
       vg = 0;
-      y += scene.getDistanceY(bounds, speed*vy1, TileMap.isobstacle);
+      pos.y += scene.getDistanceY(bounds, speed*vy1, TileMap.isobstacle);
     } else {
       // falling
       vg = scene.getDistanceY(bounds, vg+gravity, TileMap.isstoppable);
-      y += vg;
+      pos.y += vg;
     }
-    x += scene.getDistanceX(bounds, speed*vx1, TileMap.isobstacle);
-    pos.x = x;
-    pos.y = y;
     if (vx1 != 0 || vy1 != 0) {
       skin.setDirection(vx1, vy1);
     }
@@ -1409,7 +1427,7 @@ class Person extends Actor
       var p:Point = plan.getBlockCoords(pos);
       var e:PlanEntry = plan.getEntry(p.x-plan.center.x, p.y-plan.center.y);
       if (e != null) {
-	Main.log("e="+e.x+","+e.y);
+	//Main.log("e="+e.x+","+e.y);
       	if (e.next != null) {
 	  var dx:int = e.next.x-e.x;
 	  var dy:int = e.next.y-e.y;
