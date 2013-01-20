@@ -1028,10 +1028,9 @@ class TileMap extends Bitmap
     return false;
   }
 
-  // createPlan(dst, b, width, height)
-  public function createPlan(dst:Point, b:Rectangle, width:int, height:int):PlanMap
+  // fillPlan(plan, b)
+  public function fillPlan(plan:PlanMap, b:Rectangle):void
   {
-    var plan:PlanMap = new PlanMap(blocksize, dst, width, height);
     var r0:Rectangle = plan.getBlockRect(0, 0);
     var dx0:int = Math.floor((r0.width/2+b.x)/blocksize);
     var dy0:int = Math.floor((r0.height/2+b.y)/blocksize);
@@ -1100,7 +1099,7 @@ class TileMap extends Bitmap
       }
       //queue.sortOn("cost", Array.DESCENDING);
     }
-    return plan;
+    return;
   }
 }
 
@@ -1186,7 +1185,10 @@ class Scene extends Sprite
   // createPlan(dst, bounds)
   public function createPlan(dst:Point, bounds:Rectangle):PlanMap
   {
-    return tilemap.createPlan(dst, bounds, window.width/2, window.height/2);
+    var plan:PlanMap = new PlanMap(tilemap.blocksize, dst, 
+				   window.width/2, window.height/2);
+    tilemap.fillPlan(plan, bounds);
+    return plan;
   }
 
   // translatePoint(p)
@@ -1423,26 +1425,38 @@ class Person extends Actor
   {
     super.update();
     if (target != null) {
+      // Get a macro-level planning.
       plan = scene.createPlan(target.pos, skin.bounds);
       var p:Point = plan.getBlockCoords(pos);
-      var e:PlanEntry = plan.getEntry(p.x-plan.center.x, p.y-plan.center.y);
+      p.x -= plan.center.x;
+      p.y -= plan.center.y;
+      var e:PlanEntry = plan.getEntry(p.x, p.y);
+      var dx:int = 0, dy:int = 0;
       if (e != null) {
-	//Main.log("e="+e.x+","+e.y);
+	// Micro-level (greedy) planning.
       	if (e.next != null) {
-	  var dx:int = e.next.x-e.x;
-	  var dy:int = e.next.y-e.y;
-	  if (dy < 0) { 
-	    dy = -1; 
-	  } else if (0 < dy) {
-	    dy = +1;
-	  } else if (dx < 0) { 
-	    dx = -1; 
-	  } else if (0 < dx) {
+	  var r:Rectangle = plan.getBlockRect(e.next.x, e.next.y);
+	  var x1:int = r.x+r.width/2;
+	  var y1:int = r.y+r.height/2;
+	  if (x1 < pos.x) { 
+	    dx = -1;
+	  } else if (pos.x < x1) {
 	    dx = +1;
 	  }
-	  move(dx, dy);
+	  if (scene.getDistanceX(bounds, speed*dx, TileMap.isobstacle) == 0) {
+	    dx = 0;
+	  }
+	  if (dx == 0) {
+	    if (y1 < pos.y) { 
+	      dy = -1; 
+	    } else if (pos.y < y1) {
+	      dy = +1;
+	    }
+	  }
+	  Main.log("g="+(x1-p.x)+","+(y1-p.y)+" d="+dx+","+dy);
 	}
       }
+      move(dx, dy);
     } else {
       if (Math.random() < 0.05) {
 	move(int(Math.random()*3)-1, 0);

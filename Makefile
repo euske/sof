@@ -24,7 +24,7 @@ $(TARGET): src/Main.as
 
 live: $(TARGET)
 	$(SSHON)
-	$(RSYNC) $(TARGET) tabesugi.net:/cgi/host/live.tabesugi.net/live.swf
+	$(RSYNC) $(TARGET) live.tabesugi.net:public/cgi/root/host/live.tabesugi.net/live.swf
 
 $(WEBDIR):
 	$(SSHON)
