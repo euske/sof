@@ -697,26 +697,24 @@ class PlanMap
 {
   public var blocksize:int;
   public var center:Point;
-  public var maxcost:int;
   public var x0:int, y0:int, x1:int, y1:int;
-  private var width:int;
   private var a:Array;
 
-  public function PlanMap(blocksize:int, center0:Point, width0:int, height0:int)
+  public function PlanMap(blocksize:int, center:Point, width:int, height:int)
   {
     this.blocksize = blocksize;
-    this.center = getBlockCoords(center0);
-    this.maxcost = (width0+height0+1)*2;
-    this.x0 = -Math.floor(width0/blocksize);
-    this.y0 = -Math.floor(height0/blocksize);
-    this.x1 = +Math.floor(width0/blocksize);
-    this.y1 = +Math.floor(height0/blocksize);
-    this.width = (x1-x0+1);
+    this.center = center;
+    this.x0 = Math.floor((center.x-width)/blocksize);
+    this.y0 = Math.floor((center.y-height)/blocksize);
+    this.x1 = Math.floor((center.x+width+blocksize-1)/blocksize);
+    this.y1 = Math.floor((center.y+height+blocksize-1)/blocksize);
     this.a = new Array(y1-y0+1);
+    var w:int = (x1-x0+1);
+    var m:int = (width+height+1)*2;
     for (var y:int = y0; y <= y1; y++) {
-      var b:Array = new Array(width);
+      var b:Array = new Array(w);
       for (var x:int = x0; x <= x1; x++) {
-	b[x-x0] = new PlanEntry(x, y, 0, maxcost, null);
+	b[x-x0] = new PlanEntry(x, y, 0, m, null);
       }
       a[y-y0] = b;
     }
@@ -730,8 +728,7 @@ class PlanMap
 
   public function getBlockRect(x:int, y:int):Rectangle
   {
-    return new Rectangle((x+center.x)*blocksize, (y+center.y)*blocksize, 
-			 blocksize, blocksize);
+    return new Rectangle(x*blocksize, y*blocksize, blocksize, blocksize);
   }
 
   public function getEntry(x:int, y:int):PlanEntry
@@ -748,9 +745,6 @@ class PlanVisualizer extends Shape
   public function update(plan:PlanMap):void
   {
     graphics.clear();
-    graphics.beginFill(0xffffff);
-    graphics.drawRect(0, 0, 10, 10);
-    graphics.endFill();
     for (var y:int = plan.y0; y <= plan.y1; y++) {
       for (var x:int = plan.x0; x <= plan.x1; x++) {
 	var e:PlanEntry = plan.getEntry(x, y);
@@ -1031,23 +1025,22 @@ class TileMap extends Bitmap
   // fillPlan(plan, b)
   public function fillPlan(plan:PlanMap, b:Rectangle):void
   {
-    var r0:Rectangle = plan.getBlockRect(0, 0);
+    var p:Point = plan.getBlockCoords(plan.center);
+    var r0:Rectangle = plan.getBlockRect(p.x, p.y);
     var dx0:int = Math.floor((r0.width/2+b.x)/blocksize);
     var dy0:int = Math.floor((r0.height/2+b.y)/blocksize);
     var dx1:int = Math.floor((r0.width/2+b.x+b.width-1)/blocksize);
     var dy1:int = Math.floor((r0.height/2+b.y+b.height-1)/blocksize);
-    var e1:PlanEntry = plan.getEntry(0, 0);
+    var e1:PlanEntry = plan.getEntry(p.x, p.y);
     e1.cost = 0;
     var queue:Array = [ e1 ];
     while (0 < queue.length) {
       var e0:PlanEntry = queue.pop();
       var cost:int = e0.cost+1;
-      var x0:int = e0.x+plan.center.x;
-      var y0:int = e0.y+plan.center.y;
-      if (hasBlock(x0+dx0, x0+dx1, y0+dy0, y0+dy1, isobstacle)) continue;
+      if (hasBlock(e0.x+dx0, e0.x+dx1, e0.y+dy0, e0.y+dy1, isobstacle)) continue;
 
       // try walking right.
-      if (plan.x0 < e0.x && isstoppable(getBlock(x0-1, y0+dy1+1))) {
+      if (plan.x0 < e0.x && isstoppable(getBlock(e0.x-1, e0.y+dy1+1))) {
 	e1 = plan.getEntry(e0.x-1, e0.y);
 	if (cost < e1.cost) {
 	  e1.action = PlanEntry.WALK;
@@ -1057,7 +1050,7 @@ class TileMap extends Bitmap
 	}
       }
       // try walking left.
-      if (e0.x < plan.x1 && isstoppable(getBlock(x0+1, y0+dy1+1))) {
+      if (e0.x < plan.x1 && isstoppable(getBlock(e0.x+1, e0.y+dy1+1))) {
 	e1 = plan.getEntry(e0.x+1, e0.y);
 	if (cost < e1.cost) {
 	  e1.action = PlanEntry.WALK;
@@ -1067,7 +1060,7 @@ class TileMap extends Bitmap
 	}
       }
       // try falling.
-      if (plan.y0 < e0.y && !isstoppable(getBlock(x0, y0+dy1))) {
+      if (plan.y0 < e0.y && !isstoppable(getBlock(e0.x, e0.y+dy1))) {
 	e1 = plan.getEntry(e0.x, e0.y-1);
 	if (cost < e1.cost) {
 	  e1.action = PlanEntry.FALL;
@@ -1077,10 +1070,10 @@ class TileMap extends Bitmap
 	}
       }
       // try climbing down.
-      if (plan.y0 < e0.y && isgrabbable(getBlock(x0, y0+dy1))) {
+      if (plan.y0 < e0.y && isgrabbable(getBlock(e0.x, e0.y+dy1))) {
 	e1 = plan.getEntry(e0.x, e0.y-1);
 	if (cost < e1.cost) {
-	  e1.action = PlanEntry.JUMP;
+	  e1.action = PlanEntry.CLIMB;
 	  e1.cost = cost;
 	  e1.next = e0;
 	  queue.push(e1);
@@ -1088,7 +1081,7 @@ class TileMap extends Bitmap
       }
       // try climbing up.
       if (e0.y < plan.y1 && 
-	  hasBlock(x0+dx0, x0+dx1, y0+dy0+1, y0+dy1+1, isgrabbable)) {
+	  hasBlock(e0.x+dx0, e0.x+dx1, e0.y+dy0+1, e0.y+dy1+1, isgrabbable)) {
 	e1 = plan.getEntry(e0.x, e0.y+1);
 	if (cost < e1.cost) {
 	  e1.action = PlanEntry.CLIMB;
@@ -1306,9 +1299,9 @@ class Actor extends EventDispatcher
   private var vx:int = 0, vy:int = 0, vg:int = 0;
   private var phase:Number = 0;
 
-  public const gravity:int = 4;
+  public const gravity:int = 2;
   public const speed:int = 8;
-  public const jumpacc:int = -40;
+  public const jumpacc:int = -24;
 
   public static const JUMP:String = "JUMP";
   public static const DIE:String = "DIE";
@@ -1428,8 +1421,6 @@ class Person extends Actor
       // Get a macro-level planning.
       plan = scene.createPlan(target.pos, skin.bounds);
       var p:Point = plan.getBlockCoords(pos);
-      p.x -= plan.center.x;
-      p.y -= plan.center.y;
       var e:PlanEntry = plan.getEntry(p.x, p.y);
       var dx:int = 0, dy:int = 0;
       if (e != null) {
@@ -1453,7 +1444,7 @@ class Person extends Actor
 	      dy = +1;
 	    }
 	  }
-	  Main.log("g="+(x1-p.x)+","+(y1-p.y)+" d="+dx+","+dy);
+	  Main.log("g="+(x1-pos.x)+","+(y1-pos.y)+" d="+dx+","+dy);
 	}
       }
       move(dx, dy);
