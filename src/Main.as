@@ -30,9 +30,14 @@ import flash.geom.Rectangle;
 
 //  Main 
 //
-[SWF(width="640", height="480", backgroundColor="#ffffff", frameRate=24)]
+[SWF(width="640", height="480", backgroundColor="#000000", frameRate=24)]
 public class Main extends Sprite
 {
+  // Background image: 
+  [Embed(source="../assets/background.png", mimeType="image/png")]
+  private static const BackgroundCls:Class;
+  private static const background:Bitmap = new BackgroundCls();
+  
   // Skin image: http://www.minecraft.net/skin/USERNAME
   //[Embed(source="Skinzones.png", mimeType="image/png")]
   [Embed(source="../skins/FFSTV.png", mimeType="image/png")]
@@ -48,28 +53,6 @@ public class Main extends Sprite
   private static const Image3Cls:Class;
   private static const image3:Bitmap = new Image3Cls();
 
-  // Font
-  [Embed(source="../assets/awesomefont.png", mimeType="image/png")]
-  private static const AwesomeFontGlyphsCls:Class;
-  private static const awesomefontglyphs:Bitmap = new AwesomeFontGlyphsCls();
-  private static const awesomefontwidths:Array = [
-      0, 0, 0, 0, 0, 0, 0, 0,						  
-      0, 0, 0, 0, 0, 0, 0, 0,						  
-      0, 0, 0, 0, 0, 0, 0, 0,						  
-      0, 0, 0, 0, 0, 0, 0, 0,						  
-      0, 4, 6, 10, 16, 20, 29, 36, 
-      38, 42, 46, 52, 58, 61, 67, 69, 
-      76, 80, 84, 88, 92, 96, 100, 104, 
-      108, 112, 116, 118, 121, 126, 132, 137, 
-      141, 149, 155, 161, 167, 173, 178, 184, 
-      190, 196, 202, 208, 214, 220, 228, 234, 
-      240, 246, 253, 259, 265, 273, 279, 285, 
-      293, 301, 307, 313, 315, 322, 326, 332, 
-      338, 348, 353, 357, 362, 366, 371, 376, 
-      380, 384, 386, 390, 394, 396, 402, 406, 
-      411, 415, 420, 425, 429, 433, 438, 442, 
-      448, 452, 456, 461, 465, 474, 479, 489];
-  
   // Jump sound
   [Embed(source="../assets/jump1.mp3")]
   private static const JumpSoundCls:Class;
@@ -89,20 +72,16 @@ public class Main extends Sprite
   private static const mapimage:Bitmap = new MapImageCls();
 
   private static const images:Array = [ image1, image2, image3 ];
-  
-  private static var awesomefont:BitmapFont;
 
   // Main()
   public function Main()
   {
-    loginit();
+    //loginit();
     stage.addEventListener(KeyboardEvent.KEY_DOWN, OnKeyDown);
     stage.addEventListener(KeyboardEvent.KEY_UP, OnKeyUp);
     stage.addEventListener(Event.ENTER_FRAME, OnEnterFrame);
     stage.scaleMode = StageScaleMode.NO_SCALE;
     init();
-    awesomefont = new BitmapFont(awesomefontglyphs.bitmapData, awesomefontwidths);
-    addChild(awesomefont.render("Video Games Awesome", 0xff0000));
   }
 
   /// Logging functions
@@ -168,17 +147,19 @@ public class Main extends Sprite
   {
     Main.log("init");
 
-    graphics.beginFill(0x000000);
-    graphics.drawRect(0, 0, stage.stageWidth, stage.stageHeight);
-    graphics.endFill();
+    background.alpha = 0.7;
+    addChild(background);
     
     tilemap = new TileMap(mapimage.bitmapData, blocksimage.bitmapData, 32);
+    addChild(tilemap);
+
     scene = new Scene(stage.stageWidth, stage.stageHeight, tilemap);
 
     player = new Player(scene, image0.bitmapData);
     player.bounds = tilemap.getBlockRect(3, 3);
     player.addEventListener(ActorActionEvent.ACTION, onActorAction);
     player.addEventListener(ActorActionEvent.ACTION, onPlayerAction);
+    player.speak("Video Games AWESOME!");
     scene.add(player);
 
     for (var i:int = 0; i < images.length; i++) {
@@ -190,7 +171,6 @@ public class Main extends Sprite
     }
 
     addChild(scene);
-    //playVideo(new Frage1VideoCls());
     
     visualizer = new PlanVisualizer();
     visualizer.x = 100;
@@ -365,7 +345,7 @@ class BitmapFont
 
   // render(text, color)
   //   Creates a Bitmap with a given string rendered.
-  public function render(text:String, color:uint=0xffffff):Bitmap
+  public function render(text:String, color:uint=0xffffff, scale:int=1):Bitmap
   {
     var width:int = getTextWidth(text);
     var data:BitmapData = new BitmapData(width, height, true, 0xffffffff);
@@ -381,7 +361,10 @@ class BitmapFont
     var ct:ColorTransform = new ColorTransform();
     ct.color = color;
     data.colorTransform(data.rect, ct);
-    return new Bitmap(data);
+    var bitmap:Bitmap = new Bitmap(data);
+    bitmap.width *= scale;
+    bitmap.height *= scale;
+    return bitmap;
   }
 
   private function getCharWidth(c:int):int
@@ -390,6 +373,38 @@ class BitmapFont
     return widths[c+1] - widths[c];
   }
 
+}
+
+
+//  AwesomeFont
+// 
+class AwesomeFont extends BitmapFont
+{
+  [Embed(source="../assets/awesomefont.png", mimeType="image/png")]
+  private static const AwesomeFontGlyphsCls:Class;
+  private static const awesomefontglyphs:Bitmap = new AwesomeFontGlyphsCls();
+  private static const awesomefontwidths:Array = [
+      0, 0, 0, 0, 0, 0, 0, 0,						  
+      0, 0, 0, 0, 0, 0, 0, 0,						  
+      0, 0, 0, 0, 0, 0, 0, 0,						  
+      0, 0, 0, 0, 0, 0, 0, 0,						  
+      0, 4, 6, 10, 16, 20, 29, 36, 
+      38, 42, 46, 52, 58, 61, 67, 69, 
+      76, 80, 84, 88, 92, 96, 100, 104, 
+      108, 112, 116, 118, 121, 126, 132, 137, 
+      141, 149, 155, 161, 167, 173, 178, 184, 
+      190, 196, 202, 208, 214, 220, 228, 234, 
+      240, 246, 253, 259, 265, 273, 279, 285, 
+      293, 301, 307, 313, 315, 322, 326, 332, 
+      338, 348, 353, 357, 362, 366, 371, 376, 
+      380, 384, 386, 390, 394, 396, 402, 406, 
+      411, 415, 420, 425, 429, 433, 438, 442, 
+      448, 452, 456, 461, 465, 474, 479, 489];
+
+  public function AwesomeFont()
+  {
+    super(awesomefontglyphs.bitmapData, awesomefontwidths);
+  }
 }
 
 
@@ -465,7 +480,8 @@ class MCSkin extends Shape3D
     this.vz = vz;
   }
 
-  private var vx:int = 1, vz:int = 0;
+  public var vx:int = 1, vz:int = 0;
+  
   private var p0:Number = 1.0;
   private var q0:Number = 0.0;
   private var p1:Number = 1.0;
@@ -664,6 +680,45 @@ class MCSkin extends Shape3D
 
     graphics.lineStyle(0, 0xff0000);
     graphics.drawRect(bounds.x, bounds.y, bounds.width, bounds.height);
+  }
+}
+
+
+//  MCBalloon
+//
+class MCBalloon extends Sprite
+{
+  public var font:BitmapFont;
+  public const scale:int = 2;
+  public const marginWidth:int = 10;
+  public const cornerWidth:int = 10;
+
+  private static var awesomefont:BitmapFont = new AwesomeFont();
+
+  public function MCBalloon()
+  {
+    this.font = awesomefont;
+  }
+  
+  public function setText(text:String):void
+  {
+    graphics.clear();
+    removeChildren();
+    if (text != null) {
+      var w:int = font.getTextWidth(text);
+      graphics.lineStyle(4, 0xffffff);
+      graphics.beginFill(0x444444);
+      graphics.drawRoundRect(0, 0, 
+			     w*scale + marginWidth*2,
+			     font.height*scale + marginWidth*2,
+			     cornerWidth, cornerWidth);
+      graphics.endFill();
+
+      var glyphs:Bitmap = font.render(text, 0xffff00, scale);
+      glyphs.x = marginWidth;
+      glyphs.y = marginWidth;
+      addChild(glyphs);
+    }
   }
 }
 
@@ -1113,13 +1168,13 @@ class Scene extends Sprite
     this.tilemap = tilemap;
     this.mapsize = new Point(tilemap.mapwidth*tilemap.blocksize,
 			     tilemap.mapheight*tilemap.blocksize);
-    addChild(tilemap);
   }
 
   // add(actor)
   public function add(actor:Actor):void
   {
     addChild(actor.skin);
+    addChild(actor.balloon);
     actors.push(actor);
   }
 
@@ -1127,6 +1182,7 @@ class Scene extends Sprite
   public function remove(actor:Actor):void
   {
     removeChild(actor.skin);
+    removeChild(actor.balloon);
     actors.splice(actors.indexOf(actor), 1);
   }
 
@@ -1294,7 +1350,8 @@ class Actor extends EventDispatcher
 {
   public var scene:Scene;
   public var skin:MCSkin;
-
+  public var balloon:MCBalloon;
+  
   public var pos:Point;
   private var vx:int = 0, vy:int = 0, vg:int = 0;
   private var phase:Number = 0;
@@ -1311,6 +1368,7 @@ class Actor extends EventDispatcher
   {
     this.scene = scene;
     this.skin = new MCSkin(image);
+    this.balloon = new MCBalloon();
   }
 
   // bounds
@@ -1388,6 +1446,18 @@ class Actor extends EventDispatcher
     skin.x = p.x;
     skin.y = p.y;
     skin.repaint();
+    if (skin.vx < 0) {
+      balloon.x = p.x+skin.bounds.x-balloon.width-10;
+    } else {
+      balloon.x = p.x+skin.bounds.x+skin.bounds.width+20;
+    }
+    balloon.y = p.y+skin.bounds.y-balloon.height/2;
+  }
+
+  // speak()
+  public virtual function speak(text:String=null):void
+  {
+    balloon.setText(text);
   }
 }
 
@@ -1455,6 +1525,19 @@ class Person extends Actor
 	move(0, int(Math.random()*3)-1);
       } else if (Math.random() < 0.1) {
 	jump();
+      }
+    }
+    if (Math.random() < 0.05) {
+      switch (int(Math.random()*3)) {
+      case 0:
+	speak("Derp.");
+	break;
+      case 1:
+	speak("SNARF!");
+	break;
+      default:
+	speak();
+	break;
       }
     }
   }
