@@ -40,16 +40,16 @@ public class Main extends Sprite
   
   // Skin image: http://www.minecraft.net/skin/USERNAME
   //[Embed(source="Skinzones.png", mimeType="image/png")]
-  [Embed(source="../skins/FFSTV.png", mimeType="image/png")]
+  [Embed(source="../assets/skins/FFSTV.png", mimeType="image/png")]
   private static const Image0Cls:Class;
   private static const image0:Bitmap = new Image0Cls();
-  [Embed(source="../skins/MissBlow.png", mimeType="image/png")]
+  [Embed(source="../assets/skins/MissBlow.png", mimeType="image/png")]
   private static const Image1Cls:Class;
   private static const image1:Bitmap = new Image1Cls();
-  [Embed(source="../skins/Snarfy_Snarf.png", mimeType="image/png")]
+  [Embed(source="../assets/skins/Snarfy_Snarf.png", mimeType="image/png")]
   private static const Image2Cls:Class;
   private static const image2:Bitmap = new Image2Cls();
-  [Embed(source="../skins/Deakwanda.png", mimeType="image/png")]
+  [Embed(source="../assets/skins/Deakwanda.png", mimeType="image/png")]
   private static const Image3Cls:Class;
   private static const image3:Bitmap = new Image3Cls();
 
