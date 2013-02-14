@@ -61,10 +61,10 @@ public class Main extends Sprite
   [Embed(source="../../assets/Frage1.flv", mimeType="application/octet-stream")]
   private static const Frage1VideoCls:Class;
 
-  // Block images: http://www.minecraftwiki.net/wiki/File:BlockCSS.png
-  [Embed(source="../../assets/blocks.png", mimeType="image/png")]
-  private static const BlocksImageCls:Class;
-  private static const blocksimage:Bitmap = new BlocksImageCls();
+  // Tile images: http://www.minecraftwiki.net/wiki/File:BlockCSS.png
+  [Embed(source="../../assets/tiles.png", mimeType="image/png")]
+  private static const TilesImageCls:Class;
+  private static const tilesimage:Bitmap = new TilesImageCls();
 
   [Embed(source="../../assets/map.png", mimeType="image/png")]
   private static const MapImageCls:Class;
@@ -149,13 +149,13 @@ public class Main extends Sprite
     background.alpha = 0.7;
     addChild(background);
     
-    tilemap = new TileMap(mapimage.bitmapData, blocksimage.bitmapData, 32);
+    tilemap = new TileMap(mapimage.bitmapData, tilesimage.bitmapData, 32);
     addChild(tilemap);
 
     scene = new Scene(stage.stageWidth, stage.stageHeight, tilemap);
 
     player = new Player(scene, image0.bitmapData);
-    player.bounds = tilemap.getBlockRect(3, 3);
+    player.bounds = tilemap.getTileRect(3, 3);
     player.addEventListener(ActorActionEvent.ACTION, onActorAction);
     player.addEventListener(ActorActionEvent.ACTION, onPlayerAction);
     player.speak("Video Games AWESOME!");
@@ -163,7 +163,7 @@ public class Main extends Sprite
 
     for (var i:int = 0; i < images.length; i++) {
       var actor:Person = new Person(scene, images[i].bitmapData);
-      actor.bounds = tilemap.getBlockRect(i+5, i+5);
+      actor.bounds = tilemap.getTileRect(i+5, i+5);
       actor.addEventListener(ActorActionEvent.ACTION, onActorAction);
       if (i == 0) actor.setTarget(player);
       scene.add(actor);
@@ -333,13 +333,13 @@ class Person extends Actor
     if (target != null) {
       // Get a macro-level planning.
       plan = scene.createPlan(target.pos, skin.bounds);
-      var p:Point = plan.getBlockCoords(pos);
+      var p:Point = plan.getTileCoords(pos);
       var e:PlanEntry = plan.getEntry(p.x, p.y);
       var dx:int = 0, dy:int = 0;
       if (e != null) {
 	// Micro-level (greedy) planning.
       	if (e.next != null) {
-	  var r:Rectangle = plan.getBlockRect(e.next.x, e.next.y);
+	  var r:Rectangle = plan.getTileRect(e.next.x, e.next.y);
 	  var x1:int = r.x+r.width/2;
 	  var y1:int = r.y+r.height/2;
 	  if (x1 < pos.x) { 

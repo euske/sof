@@ -52,8 +52,8 @@ public class Tile
   public static var isstoppable:Function = 
     (function (b:int):Boolean { return b != NONE; });
   
-  // pixelToBlockId(c)
-  public static function pixelToBlockId(c:uint):int
+  // pixelToTileId(c)
+  public static function pixelToTileId(c:uint):int
   {
     switch (c) {
     case 0x000000: // 0

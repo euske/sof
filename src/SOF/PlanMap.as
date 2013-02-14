@@ -8,19 +8,19 @@ import SOF.PlanEntry;
 // 
 public class PlanMap
 {
-  public var blocksize:int;
+  public var tilesize:int;
   public var center:Point;
   public var x0:int, y0:int, x1:int, y1:int;
   private var a:Array;
 
-  public function PlanMap(blocksize:int, center:Point, width:int, height:int)
+  public function PlanMap(tilesize:int, center:Point, width:int, height:int)
   {
-    this.blocksize = blocksize;
+    this.tilesize = tilesize;
     this.center = center;
-    this.x0 = Math.floor((center.x-width)/blocksize);
-    this.y0 = Math.floor((center.y-height)/blocksize);
-    this.x1 = Math.floor((center.x+width+blocksize-1)/blocksize);
-    this.y1 = Math.floor((center.y+height+blocksize-1)/blocksize);
+    this.x0 = Math.floor((center.x-width)/tilesize);
+    this.y0 = Math.floor((center.y-height)/tilesize);
+    this.x1 = Math.floor((center.x+width+tilesize-1)/tilesize);
+    this.y1 = Math.floor((center.y+height+tilesize-1)/tilesize);
     this.a = new Array(y1-y0+1);
     var w:int = (x1-x0+1);
     var m:int = (width+height+1)*2;
@@ -33,15 +33,14 @@ public class PlanMap
     }
   }
 
-  public function getBlockCoords(p:Point):Point
+  public function getTileCoords(p:Point):Point
   {
-    return new Point(Math.floor(p.x/blocksize), 
-		     Math.floor(p.y/blocksize));
+    return new Point(Math.floor(p.x/tilesize), Math.floor(p.y/tilesize));
   }
 
-  public function getBlockRect(x:int, y:int):Rectangle
+  public function getTileRect(x:int, y:int):Rectangle
   {
-    return new Rectangle(x*blocksize, y*blocksize, blocksize, blocksize);
+    return new Rectangle(x*tilesize, y*tilesize, tilesize, tilesize);
   }
 
   public function getEntry(x:int, y:int):PlanEntry

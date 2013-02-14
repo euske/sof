@@ -20,8 +20,8 @@ public class Scene extends Sprite
   {
     this.window = new Rectangle(0, 0, width, height);
     this.tilemap = tilemap;
-    this.mapsize = new Point(tilemap.mapwidth*tilemap.blocksize,
-			     tilemap.mapheight*tilemap.blocksize);
+    this.mapsize = new Point(tilemap.mapwidth*tilemap.tilesize,
+			     tilemap.mapheight*tilemap.tilesize);
   }
 
   // add(actor)
@@ -88,7 +88,7 @@ public class Scene extends Sprite
   // createPlan(dst, bounds)
   public function createPlan(dst:Point, bounds:Rectangle):PlanMap
   {
-    var plan:PlanMap = new PlanMap(tilemap.blocksize, dst, 
+    var plan:PlanMap = new PlanMap(tilemap.tilesize, dst, 
 				   window.width/2, window.height/2);
     tilemap.fillPlan(plan, bounds);
     return plan;
@@ -100,16 +100,16 @@ public class Scene extends Sprite
     return new Point(p.x-window.x, p.y-window.y);
   }
 
-  // scanBlockX(r)
-  public function scanBlockX(r:Rectangle, f:Function):Boolean
+  // scanTileX(r)
+  public function scanTileX(r:Rectangle, f:Function):Boolean
   {
-    return tilemap.scanBlockX(r, f) != tilemap.NOTFOUND;
+    return tilemap.scanTileX(r, f) != tilemap.NOTFOUND;
   }
 
-  // scanBlockY(r)
-  public function scanBlockY(r:Rectangle, f:Function):Boolean
+  // scanTileY(r)
+  public function scanTileY(r:Rectangle, f:Function):Boolean
   {
-    return tilemap.scanBlockY(r, f) != tilemap.NOTFOUND;
+    return tilemap.scanTileY(r, f) != tilemap.NOTFOUND;
   }
 
   // getDistanceX(r)
@@ -119,10 +119,10 @@ public class Scene extends Sprite
     var x:int = tilemap.NOTFOUND;
     if (vx < 0) {
       r = new Rectangle(src.x, src.y, vx, src.height);
-      x = tilemap.scanBlockX(r, f);
+      x = tilemap.scanTileX(r, f);
     } else if (0 < vx) {
       r = new Rectangle(src.x+src.width, src.y, vx, src.height);
-      x = tilemap.scanBlockX(r, f);
+      x = tilemap.scanTileX(r, f);
     }
     if (x != tilemap.NOTFOUND) {
       vx = x - r.x;
@@ -137,10 +137,10 @@ public class Scene extends Sprite
     var y:int = tilemap.NOTFOUND;
     if (vy < 0) {
       r = new Rectangle(src.x, src.y, src.width, vy);
-      y = tilemap.scanBlockY(r, f);
+      y = tilemap.scanTileY(r, f);
     } else if (0 < vy) {
       r = new Rectangle(src.x, src.y+src.height, src.width, vy);
-      y = tilemap.scanBlockY(r, f);
+      y = tilemap.scanTileY(r, f);
     }
     if (y != tilemap.NOTFOUND) {
       vy = y - r.y;
@@ -151,10 +151,10 @@ public class Scene extends Sprite
   // hasLadderNearby(r)
   public function hasLadderNearby(r:Rectangle):int
   {
-    var r0:Rectangle = new Rectangle(r.x, r.y, -tilemap.blocksize/2, r.height);
-    var r1:Rectangle = new Rectangle(r.x+r.width, r.y, +tilemap.blocksize/2, r.height);
-    var h0:Boolean = scanBlockX(r0, Tile.isgrabbable);
-    var h1:Boolean = scanBlockX(r1, Tile.isgrabbable);
+    var r0:Rectangle = new Rectangle(r.x, r.y, -tilemap.tilesize/2, r.height);
+    var r1:Rectangle = new Rectangle(r.x+r.width, r.y, +tilemap.tilesize/2, r.height);
+    var h0:Boolean = scanTileX(r0, Tile.isgrabbable);
+    var h1:Boolean = scanTileX(r1, Tile.isgrabbable);
     if (!h0 && h1) {
       return +1;
     } else if (h0 && !h1) {
@@ -167,10 +167,10 @@ public class Scene extends Sprite
   // hasHoleNearby(r)
   public function hasHoleNearby(r:Rectangle):int
   {
-    var r0:Rectangle = new Rectangle(r.x, r.y+r.height, -tilemap.blocksize/2, 1);
-    var r1:Rectangle = new Rectangle(r.x+r.width, r.y+r.height, +tilemap.blocksize/2, 1);
-    var h0:Boolean = scanBlockX(r0, Tile.isnonobstacle);
-    var h1:Boolean = scanBlockX(r1, Tile.isnonobstacle);
+    var r0:Rectangle = new Rectangle(r.x, r.y+r.height, -tilemap.tilesize/2, 1);
+    var r1:Rectangle = new Rectangle(r.x+r.width, r.y+r.height, +tilemap.tilesize/2, 1);
+    var h0:Boolean = scanTileX(r0, Tile.isnonobstacle);
+    var h1:Boolean = scanTileX(r1, Tile.isnonobstacle);
     if (!h0 && h1) {
       return +1;
     } else if (h0 && !h1) {

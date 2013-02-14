@@ -89,7 +89,7 @@ public class Actor extends EventDispatcher
       }
     }
     pos.x += scene.getDistanceX(bounds, speed*vx1, Tile.isobstacle);
-    if (scene.scanBlockY(bounds, Tile.isgrabbable) ||
+    if (scene.scanTileY(bounds, Tile.isgrabbable) ||
 	0 < vy1 && scene.getDistanceY(bounds, vy1, Tile.isgrabbable) == 0) {
       // climbing
       vg = 0;

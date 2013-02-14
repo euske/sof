@@ -13,20 +13,20 @@ import SOF.PlanMap;
 public class TileMap extends Bitmap
 {
   public var map:BitmapData;
-  public var blocks:BitmapData;
-  public var blocksize:int;
+  public var tiles:BitmapData;
+  public var tilesize:int;
   public const NOTFOUND:int = -999;
 
   private var prevrect:Rectangle;
 
-  // TileMap(map, blocks, blocksize, width, height)
+  // TileMap(map, tiles, tilesize, width, height)
   public function TileMap(map:BitmapData, 
-			  blocks:BitmapData,
-			  blocksize:int)
+			  tiles:BitmapData,
+			  tilesize:int)
   {
     this.map = map;
-    this.blocks = blocks;
-    this.blocksize = blocksize;
+    this.tiles = tiles;
+    this.tilesize = tilesize;
     this.prevrect = new Rectangle(-1,-1,0,0);
   }
 
@@ -44,87 +44,87 @@ public class TileMap extends Bitmap
   // repaint(window)
   public function repaint(window:Rectangle):void
   {
-    var x0:int = Math.floor(window.x/blocksize);
-    var y0:int = Math.floor(window.y/blocksize);
-    var mw:int = Math.floor(window.width/blocksize)+1;
-    var mh:int = Math.floor(window.height/blocksize)+1;
+    var x0:int = Math.floor(window.x/tilesize);
+    var y0:int = Math.floor(window.y/tilesize);
+    var mw:int = Math.floor(window.width/tilesize)+1;
+    var mh:int = Math.floor(window.height/tilesize)+1;
     if (prevrect.x != x0 || prevrect.y != y0 ||
 	prevrect.width != mw || prevrect.height != mh) {
-      renderBlocks(x0, y0, mw, mh);
+      renderTiles(x0, y0, mw, mh);
       prevrect.x = x0;
       prevrect.y = y0;
       prevrect.width = mw;
       prevrect.height = mh;
     }
-    this.x = (x0*blocksize)-window.x;
-    this.y = (y0*blocksize)-window.y;
+    this.x = (x0*tilesize)-window.x;
+    this.y = (y0*tilesize)-window.y;
   }
 
-  // renderBlocks(x, y)
-  protected function renderBlocks(x0:int, y0:int, mw:int, mh:int):void
+  // renderTiles(x, y)
+  protected function renderTiles(x0:int, y0:int, mw:int, mh:int):void
   {
     if (bitmapData == null) {
-      bitmapData = new BitmapData(mw*blocksize, 
-				  mh*blocksize, 
+      bitmapData = new BitmapData(mw*tilesize, 
+				  mh*tilesize, 
 				  true, 0x00000000);
     }
     for (var dy:int = 0; dy < mh; dy++) {
       for (var dx:int = 0; dx < mw; dx++) {
-	var i:int = getBlock(x0+dx, y0+dy);
-	var src:Rectangle = new Rectangle(i*blocksize, 0, blocksize, blocksize);
-	var dst:Point = new Point(dx*blocksize, dy*blocksize);
-	bitmapData.copyPixels(blocks, src, dst);
+	var i:int = getTile(x0+dx, y0+dy);
+	var src:Rectangle = new Rectangle(i*tilesize, 0, tilesize, tilesize);
+	var dst:Point = new Point(dx*tilesize, dy*tilesize);
+	bitmapData.copyPixels(tiles, src, dst);
       }
     }
   }
 
-  // pixelToBlockId(c)
-  protected function pixelToBlockId(c:uint):int
+  // pixelToTileId(c)
+  protected function pixelToTileId(c:uint):int
   {
-    return Tile.pixelToBlockId(c);
+    return Tile.pixelToTileId(c);
   }
 
-  // getBlock(x, y)
-  private function getBlock(x:int, y:int):int
+  // getTile(x, y)
+  private function getTile(x:int, y:int):int
   {
     if (x < 0 || map.width <= x || 
 	y < 0 || map.height <= y) {
       return -1;
     }
     var c:uint = map.getPixel(x, y);
-    return pixelToBlockId(c);
+    return pixelToTileId(c);
   }
 
-  // getBlockRect(x, y)
-  public function getBlockRect(x:int, y:int):Rectangle
+  // getTileRect(x, y)
+  public function getTileRect(x:int, y:int):Rectangle
   {
-    return new Rectangle(x*blocksize, y*blocksize, blocksize, blocksize);
+    return new Rectangle(x*tilesize, y*tilesize, tilesize, tilesize);
   }
 
-  // scanBlockX(r)
-  public function scanBlockX(r:Rectangle, f:Function):int
+  // scanTileX(r)
+  public function scanTileX(r:Rectangle, f:Function):int
   {
-    var y0:int = Math.floor(r.y/blocksize);
-    var y1:int = Math.floor((r.y+r.height-1)/blocksize);
+    var y0:int = Math.floor(r.y/tilesize);
+    var y1:int = Math.floor((r.y+r.height-1)/tilesize);
     var x0:int, x1:int;
     var x:int, y:int;
     if (r.width < 0) {
-      x0 = Math.floor((r.x-1)/blocksize);
-      x1 = Math.floor((r.x+r.width)/blocksize);
+      x0 = Math.floor((r.x-1)/tilesize);
+      x1 = Math.floor((r.x+r.width)/tilesize);
       for (x = x0; x1 <= x; x--) {
 	for (y = y0; y <= y1; y++) {
-	  if (f(getBlock(x, y))) {
-	    return (x+1)*blocksize;
+	  if (f(getTile(x, y))) {
+	    return (x+1)*tilesize;
 	  }
 	}
       }
     } else if (0 < r.width) {
-      x0 = Math.floor(r.x/blocksize);
-      x1 = Math.floor((r.x+r.width-1)/blocksize);
+      x0 = Math.floor(r.x/tilesize);
+      x1 = Math.floor((r.x+r.width-1)/tilesize);
       for (x = x0; x <= x1; x++) {
 	for (y = y0; y <= y1; y++) {
-	  if (f(getBlock(x, y))) {
-	    return x*blocksize;
+	  if (f(getTile(x, y))) {
+	    return x*tilesize;
 	  }
 	}
       }
@@ -132,30 +132,30 @@ public class TileMap extends Bitmap
     return NOTFOUND;
   }
 
-  // scanBlockY(r)
-  public function scanBlockY(r:Rectangle, f:Function):int
+  // scanTileY(r)
+  public function scanTileY(r:Rectangle, f:Function):int
   {
-    var x0:int = Math.floor(r.x/blocksize);
-    var x1:int = Math.floor((r.x+r.width-1)/blocksize);
+    var x0:int = Math.floor(r.x/tilesize);
+    var x1:int = Math.floor((r.x+r.width-1)/tilesize);
     var y0:int, y1:int;
     var x:int, y:int;
     if (r.height < 0) {
-      y0 = Math.floor((r.y-1)/blocksize);
-      y1 = Math.floor((r.y+r.height)/blocksize);
+      y0 = Math.floor((r.y-1)/tilesize);
+      y1 = Math.floor((r.y+r.height)/tilesize);
       for (y = y0; y1 <= y; y--) {
 	for (x = x0; x <= x1; x++) {
-	  if (f(getBlock(x, y))) {
-	    return (y+1)*blocksize;
+	  if (f(getTile(x, y))) {
+	    return (y+1)*tilesize;
 	  }
 	}
       }
     } else if (0 < r.height) {
-      y0 = Math.floor(r.y/blocksize);
-      y1 = Math.floor((r.y+r.height-1)/blocksize);
+      y0 = Math.floor(r.y/tilesize);
+      y1 = Math.floor((r.y+r.height-1)/tilesize);
       for (y = y0; y <= y1; y++) {
 	for (x = x0; x <= x1; x++) {
-	  if (f(getBlock(x, y))) {
-	    return y*blocksize;
+	  if (f(getTile(x, y))) {
+	    return y*tilesize;
 	  }
 	}
       }
@@ -163,11 +163,11 @@ public class TileMap extends Bitmap
     return NOTFOUND;
   }
 
-  private function hasBlock(x0:int, x1:int, y0:int, y1:int, f:Function):Boolean
+  private function hasTile(x0:int, x1:int, y0:int, y1:int, f:Function):Boolean
   {
     for (var y:int = y0; y <= y1; y++) {
       for (var x:int = x0; x <= x1; x++) {
-	if (f(getBlock(x, y))) return true;
+	if (f(getTile(x, y))) return true;
       }
     }
     return false;
@@ -176,22 +176,22 @@ public class TileMap extends Bitmap
   // fillPlan(plan, b)
   public function fillPlan(plan:PlanMap, b:Rectangle):void
   {
-    var p:Point = plan.getBlockCoords(plan.center);
-    var r0:Rectangle = plan.getBlockRect(p.x, p.y);
-    var dx0:int = Math.floor((r0.width/2+b.x)/blocksize);
-    var dy0:int = Math.floor((r0.height/2+b.y)/blocksize);
-    var dx1:int = Math.floor((r0.width/2+b.x+b.width-1)/blocksize);
-    var dy1:int = Math.floor((r0.height/2+b.y+b.height-1)/blocksize);
+    var p:Point = plan.getTileCoords(plan.center);
+    var r0:Rectangle = plan.getTileRect(p.x, p.y);
+    var dx0:int = Math.floor((r0.width/2+b.x)/tilesize);
+    var dy0:int = Math.floor((r0.height/2+b.y)/tilesize);
+    var dx1:int = Math.floor((r0.width/2+b.x+b.width-1)/tilesize);
+    var dy1:int = Math.floor((r0.height/2+b.y+b.height-1)/tilesize);
     var e1:PlanEntry = plan.getEntry(p.x, p.y);
     e1.cost = 0;
     var queue:Array = [ e1 ];
     while (0 < queue.length) {
       var e0:PlanEntry = queue.pop();
       var cost:int = e0.cost+1;
-      if (hasBlock(e0.x+dx0, e0.x+dx1, e0.y+dy0, e0.y+dy1, Tile.isobstacle)) continue;
+      if (hasTile(e0.x+dx0, e0.x+dx1, e0.y+dy0, e0.y+dy1, Tile.isobstacle)) continue;
 
       // try walking right.
-      if (plan.x0 < e0.x && Tile.isstoppable(getBlock(e0.x-1, e0.y+dy1+1))) {
+      if (plan.x0 < e0.x && Tile.isstoppable(getTile(e0.x-1, e0.y+dy1+1))) {
 	e1 = plan.getEntry(e0.x-1, e0.y);
 	if (cost < e1.cost) {
 	  e1.action = PlanEntry.WALK;
@@ -201,7 +201,7 @@ public class TileMap extends Bitmap
 	}
       }
       // try walking left.
-      if (e0.x < plan.x1 && Tile.isstoppable(getBlock(e0.x+1, e0.y+dy1+1))) {
+      if (e0.x < plan.x1 && Tile.isstoppable(getTile(e0.x+1, e0.y+dy1+1))) {
 	e1 = plan.getEntry(e0.x+1, e0.y);
 	if (cost < e1.cost) {
 	  e1.action = PlanEntry.WALK;
@@ -211,7 +211,7 @@ public class TileMap extends Bitmap
 	}
       }
       // try falling.
-      if (plan.y0 < e0.y && !Tile.isstoppable(getBlock(e0.x, e0.y+dy1))) {
+      if (plan.y0 < e0.y && !Tile.isstoppable(getTile(e0.x, e0.y+dy1))) {
 	e1 = plan.getEntry(e0.x, e0.y-1);
 	if (cost < e1.cost) {
 	  e1.action = PlanEntry.FALL;
@@ -221,7 +221,7 @@ public class TileMap extends Bitmap
 	}
       }
       // try climbing down.
-      if (plan.y0 < e0.y && Tile.isgrabbable(getBlock(e0.x, e0.y+dy1))) {
+      if (plan.y0 < e0.y && Tile.isgrabbable(getTile(e0.x, e0.y+dy1))) {
 	e1 = plan.getEntry(e0.x, e0.y-1);
 	if (cost < e1.cost) {
 	  e1.action = PlanEntry.CLIMB;
@@ -232,7 +232,7 @@ public class TileMap extends Bitmap
       }
       // try climbing up.
       if (e0.y < plan.y1 && 
-	  hasBlock(e0.x+dx0, e0.x+dx1, e0.y+dy0+1, e0.y+dy1+1, Tile.isgrabbable)) {
+	  hasTile(e0.x+dx0, e0.x+dx1, e0.y+dy0+1, e0.y+dy1+1, Tile.isgrabbable)) {
 	e1 = plan.getEntry(e0.x, e0.y+1);
 	if (cost < e1.cost) {
 	  e1.action = PlanEntry.CLIMB;
