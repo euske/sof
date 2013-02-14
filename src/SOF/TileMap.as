@@ -78,12 +78,6 @@ public class TileMap extends Bitmap
     }
   }
 
-  // pixelToTileId(c)
-  protected function pixelToTileId(c:uint):int
-  {
-    return Tile.pixelToTileId(c);
-  }
-
   // getTile(x, y)
   private function getTile(x:int, y:int):int
   {
@@ -92,7 +86,7 @@ public class TileMap extends Bitmap
       return -1;
     }
     var c:uint = map.getPixel(x, y);
-    return pixelToTileId(c);
+    return Tile.pixelToTileId(c);
   }
 
   // getTileRect(x, y)
