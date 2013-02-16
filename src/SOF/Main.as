@@ -18,10 +18,9 @@ import flash.events.NetDataEvent;
 import flash.media.Sound;
 import flash.ui.Keyboard;
 import flash.utils.ByteArray;
-import flash.text.TextField;
-import flash.text.TextFieldType;
 import flash.geom.Point;
 import flash.geom.Rectangle;
+import SOF.Logger;
 import SOF.Scene;
 import SOF.TileMap;
 import SOF.PlanVisualizer;
@@ -75,40 +74,12 @@ public class Main extends Sprite
   // Main()
   public function Main()
   {
-    loginit();
     stage.addEventListener(KeyboardEvent.KEY_DOWN, OnKeyDown);
     stage.addEventListener(KeyboardEvent.KEY_UP, OnKeyUp);
     stage.addEventListener(Event.ENTER_FRAME, OnEnterFrame);
     stage.scaleMode = StageScaleMode.NO_SCALE;
     init();
-  }
-
-  /// Logging functions
-  private static var logger:TextField;
-
-  // loginit(width, height)
-  private function loginit(width:int=400, height:int=100):void
-  {
-    logger = new TextField();
-    logger.multiline = true;
-    logger.border = true;
-    logger.width = width;
-    logger.height = height;
-    logger.background = true;
-    logger.type = TextFieldType.DYNAMIC;
-    logger.x = 0;
-    logger.y = stage.stageHeight-height;
-    addChild(logger);
-  }
-
-  // log(x)
-  public static function log(x:String):void
-  {
-    if (logger != null) {
-      logger.appendText(x+"\n");
-      logger.scrollV = logger.maxScrollV;
-      logger.parent.setChildIndex(logger, logger.parent.numChildren-1);
-    }
+    addChild(new Logger());
   }
 
   // OnKeyDown(e)
@@ -144,7 +115,7 @@ public class Main extends Sprite
   // init()
   private function init():void
   {
-    Main.log("init");
+    Logger.log("init");
 
     background.alpha = 0.7;
     addChild(background);
@@ -296,6 +267,7 @@ public class Main extends Sprite
 import flash.display.BitmapData;
 import flash.geom.Point;
 import flash.geom.Rectangle;
+import SOF.Logger;
 import SOF.Scene;
 import SOF.Tile;
 import SOF.TileMap;
@@ -359,7 +331,7 @@ class Person extends Actor
       	  dy = +1;
       	}
       }
-      SOF.Main.log("g="+(x1-pos.x)+","+(y1-pos.y)+" d="+dx+","+dy);
+      Logger.log("g="+(x1-pos.x)+","+(y1-pos.y)+" d="+dx+","+dy);
       move(dx, dy);
       if (bounds.intersects(curgoal)) {
 	curgoal = null;
