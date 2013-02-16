@@ -75,7 +75,7 @@ public class Main extends Sprite
   // Main()
   public function Main()
   {
-    //loginit();
+    loginit();
     stage.addEventListener(KeyboardEvent.KEY_DOWN, OnKeyDown);
     stage.addEventListener(KeyboardEvent.KEY_UP, OnKeyUp);
     stage.addEventListener(Event.ENTER_FRAME, OnEnterFrame);
@@ -310,7 +310,7 @@ import SOF.ActorActionEvent;
 class Person extends Actor
 {
   private var target:Actor;
-  public var plan:PlanMap;
+  private var curgoal:Rectangle;
 
   // Person(image)
   public function Person(scene:Scene, image:BitmapData)
@@ -323,46 +323,51 @@ class Person extends Actor
   public function setTarget(actor:Actor):void
   {
     target = actor;
+    curgoal = null;
   }
 
   // update()
-  private var action:int = 1;
   public override function update():void
   {
     super.update();
-    if (target != null) {
+    if (target != null && curgoal == null) {
       // Get a macro-level planning.
-      plan = scene.createPlan(target.pos, skin.bounds);
+      var plan:PlanMap = scene.createPlan(target.pos, skin.bounds);
       var p:Point = plan.getTileCoords(pos);
       var e:PlanEntry = plan.getEntry(p.x, p.y);
-      var dx:int = 0, dy:int = 0;
-      if (e != null) {
-	// Micro-level (greedy) planning.
-      	if (e.next != null) {
-	  var r:Rectangle = plan.getTileRect(e.next.x, e.next.y);
-	  var x1:int = r.x+r.width/2;
-	  var y1:int = r.y+r.height/2;
-	  if (x1 < pos.x) { 
-	    dx = -1;
-	  } else if (pos.x < x1) {
-	    dx = +1;
-	  }
-	  if (scene.getDistanceX(bounds, speed*dx, Tile.isobstacle) == 0) {
-	    dx = 0;
-	  }
-	  if (dx == 0) {
-	    if (y1 < pos.y) { 
-	      dy = -1; 
-	    } else if (pos.y < y1) {
-	      dy = +1;
-	    }
-	  }
-	  SOF.Main.log("g="+(x1-pos.x)+","+(y1-pos.y)+" d="+dx+","+dy);
-	}
+      if (e != null && e.next != null) {
+	curgoal = plan.getTileRect(e.next.x, e.next.y);
       }
+    }
+    if (curgoal != null) {
+      // Micro-level (greedy) planning.
+      var x1:int = curgoal.x+curgoal.width/2;
+      var y1:int = curgoal.y+curgoal.height/2;
+      var dx:int = 0, dy:int = 0;
+      if (x1 < pos.x) { 
+      	dx = -1;
+      } else if (pos.x < x1) {
+      	dx = +1;
+      }
+      if (scene.getDistanceX(bounds, speed*dx, Tile.isobstacle) == 0) {
+      	dx = 0;
+      }
+      if (dx == 0) {
+      	if (y1 < pos.y) { 
+      	  dy = -1; 
+      	} else if (pos.y < y1) {
+      	  dy = +1;
+      	}
+      }
+      SOF.Main.log("g="+(x1-pos.x)+","+(y1-pos.y)+" d="+dx+","+dy);
       move(dx, dy);
+      if (bounds.intersects(curgoal)) {
+	curgoal = null;
+      }
     } else {
-      if (Math.random() < 0.05) {
+      if (target != null) {
+	move(0, 0);
+      } else if (Math.random() < 0.05) {
 	move(int(Math.random()*3)-1, 0);
       } else if (Math.random() < 0.05) {
 	move(0, int(Math.random()*3)-1);
@@ -370,6 +375,7 @@ class Person extends Actor
 	jump();
       }
     }
+
     if (Math.random() < 0.05) {
       switch (int(Math.random()*3)) {
       case 0:
