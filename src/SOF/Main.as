@@ -76,7 +76,7 @@ public class Main extends Sprite
     stage.addEventListener(Event.ENTER_FRAME, OnEnterFrame);
     stage.scaleMode = StageScaleMode.NO_SCALE;
     init();
-    addChild(new Logger());
+    //addChild(new Logger());
   }
 
   // OnKeyDown(e)
@@ -127,13 +127,25 @@ public class Main extends Sprite
     player.addEventListener(ActorActionEvent.ACTION, onActorAction);
     player.addEventListener(ActorActionEvent.ACTION, onPlayerAction);
     player.speak("Video Games AWESOME!");
+    player.setName("Farshar");
     scene.add(player);
 
     for (var i:int = 0; i < images.length; i++) {
       var actor:Person = new Person(scene, images[i].bitmapData);
       actor.bounds = tilemap.getTileRect(i+5, i+5);
       actor.addEventListener(ActorActionEvent.ACTION, onActorAction);
-      if (i == 0) actor.setTarget(player);
+      switch (i) {
+      case 0:
+	actor.setName("MissBlow");
+	actor.setTarget(player);
+	break;
+      case 1:
+	actor.setName("Snarf");
+	break;
+      case 2:
+	actor.setName("Deakwanda");
+	break;
+      }
       scene.add(actor);
     }
 
@@ -280,6 +292,7 @@ class Person extends Actor
 {
   private var target:Actor;
   private var curgoal:Rectangle;
+  private var curaction:int;
 
   // Person(image)
   public function Person(scene:Scene, image:BitmapData)
@@ -306,6 +319,7 @@ class Person extends Actor
       var e:PlanEntry = plan.getEntry(p.x, p.y);
       if (e != null && e.next != null) {
 	curgoal = plan.getTileRect(e.next.x, e.next.y);
+	curaction = e.action;
       }
     }
     if (curgoal != null) {
@@ -328,7 +342,7 @@ class Person extends Actor
       	  dy = +1;
       	}
       }
-      Logger.log("g="+(x1-pos.x)+","+(y1-pos.y)+" d="+dx+","+dy);
+      //Logger.log("g="+(x1-pos.x)+","+(y1-pos.y)+" d="+dx+","+dy);
       move(dx, dy);
       if (bounds.intersects(curgoal)) {
 	curgoal = null;

@@ -6,6 +6,7 @@ import flash.events.EventDispatcher;
 import flash.geom.Point;
 import flash.geom.Rectangle;
 import SOF.MCSkin;
+import SOF.MCNameTag;
 import SOF.MCBalloon;
 import SOF.TileMap;
 import SOF.Tile;
@@ -17,6 +18,7 @@ public class Actor extends EventDispatcher
 {
   public var scene:Scene;
   public var skin:MCSkin;
+  public var nametag:MCNameTag;
   public var balloon:MCBalloon;
   
   public var pos:Point;
@@ -30,14 +32,13 @@ public class Actor extends EventDispatcher
   public static const JUMP:String = "JUMP";
   public static const DIE:String = "DIE";
 
-  private static var awesomefont:AwesomeFont = new AwesomeFont();
-
   // Actor(image)
   public function Actor(scene:Scene, image:BitmapData)
   {
     this.scene = scene;
     this.skin = new MCSkin(image);
-    this.balloon = new MCBalloon(awesomefont);
+    this.nametag = new MCNameTag();
+    this.balloon = new MCBalloon();
   }
 
   // bounds
@@ -121,6 +122,9 @@ public class Actor extends EventDispatcher
       balloon.x = p.x+skin.bounds.x+skin.bounds.width+20;
     }
     balloon.y = p.y+skin.bounds.y-balloon.height/2;
+
+    nametag.x = p.x-nametag.width/2;
+    nametag.y = p.y+skin.bounds.y-nametag.height;
   }
 
   // speak()
@@ -128,6 +132,13 @@ public class Actor extends EventDispatcher
   {
     balloon.setText(text);
   }
+
+  // setName(name)
+  public virtual function setName(name:String):void
+  {
+    nametag.setText(name);
+  }
+
 }
 
 }

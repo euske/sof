@@ -29,6 +29,7 @@ public class Scene extends Sprite
   {
     addChild(actor.skin);
     addChild(actor.balloon);
+    addChild(actor.nametag);
     actors.push(actor);
   }
 
@@ -37,6 +38,7 @@ public class Scene extends Sprite
   {
     removeChild(actor.skin);
     removeChild(actor.balloon);
+    removeChild(actor.nametag);
     actors.splice(actors.indexOf(actor), 1);
   }
 

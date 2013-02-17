@@ -4,17 +4,16 @@ import flash.display.Sprite;
 import flash.display.Bitmap;
 import SOF.AwesomeFont;
 
-//  MCBalloon
+//  MCNameTag
 //
-public class MCBalloon extends Sprite
+public class MCNameTag extends Sprite
 {
   private static var font:AwesomeFont = new AwesomeFont();
 
   public const scale:int = 2;
-  public const marginWidth:int = 10;
-  public const cornerWidth:int = 10;
+  public const marginWidth:int = 1;
 
-  public function MCBalloon()
+  public function MCNameTag()
   {
   }
   
@@ -24,15 +23,13 @@ public class MCBalloon extends Sprite
     removeChildren();
     if (text != null) {
       var w:int = font.getTextWidth(text);
-      graphics.lineStyle(4, 0xffffff);
-      graphics.beginFill(0x444444);
-      graphics.drawRoundRect(0, 0, 
-			     w*scale + marginWidth*2,
-			     font.height*scale + marginWidth*2,
-			     cornerWidth, cornerWidth);
+      graphics.beginFill(0x000000, 0.5);
+      graphics.drawRect(0, 0, 
+			w*scale + marginWidth*2,
+			font.height*scale + marginWidth*2);
       graphics.endFill();
 
-      var glyphs:Bitmap = font.render(text, 0xffff00, scale);
+      var glyphs:Bitmap = font.render(text, 0xffffff, scale);
       glyphs.x = marginWidth;
       glyphs.y = marginWidth;
       addChild(glyphs);
