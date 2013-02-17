@@ -71,12 +71,12 @@ public class Main extends Sprite
   // Main()
   public function Main()
   {
+    addChild(new Logger());
     stage.addEventListener(KeyboardEvent.KEY_DOWN, OnKeyDown);
     stage.addEventListener(KeyboardEvent.KEY_UP, OnKeyUp);
     stage.addEventListener(Event.ENTER_FRAME, OnEnterFrame);
     stage.scaleMode = StageScaleMode.NO_SCALE;
     init();
-    //addChild(new Logger());
   }
 
   // OnKeyDown(e)
@@ -306,13 +306,14 @@ class Person extends Actor
   {
     target = actor;
     curgoal = null;
+    curaction = PlanEntry.NONE;
   }
 
   // update()
   public override function update():void
   {
     super.update();
-    if (target != null && curgoal == null) {
+    if (target != null && curaction == PlanEntry.NONE) {
       // Get a macro-level planning.
       var plan:PlanMap = scene.createPlan(target.pos, skin.bounds);
       var p:Point = plan.getTileCoords(pos);
@@ -320,6 +321,11 @@ class Person extends Actor
       if (e != null && e.next != null) {
 	curgoal = plan.getTileRect(e.next.x, e.next.y);
 	curaction = e.action;
+	Logger.log("goal="+curgoal+", action="+curaction);
+	if (curaction == PlanEntry.JUMP) {
+	  jump();
+	  curaction = PlanEntry.NONE;
+	}
       }
       PlanVisualizer.update(plan);
     }
@@ -347,6 +353,7 @@ class Person extends Actor
       move(dx, dy);
       if (bounds.intersects(curgoal)) {
 	curgoal = null;
+	curaction = PlanEntry.NONE;
       }
     } else {
       if (target != null) {

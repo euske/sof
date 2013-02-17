@@ -4,6 +4,7 @@ import flash.display.Bitmap;
 import flash.display.BitmapData;
 import flash.geom.Point;
 import flash.geom.Rectangle;
+import SOF.Logger;
 import SOF.Tile;
 import SOF.PlanEntry;
 import SOF.PlanMap;
@@ -185,7 +186,7 @@ public class TileMap extends Bitmap
       if (hasTile(e0.x+dx0, e0.x+dx1, e0.y+dy0, e0.y+dy1, Tile.isobstacle)) continue;
 
       // try walking right.
-      if (plan.x0 < e0.x && Tile.isstoppable(getTile(e0.x-1, e0.y+dy1+1))) {
+      if (plan.x0 <= e0.x-1 && Tile.isstoppable(getTile(e0.x-1, e0.y+dy1+1))) {
 	e1 = plan.getEntry(e0.x-1, e0.y);
 	if (cost < e1.cost) {
 	  e1.action = PlanEntry.WALK;
@@ -195,7 +196,7 @@ public class TileMap extends Bitmap
 	}
       }
       // try walking left.
-      if (e0.x < plan.x1 && Tile.isstoppable(getTile(e0.x+1, e0.y+dy1+1))) {
+      if (e0.x+1 <= plan.x1 && Tile.isstoppable(getTile(e0.x+1, e0.y+dy1+1))) {
 	e1 = plan.getEntry(e0.x+1, e0.y);
 	if (cost < e1.cost) {
 	  e1.action = PlanEntry.WALK;
@@ -205,7 +206,7 @@ public class TileMap extends Bitmap
 	}
       }
       // try falling.
-      if (plan.y0 < e0.y && !Tile.isstoppable(getTile(e0.x, e0.y+dy1))) {
+      if (plan.y0 <= e0.y-1 && !Tile.isstoppable(getTile(e0.x, e0.y+dy1))) {
 	e1 = plan.getEntry(e0.x, e0.y-1);
 	if (cost < e1.cost) {
 	  e1.action = PlanEntry.FALL;
@@ -215,7 +216,7 @@ public class TileMap extends Bitmap
 	}
       }
       // try climbing down.
-      if (plan.y0 < e0.y && Tile.isgrabbable(getTile(e0.x, e0.y+dy1))) {
+      if (plan.y0 <= e0.y-1 && Tile.isgrabbable(getTile(e0.x, e0.y+dy1))) {
 	e1 = plan.getEntry(e0.x, e0.y-1);
 	if (cost < e1.cost) {
 	  e1.action = PlanEntry.CLIMB;
@@ -225,11 +226,33 @@ public class TileMap extends Bitmap
 	}
       }
       // try climbing up.
-      if (e0.y < plan.y1 && 
+      if (e0.y+1 <= plan.y1 && 
 	  hasTile(e0.x+dx0, e0.x+dx1, e0.y+dy0+1, e0.y+dy1+1, Tile.isgrabbable)) {
 	e1 = plan.getEntry(e0.x, e0.y+1);
 	if (cost < e1.cost) {
 	  e1.action = PlanEntry.CLIMB;
+	  e1.cost = cost;
+	  e1.next = e0;
+	  queue.push(e1);
+	}
+      }
+      // try jumping upward right.
+      if (plan.x0 <= e0.x-1 && e0.y+3 <= plan.y1 && 
+	  !hasTile(e0.x+dx0-1, e0.x+dx1, e0.y+dy1, e0.y+dy1+3, Tile.isstoppable)) {
+	e1 = plan.getEntry(e0.x-1, e0.y+3);
+	if (cost < e1.cost) {
+	  e1.action = PlanEntry.JUMP;
+	  e1.cost = cost;
+	  e1.next = e0;
+	  queue.push(e1);
+	}
+      }
+      // try jumping upward left.
+      if (e0.x+1 <= plan.x1 && e0.y+3 <= plan.y1 && 
+	  !hasTile(e0.x+dx0, e0.x+dx1+1, e0.y+dy1, e0.y+dy1+3, Tile.isstoppable)) {
+	e1 = plan.getEntry(e0.x+1, e0.y+3);
+	if (cost < e1.cost) {
+	  e1.action = PlanEntry.JUMP;
 	  e1.cost = cost;
 	  e1.next = e0;
 	  queue.push(e1);

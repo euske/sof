@@ -4,6 +4,7 @@ package SOF {
 //
 public class PlanEntry
 {
+  public static const NONE:int = 0;
   public static const WALK:int = 1;
   public static const FALL:int = 2;
   public static const CLIMB:int = 3;
