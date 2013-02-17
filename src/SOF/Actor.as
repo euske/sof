@@ -1,8 +1,8 @@
 package SOF {
 
+import flash.display.Sprite;
 import flash.display.BitmapData;
 import flash.events.Event;
-import flash.events.EventDispatcher;
 import flash.geom.Point;
 import flash.geom.Rectangle;
 import SOF.MCSkin;
@@ -14,7 +14,7 @@ import SOF.ActorActionEvent;
 
 //  Actor
 //
-public class Actor extends EventDispatcher
+public class Actor extends Sprite
 {
   public var scene:Scene;
   public var skin:MCSkin;
@@ -39,6 +39,9 @@ public class Actor extends EventDispatcher
     this.skin = new MCSkin(image);
     this.nametag = new MCNameTag();
     this.balloon = new MCBalloon();
+    addChild(this.skin);
+    addChild(this.nametag);
+    addChild(this.balloon);
   }
 
   // bounds
@@ -113,18 +116,15 @@ public class Actor extends EventDispatcher
   public virtual function repaint():void
   {
     var p:Point = scene.translatePoint(pos);
-    skin.x = p.x;
-    skin.y = p.y;
+    this.x = p.x;
+    this.y = p.y;
     skin.repaint();
     if (skin.vx < 0) {
-      balloon.x = p.x+skin.bounds.x-balloon.width-10;
+      balloon.x = skin.bounds.x-balloon.width-10;
     } else {
-      balloon.x = p.x+skin.bounds.x+skin.bounds.width+20;
+      balloon.x = skin.bounds.x+skin.bounds.width+20;
     }
-    balloon.y = p.y+skin.bounds.y-balloon.height/2;
-
-    nametag.x = p.x-nametag.width/2;
-    nametag.y = p.y+skin.bounds.y-nametag.height;
+    balloon.y = skin.bounds.y-balloon.height/2;
   }
 
   // speak()
@@ -137,6 +137,8 @@ public class Actor extends EventDispatcher
   public virtual function setName(name:String):void
   {
     nametag.setText(name);
+    nametag.x = -nametag.width/2;
+    nametag.y = skin.bounds.y-nametag.height-10;
   }
 
 }

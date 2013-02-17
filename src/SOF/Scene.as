@@ -27,18 +27,14 @@ public class Scene extends Sprite
   // add(actor)
   public function add(actor:Actor):void
   {
-    addChild(actor.skin);
-    addChild(actor.balloon);
-    addChild(actor.nametag);
+    addChild(actor);
     actors.push(actor);
   }
 
   // remove(actor)
   public function remove(actor:Actor):void
   {
-    removeChild(actor.skin);
-    removeChild(actor.balloon);
-    removeChild(actor.nametag);
+    removeChild(actor);
     actors.splice(actors.indexOf(actor), 1);
   }
 
