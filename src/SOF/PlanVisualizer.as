@@ -8,6 +8,19 @@ import SOF.PlanMap;
 // 
 public class PlanVisualizer extends Shape
 {
+  public static var main:PlanVisualizer;
+
+  public function PlanVisualizer()
+  {
+    super();
+    main = this;
+  }
+
+  public static function update(plan:PlanMap):void
+  {
+    main.update(plan);
+  }
+
   public function update(plan:PlanMap):void
   {
     graphics.clear();

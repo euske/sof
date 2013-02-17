@@ -221,7 +221,6 @@ public class Main extends Sprite
   {
     scene.update();
     scene.repaint();
-    visualizer.update(scene.actors[1].plan);
   }
 
   // onActorAction()
@@ -282,6 +281,7 @@ import SOF.Tile;
 import SOF.TileMap;
 import SOF.PlanEntry;
 import SOF.PlanMap;
+import SOF.PlanVisualizer;
 import SOF.Actor;
 import SOF.ActorActionEvent;
 
@@ -321,6 +321,7 @@ class Person extends Actor
 	curgoal = plan.getTileRect(e.next.x, e.next.y);
 	curaction = e.action;
       }
+      PlanVisualizer.update(plan);
     }
     if (curgoal != null) {
       // Micro-level (greedy) planning.
