@@ -30,15 +30,15 @@ public class PlanVisualizer extends Shape
 	var c:int = 0x0000ff;
 	switch (e.action) {
 	case PlanEntry.WALK:
-	  c = 0xffffff;
+	  c = 0xffffff;		// white
 	  break;
 	case PlanEntry.FALL:
-	  c = 0x0000ff;
+	  c = 0x0000ff;		// blue
 	  break;
-	case PlanEntry.CLIMB:
+	case PlanEntry.CLIMB:	// green
 	  c = 0x00ff00;
 	  break;
-	case PlanEntry.JUMP:
+	case PlanEntry.JUMP:	// magenta
 	  c = 0xff00ff;
 	  break;
 	default:

@@ -52,6 +52,12 @@ public class PlanMap
   }
 
   // fillPlan(plan, b)
+  public const JUMPLOC:Array = [ new Point(-1,+4), new Point(-1,+3), 
+				 new Point(-1,+2), new Point(-2, +1), 
+				 new Point(-1, +1),
+				 new Point(+1,+4), new Point(+1,+3), 
+				 new Point(+1,+2), new Point(+2, +1), 
+				 new Point(+1, +1) ];
   public function fillPlan(map:TileMap, b:Rectangle):void
   {
     var p:Point = getTileCoords(center);
@@ -65,12 +71,13 @@ public class PlanMap
     var queue:Array = [ e1 ];
     while (0 < queue.length) {
       var e0:PlanEntry = queue.pop();
-      var cost:int = e0.cost+1;
       if (map.hasTile(e0.x+dx0, e0.x+dx1, e0.y+dy0, e0.y+dy1, Tile.isobstacle)) continue;
 
+      var cost:int, i:int, d:Point;
       // try walking right.
       if (this.x0 <= e0.x-1 && Tile.isstoppable(map.getTile(e0.x-1, e0.y+dy1+1))) {
 	e1 = getEntry(e0.x-1, e0.y);
+	cost = e0.cost+1;
 	if (cost < e1.cost) {
 	  e1.action = PlanEntry.WALK;
 	  e1.cost = cost;
@@ -81,6 +88,7 @@ public class PlanMap
       // try walking left.
       if (e0.x+1 <= this.x1 && Tile.isstoppable(map.getTile(e0.x+1, e0.y+dy1+1))) {
 	e1 = getEntry(e0.x+1, e0.y);
+	cost = e0.cost+1;
 	if (cost < e1.cost) {
 	  e1.action = PlanEntry.WALK;
 	  e1.cost = cost;
@@ -91,6 +99,7 @@ public class PlanMap
       // try falling.
       if (this.y0 <= e0.y-1 && !Tile.isstoppable(map.getTile(e0.x, e0.y+dy1))) {
 	e1 = getEntry(e0.x, e0.y-1);
+	cost = e0.cost+1;
 	if (cost < e1.cost) {
 	  e1.action = PlanEntry.FALL;
 	  e1.cost = cost;
@@ -101,6 +110,7 @@ public class PlanMap
       // try climbing down.
       if (this.y0 <= e0.y-1 && Tile.isgrabbable(map.getTile(e0.x, e0.y+dy1))) {
 	e1 = getEntry(e0.x, e0.y-1);
+	cost = e0.cost+1;
 	if (cost < e1.cost) {
 	  e1.action = PlanEntry.CLIMB;
 	  e1.cost = cost;
@@ -112,6 +122,7 @@ public class PlanMap
       if (e0.y+1 <= this.y1 && 
 	  map.hasTile(e0.x+dx0, e0.x+dx1, e0.y+dy0+1, e0.y+dy1+1, Tile.isgrabbable)) {
 	e1 = getEntry(e0.x, e0.y+1);
+	cost = e0.cost+1;
 	if (cost < e1.cost) {
 	  e1.action = PlanEntry.CLIMB;
 	  e1.cost = cost;
@@ -119,26 +130,20 @@ public class PlanMap
 	  queue.push(e1);
 	}
       }
-      // try jumping upward right.
-      if (this.x0 <= e0.x-1 && e0.y+3 <= this.y1 && 
-	  !map.hasTile(e0.x+dx0-1, e0.x+dx1, e0.y+dy1, e0.y+dy1+3, Tile.isstoppable)) {
-	e1 = getEntry(e0.x-1, e0.y+3);
-	if (cost < e1.cost) {
-	  e1.action = PlanEntry.JUMP;
-	  e1.cost = cost;
-	  e1.next = e0;
-	  queue.push(e1);
-	}
-      }
-      // try jumping upward left.
-      if (e0.x+1 <= this.x1 && e0.y+3 <= this.y1 && 
-	  !map.hasTile(e0.x+dx0, e0.x+dx1+1, e0.y+dy1, e0.y+dy1+3, Tile.isstoppable)) {
-	e1 = getEntry(e0.x+1, e0.y+3);
-	if (cost < e1.cost) {
-	  e1.action = PlanEntry.JUMP;
-	  e1.cost = cost;
-	  e1.next = e0;
-	  queue.push(e1);
+      // try jumping.
+      for (i = 0; i < JUMPLOC.length; i++) {
+	d = JUMPLOC[i];
+	if (this.x0 <= e0.x+d.x && e0.x+d.x <= this.x1 && e0.y+d.y <= this.y1 && 
+	    Tile.isstoppable(map.getTile(e0.x+d.x, e0.y+dy1+d.y+1)) &&
+	    !map.hasTile(e0.x+dx0+d.x, e0.x+dx1, e0.y+dy0, e0.y+dy1+d.y, Tile.isstoppable)) {
+	  e1 = getEntry(e0.x+d.x, e0.y+d.y);
+	  cost = e0.cost+d.x+d.y;
+	  if (cost < e1.cost) {
+	    e1.action = PlanEntry.JUMP;
+	    e1.cost = cost;
+	    e1.next = e0;
+	    queue.push(e1);
+	  }
 	}
       }
       //queue.sortOn("cost", Array.DESCENDING);

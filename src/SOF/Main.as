@@ -114,8 +114,8 @@ public class Main extends Sprite
   {
     Logger.log("init");
 
-    background.alpha = 0.7;
-    addChild(background);
+    //background.alpha = 0.7;
+    //addChild(background);
     
     tilemap = new TileMap(mapimage.bitmapData, tilesimage.bitmapData, 32);
     addChild(tilemap);
