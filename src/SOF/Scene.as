@@ -4,6 +4,7 @@ import flash.display.Sprite;
 import flash.geom.Point;
 import flash.geom.Rectangle;
 import SOF.TileMap;
+import SOF.PlanMap;
 import SOF.Actor;
 
 //  Scene
@@ -88,7 +89,7 @@ public class Scene extends Sprite
   {
     var plan:PlanMap = new PlanMap(tilemap.tilesize, dst, 
 				   window.width/2, window.height/2);
-    tilemap.fillPlan(plan, bounds);
+    plan.fillPlan(tilemap, bounds);
     return plan;
   }
 

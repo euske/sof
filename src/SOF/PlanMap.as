@@ -3,6 +3,8 @@ package SOF {
 import flash.geom.Point;
 import flash.geom.Rectangle;
 import SOF.PlanEntry;
+import SOF.Tile;
+import SOF.TileMap;
 
 //  PlanMap
 // 
@@ -47,6 +49,101 @@ public class PlanMap
   {
     if (x < x0 || x1 < x || y < y0 || y1 < y) return null;
     return a[y-y0][x-x0];
+  }
+
+  // fillPlan(plan, b)
+  public function fillPlan(map:TileMap, b:Rectangle):void
+  {
+    var p:Point = getTileCoords(center);
+    var r0:Rectangle = getTileRect(p.x, p.y);
+    var dx0:int = Math.floor((r0.width/2+b.x)/tilesize);
+    var dy0:int = Math.floor((r0.height/2+b.y)/tilesize);
+    var dx1:int = Math.floor((r0.width/2+b.x+b.width-1)/tilesize);
+    var dy1:int = Math.floor((r0.height/2+b.y+b.height-1)/tilesize);
+    var e1:PlanEntry = getEntry(p.x, p.y);
+    e1.cost = 0;
+    var queue:Array = [ e1 ];
+    while (0 < queue.length) {
+      var e0:PlanEntry = queue.pop();
+      var cost:int = e0.cost+1;
+      if (map.hasTile(e0.x+dx0, e0.x+dx1, e0.y+dy0, e0.y+dy1, Tile.isobstacle)) continue;
+
+      // try walking right.
+      if (this.x0 <= e0.x-1 && Tile.isstoppable(map.getTile(e0.x-1, e0.y+dy1+1))) {
+	e1 = getEntry(e0.x-1, e0.y);
+	if (cost < e1.cost) {
+	  e1.action = PlanEntry.WALK;
+	  e1.cost = cost;
+	  e1.next = e0;
+	  queue.push(e1);
+	}
+      }
+      // try walking left.
+      if (e0.x+1 <= this.x1 && Tile.isstoppable(map.getTile(e0.x+1, e0.y+dy1+1))) {
+	e1 = getEntry(e0.x+1, e0.y);
+	if (cost < e1.cost) {
+	  e1.action = PlanEntry.WALK;
+	  e1.cost = cost;
+	  e1.next = e0;
+	  queue.push(e1);
+	}
+      }
+      // try falling.
+      if (this.y0 <= e0.y-1 && !Tile.isstoppable(map.getTile(e0.x, e0.y+dy1))) {
+	e1 = getEntry(e0.x, e0.y-1);
+	if (cost < e1.cost) {
+	  e1.action = PlanEntry.FALL;
+	  e1.cost = cost;
+	  e1.next = e0;
+	  queue.push(e1);
+	}
+      }
+      // try climbing down.
+      if (this.y0 <= e0.y-1 && Tile.isgrabbable(map.getTile(e0.x, e0.y+dy1))) {
+	e1 = getEntry(e0.x, e0.y-1);
+	if (cost < e1.cost) {
+	  e1.action = PlanEntry.CLIMB;
+	  e1.cost = cost;
+	  e1.next = e0;
+	  queue.push(e1);
+	}
+      }
+      // try climbing up.
+      if (e0.y+1 <= this.y1 && 
+	  map.hasTile(e0.x+dx0, e0.x+dx1, e0.y+dy0+1, e0.y+dy1+1, Tile.isgrabbable)) {
+	e1 = getEntry(e0.x, e0.y+1);
+	if (cost < e1.cost) {
+	  e1.action = PlanEntry.CLIMB;
+	  e1.cost = cost;
+	  e1.next = e0;
+	  queue.push(e1);
+	}
+      }
+      // try jumping upward right.
+      if (this.x0 <= e0.x-1 && e0.y+3 <= this.y1 && 
+	  !map.hasTile(e0.x+dx0-1, e0.x+dx1, e0.y+dy1, e0.y+dy1+3, Tile.isstoppable)) {
+	e1 = getEntry(e0.x-1, e0.y+3);
+	if (cost < e1.cost) {
+	  e1.action = PlanEntry.JUMP;
+	  e1.cost = cost;
+	  e1.next = e0;
+	  queue.push(e1);
+	}
+      }
+      // try jumping upward left.
+      if (e0.x+1 <= this.x1 && e0.y+3 <= this.y1 && 
+	  !map.hasTile(e0.x+dx0, e0.x+dx1+1, e0.y+dy1, e0.y+dy1+3, Tile.isstoppable)) {
+	e1 = getEntry(e0.x+1, e0.y+3);
+	if (cost < e1.cost) {
+	  e1.action = PlanEntry.JUMP;
+	  e1.cost = cost;
+	  e1.next = e0;
+	  queue.push(e1);
+	}
+      }
+      //queue.sortOn("cost", Array.DESCENDING);
+    }
+    return;
   }
 }
 
