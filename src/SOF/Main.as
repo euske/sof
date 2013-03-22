@@ -324,10 +324,14 @@ class Person extends Actor
 	Logger.log("goal="+curgoal+", action="+curaction);
 	if (curaction == PlanEntry.JUMP) {
 	  jump();
-	  curaction = PlanEntry.NONE;
 	}
       }
       PlanVisualizer.update(plan);
+    }
+    if (curaction == PlanEntry.JUMP) {
+      if (!jumping) {
+	curaction = PlanEntry.NONE;
+      }
     }
     if (curgoal != null) {
       // Micro-level (greedy) planning.

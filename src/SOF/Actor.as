@@ -72,6 +72,11 @@ public class Actor extends Sprite
     }
   }
 
+  public function get jumping():Boolean
+  {
+    return (vg < 0);
+  }
+
   // update()
   public virtual function update():void
   {

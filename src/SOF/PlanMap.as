@@ -53,11 +53,12 @@ public class PlanMap
 
   // fillPlan(plan, b)
   public const JUMPLOC:Array = [ new Point(-1,+4), new Point(-1,+3), 
-				 new Point(-1,+2), new Point(-2, +1), 
-				 new Point(-1, +1),
+				 new Point(-1,+2), new Point(-2,+1), 
+				 new Point(-1,+1), new Point(-2, 0), 
 				 new Point(+1,+4), new Point(+1,+3), 
-				 new Point(+1,+2), new Point(+2, +1), 
-				 new Point(+1, +1) ];
+				 new Point(+1,+2), new Point(+2,+1), 
+				 new Point(+1,+1), new Point(+2, 0), 
+				 ];
   public function fillPlan(map:TileMap, b:Rectangle):void
   {
     var p:Point = getTileCoords(center);
@@ -137,7 +138,7 @@ public class PlanMap
 	    Tile.isstoppable(map.getTile(e0.x+d.x, e0.y+dy1+d.y+1)) &&
 	    !map.hasTile(e0.x+dx0+d.x, e0.x+dx1, e0.y+dy0, e0.y+dy1+d.y, Tile.isstoppable)) {
 	  e1 = getEntry(e0.x+d.x, e0.y+d.y);
-	  cost = e0.cost+d.x+d.y;
+	  cost = e0.cost+Math.abs(d.x)+Math.abs(d.y)+1;
 	  if (cost < e1.cost) {
 	    e1.action = PlanEntry.JUMP;
 	    e1.cost = cost;
