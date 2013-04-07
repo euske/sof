@@ -22,6 +22,7 @@ public class Actor extends Sprite
   public var balloon:MCBalloon;
   
   public var pos:Point;
+  public var jumping:Boolean;
   private var vx:int = 0, vy:int = 0, vg:int = 0;
   private var phase:Number = 0;
 
@@ -69,12 +70,8 @@ public class Actor extends Sprite
     if (0 < v && scene.getDistanceY(bounds, v, Tile.isstoppable) == 0) {
       dispatchEvent(new ActorActionEvent(JUMP));
       vg = scene.getDistanceY(bounds, jumpacc, Tile.isstoppable);
+      jumping = true;
     }
-  }
-
-  public function get jumping():Boolean
-  {
-    return (vg < 0);
   }
 
   // update()
@@ -103,9 +100,13 @@ public class Actor extends Sprite
       // climbing
       vg = 0;
       pos.y += scene.getDistanceY(bounds, speed*vy1, Tile.isobstacle);
+      jumping = false;
     } else {
       // falling
       vg = scene.getDistanceY(bounds, vg+gravity, Tile.isstoppable);
+      if (0 <= vg) {
+	jumping = false;
+      }
       pos.y += vg;
     }
     if (vx1 != 0 || vy1 != 0) {

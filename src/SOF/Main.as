@@ -313,6 +313,11 @@ class Person extends Actor
   public override function update():void
   {
     super.update();
+    if (curaction == PlanEntry.JUMP) {
+      if (!jumping) {
+	curaction = PlanEntry.NONE;
+      }
+    }
     if (target != null && curaction == PlanEntry.NONE) {
       // Get a macro-level planning.
       var plan:PlanMap = scene.createPlan(target.pos, skin.bounds);
@@ -327,11 +332,6 @@ class Person extends Actor
 	}
       }
       PlanVisualizer.update(plan);
-    }
-    if (curaction == PlanEntry.JUMP) {
-      if (!jumping) {
-	curaction = PlanEntry.NONE;
-      }
     }
     if (curgoal != null) {
       // Micro-level (greedy) planning.
