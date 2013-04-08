@@ -299,6 +299,7 @@ class Person extends Actor
   {
     super(scene, image);
     move(int(Math.random()*3)-1, 0);
+    addEventListener(ActorActionEvent.ACTION, onActorAction);
   }
 
   // setTarget(actor)
@@ -309,16 +310,27 @@ class Person extends Actor
     curaction = PlanEntry.NONE;
   }
 
+  // onActorAction()
+  private function onActorAction(e:ActorActionEvent):void
+  {
+    if (e.arg == Actor.LAND) {
+      curaction = PlanEntry.NONE;
+    }
+  }
+
   // update()
   public override function update():void
   {
     super.update();
-    if (curaction == PlanEntry.JUMP) {
-      if (!jumping) {
-	curaction = PlanEntry.NONE;
+    if (target == null) {
+      if (Math.random() < 0.05) {
+	move(int(Math.random()*3)-1, 0);
+      } else if (Math.random() < 0.05) {
+	move(0, int(Math.random()*3)-1);
+      } else if (Math.random() < 0.1) {
+	jump();
       }
-    }
-    if (target != null && curaction == PlanEntry.NONE) {
+    } else if (curaction == PlanEntry.NONE) {
       // Get a macro-level planning.
       var plan:PlanMap = scene.createPlan(target.pos, skin.bounds);
       var p:Point = plan.getTileCoords(pos);
@@ -332,9 +344,10 @@ class Person extends Actor
 	}
       }
       PlanVisualizer.update(plan);
-    }
-    if (curgoal != null) {
+    } else {
       // Micro-level (greedy) planning.
+      // assert(curgoal != null);
+      // assert(curaction != PlanEntry.NONE);
       var x1:int = curgoal.x+curgoal.width/2;
       var y1:int = curgoal.y+curgoal.height/2;
       var dx:int = 0, dy:int = 0;
@@ -355,19 +368,8 @@ class Person extends Actor
       }
       //Logger.log("g="+(x1-pos.x)+","+(y1-pos.y)+" d="+dx+","+dy);
       move(dx, dy);
-      if (bounds.intersects(curgoal)) {
-	curgoal = null;
+      if (curaction != PlanEntry.JUMP && bounds.intersects(curgoal)) {
 	curaction = PlanEntry.NONE;
-      }
-    } else {
-      if (target != null) {
-	move(0, 0);
-      } else if (Math.random() < 0.05) {
-	move(int(Math.random()*3)-1, 0);
-      } else if (Math.random() < 0.05) {
-	move(0, int(Math.random()*3)-1);
-      } else if (Math.random() < 0.1) {
-	jump();
       }
     }
 

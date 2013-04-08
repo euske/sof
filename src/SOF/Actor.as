@@ -22,16 +22,18 @@ public class Actor extends Sprite
   public var balloon:MCBalloon;
   
   public var pos:Point;
-  public var jumping:Boolean;
+
   private var vx:int = 0, vy:int = 0, vg:int = 0;
   private var phase:Number = 0;
+  private var jumping:Boolean;
 
   public const gravity:int = 2;
   public const speed:int = 8;
   public const jumpacc:int = -24;
 
-  public static const JUMP:String = "JUMP";
   public static const DIE:String = "DIE";
+  public static const JUMP:String = "JUMP";
+  public static const LAND:String = "LAND";
 
   // Actor(image)
   public function Actor(scene:Scene, image:BitmapData)
@@ -100,12 +102,16 @@ public class Actor extends Sprite
       // climbing
       vg = 0;
       pos.y += scene.getDistanceY(bounds, speed*vy1, Tile.isobstacle);
-      jumping = false;
+      if (jumping) {
+	jumping = false;
+	dispatchEvent(new ActorActionEvent(LAND));
+      }
     } else {
       // falling
       vg = scene.getDistanceY(bounds, vg+gravity, Tile.isstoppable);
-      if (0 <= vg) {
+      if (jumping && 0 <= vg) {
 	jumping = false;
+	dispatchEvent(new ActorActionEvent(LAND));
       }
       pos.y += vg;
     }
