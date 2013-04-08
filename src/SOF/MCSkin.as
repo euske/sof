@@ -14,12 +14,6 @@ public class MCSkin extends Shape3D
   public const N:int = 8, M:int = 1;
   public const bounds:Rectangle = new Rectangle(-16, -32*2-16, 32*1, 32*4);
 
-  // MCSkin(image)
-  public function MCSkin(image:BitmapData)
-  {
-    super(image);
-  }
-
   // setPhase(r)
   public function setPhase(r:Number):void
   {

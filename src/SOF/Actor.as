@@ -36,10 +36,10 @@ public class Actor extends Sprite
   public static const LAND:String = "LAND";
 
   // Actor(image)
-  public function Actor(scene:Scene, image:BitmapData)
+  public function Actor(scene:Scene)
   {
     this.scene = scene;
-    this.skin = new MCSkin(image);
+    this.skin = new MCSkin();
     this.nametag = new MCNameTag();
     this.balloon = new MCBalloon();
     addChild(this.skin);
@@ -143,6 +143,12 @@ public class Actor extends Sprite
   public virtual function speak(text:String=null):void
   {
     balloon.setText(text);
+  }
+
+  // setSkin(skin)
+  public virtual function setSkin(image:BitmapData):void
+  {
+    skin.setImage(image);
   }
 
   // setName(name)

@@ -15,12 +15,17 @@ public class Shape3D extends Shape
   // VZ:
   public const VZ:Number = 0.2;
 
-  private var skin:BitmapData;
+  private var image:BitmapData;
 
-  // Shape3D(image)
-  public function Shape3D(image:BitmapData)
+  // Shape3D()
+  public function Shape3D()
   {
-    skin = image;
+  }
+
+  // setImage(image)
+  public function setImage(image:BitmapData):void
+  {
+    this.image = image;
   }
 
   // p3d(x,y,z)
@@ -33,17 +38,19 @@ public class Shape3D extends Shape
   // quad(r, p, a, b)
   protected function quad(r:Rectangle, p:Point, a:Point, b:Point):void
   {
-    var m:Matrix = new Matrix(a.x/r.width, a.y/r.width, 
-			      b.x/r.height, b.y/r.height, 
-			      p.x-(r.x*a.x/r.width+r.y*b.x/r.height),
-			      p.y-(r.x*a.y/r.width+r.y*b.y/r.height));
-    graphics.beginBitmapFill(skin, m, false);
-    graphics.moveTo(p.x, p.y);
-    graphics.lineTo(p.x+a.x, p.y+a.y);
-    graphics.lineTo(p.x+a.x+b.x, p.y+a.y+b.y);
-    graphics.lineTo(p.x+b.x, p.y+b.y);
-    graphics.lineTo(p.x, p.y);
-    graphics.endFill();
+    if (image != null) {
+      var m:Matrix = new Matrix(a.x/r.width, a.y/r.width, 
+				b.x/r.height, b.y/r.height, 
+				p.x-(r.x*a.x/r.width+r.y*b.x/r.height),
+				p.y-(r.x*a.y/r.width+r.y*b.y/r.height));
+      graphics.beginBitmapFill(image, m, false);
+      graphics.moveTo(p.x, p.y);
+      graphics.lineTo(p.x+a.x, p.y+a.y);
+      graphics.lineTo(p.x+a.x+b.x, p.y+a.y+b.y);
+      graphics.lineTo(p.x+b.x, p.y+b.y);
+      graphics.lineTo(p.x, p.y);
+      graphics.endFill();
+    }
   }
 }
 

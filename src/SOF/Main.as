@@ -122,18 +122,20 @@ public class Main extends Sprite
 
     scene = new Scene(stage.stageWidth, stage.stageHeight, tilemap);
 
-    player = new Player(scene, image0.bitmapData);
+    player = new Player(scene);
     player.bounds = tilemap.getTileRect(3, 3);
     player.addEventListener(ActorActionEvent.ACTION, onActorAction);
     player.addEventListener(ActorActionEvent.ACTION, onPlayerAction);
     player.speak("Video Games AWESOME!");
+    player.setSkin(image0.bitmapData);
     player.setName("Farshar");
     scene.add(player);
 
     for (var i:int = 0; i < images.length; i++) {
-      var actor:Person = new Person(scene, images[i].bitmapData);
+      var actor:Person = new Person(scene); 
       actor.bounds = tilemap.getTileRect(i+5, i+5);
       actor.addEventListener(ActorActionEvent.ACTION, onActorAction);
+      actor.setSkin(images[i].bitmapData);
       switch (i) {
       case 0:
 	actor.setName("MissBlow");
@@ -295,9 +297,9 @@ class Person extends Actor
   private var curaction:int;
 
   // Person(image)
-  public function Person(scene:Scene, image:BitmapData)
+  public function Person(scene:Scene)
   {
-    super(scene, image);
+    super(scene);
     move(int(Math.random()*3)-1, 0);
     addEventListener(ActorActionEvent.ACTION, onActorAction);
   }
@@ -395,9 +397,9 @@ class Person extends Actor
 class Player extends Actor
 {
   // Player(image)
-  public function Player(scene:Scene, image:BitmapData)
+  public function Player(scene:Scene)
   {
-    super(scene, image);
+    super(scene);
   }
 
   // update()
