@@ -13,7 +13,7 @@ import flash.events.Event;
 import flash.events.KeyboardEvent;
 import flash.events.MouseEvent;
 import flash.events.NetStatusEvent;
-import flash.events.NetDataEvent;
+import flash.events.AsyncErrorEvent;
 import flash.media.Sound;
 import flash.ui.Keyboard;
 import flash.utils.ByteArray;
@@ -247,20 +247,17 @@ public class Main extends Sprite
   }
 
   // popupVideo(bytes)
+  private var video:Video;
+
   private function popupVideo(bytes:ByteArray):void
   {
-    var video:Video = new Video();
+    popdownVideo();
+    video = new Video();
     var nc:NetConnection = new NetConnection();
     nc.connect(null);
     var ns:NetStream = new NetStream(nc);
-    ns.addEventListener(NetStatusEvent.NET_STATUS, 
-			(function (ev:NetStatusEvent):void {
-			  switch (ev.info.code) {
-			  case "NetStream.Buffer.Empty":
-			    removeChild(video);
-			    break;
-			  }
-			}));
+    ns.addEventListener(NetStatusEvent.NET_STATUS, onNetStatusEvent);
+    ns.addEventListener(AsyncErrorEvent.ASYNC_ERROR, onAsyncErrorEvent);
     ns.play(null);
     ns.appendBytes(bytes);
     video.x = (stage.stageWidth-video.width)/2;
@@ -269,6 +266,27 @@ public class Main extends Sprite
     addChild(video);
   }
   
+  private function popdownVideo():void
+  {
+    if (video != null) {
+      removeChild(video);
+      video = null;
+    }
+  }
+
+  private function onNetStatusEvent(ev:NetStatusEvent):void
+  {
+    switch (ev.info.code) {
+    case "NetStream.Buffer.Empty":
+      popdownVideo();
+      break;
+    }
+  }
+
+  private function onAsyncErrorEvent(ev:AsyncErrorEvent):void
+  {
+  }
+
 } // Main
 
 } // package
