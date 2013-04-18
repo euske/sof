@@ -311,7 +311,7 @@ import SOF.ActorActionEvent;
 class Person extends Actor
 {
   private var target:Actor;
-  private var curgoal:Rectangle;
+  private var curgoal:Point;
   private var curaction:int;
 
   // Person(image)
@@ -350,46 +350,51 @@ class Person extends Actor
       } else if (Math.random() < 0.1) {
 	jump();
       }
-    } else if (curaction == PlanEntry.NONE) {
-      // Get a macro-level planning.
-      var plan:PlanMap = scene.createPlan(target.pos, skin.bounds);
-      var p:Point = plan.getTileCoords(pos);
-      var e:PlanEntry = plan.getEntry(p.x, p.y);
-      if (e != null && e.next != null) {
-	curgoal = plan.getTileRect(e.next.x, e.next.y);
-	curaction = e.action;
-	Logger.log("goal="+curgoal+", action="+curaction);
-	if (curaction == PlanEntry.JUMP) {
-	  jump();
-	}
-      }
-      PlanVisualizer.update(plan);
     } else {
-      // Micro-level (greedy) planning.
-      // assert(curgoal != null);
-      // assert(curaction != PlanEntry.NONE);
-      var x1:int = curgoal.x+curgoal.width/2;
-      var y1:int = curgoal.y+curgoal.height/2;
-      var dx:int = 0, dy:int = 0;
-      if (x1 < pos.x) { 
-      	dx = -1;
-      } else if (pos.x < x1) {
-      	dx = +1;
-      }
-      if (scene.getDistanceX(bounds, speed*dx, Tile.isobstacle) == 0) {
-      	dx = 0;
-      }
-      if (dx == 0) {
-      	if (y1 < pos.y) { 
-      	  dy = -1; 
-      	} else if (pos.y < y1) {
-      	  dy = +1;
-      	}
-      }
-      //Logger.log("g="+(x1-pos.x)+","+(y1-pos.y)+" d="+dx+","+dy);
-      move(dx, dy);
-      if (curaction != PlanEntry.JUMP && bounds.intersects(curgoal)) {
-	curaction = PlanEntry.NONE;
+      var tilemap:TileMap = scene.tilemap;
+      var src:Point = tilemap.getTileCoords(pos);
+      src.y += 1;
+      var dst:Point = tilemap.getTileCoords(target.pos);
+      dst.y += 1;
+      if (curaction == PlanEntry.NONE) {
+	// Get a macro-level planning.
+	var plan:PlanMap = scene.createPlan(dst.x, dst.y, 0, 4);
+	var e:PlanEntry = plan.getEntry(src.x, src.y);
+	if (e != null && e.next != null) {
+	  curgoal = new Point(e.next.x, e.next.y);
+	  curaction = e.action;
+	  Logger.log("goal="+curgoal+", action="+curaction);
+	  if (curaction == PlanEntry.JUMP) {
+	    jump();
+	  }
+	}
+	PlanVisualizer.update(plan);
+      } else {
+	// Micro-level (greedy) planning.
+	// assert(curgoal != null);
+	// assert(curaction != PlanEntry.NONE);
+	Logger.log("goal="+curgoal+", src="+src);
+	var dx:int = 0, dy:int = 0;
+	if (curgoal.x < src.x) { 
+	  dx = -1;
+	} else if (src.x < curgoal.x) {
+	  dx = +1;
+	}
+	if (scene.getDistanceX(bounds, speed*dx, Tile.isobstacle) == 0) {
+	  dx = 0;
+	}
+	if (dx == 0) {
+	  if (curgoal.y < src.y) { 
+	    dy = -1; 
+	  } else if (src.y < curgoal.y) {
+	    dy = +1;
+	  }
+	}
+	if (dx != 0 || dy != 0) {
+	  move(dx, dy);
+	} else {
+	  curaction = PlanEntry.NONE;
+	}
       }
     }
 

@@ -11,7 +11,7 @@ import SOF.Actor;
 // 
 public class Scene extends Sprite
 {
-  private var tilemap:TileMap;
+  public var tilemap:TileMap;
   private var window:Rectangle;
   private var mapsize:Point;
   public var actors:Array = [];
@@ -85,11 +85,12 @@ public class Scene extends Sprite
   }
 
   // createPlan(dst, bounds)
-  public function createPlan(dst:Point, bounds:Rectangle):PlanMap
+  public function createPlan(cx:int, cy:int, w:int, h:int):PlanMap
   {
-    var plan:PlanMap = new PlanMap(tilemap.tilesize, dst, 
-				   window.width/2, window.height/2);
-    plan.fillPlan(tilemap, bounds);
+    var plan:PlanMap = new PlanMap(Math.floor(window.width/2/tilemap.tilesize),
+				   Math.floor(window.height/2/tilemap.tilesize),
+				   cx, cy);
+    plan.fillPlan(tilemap, w, h);
     return plan;
   }
 

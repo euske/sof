@@ -6,8 +6,6 @@ import flash.geom.Point;
 import flash.geom.Rectangle;
 import SOF.Logger;
 import SOF.Tile;
-import SOF.PlanEntry;
-import SOF.PlanMap;
 
 //  TileMap
 //
@@ -94,6 +92,12 @@ public class TileMap extends Bitmap
   public function getTileRect(x:int, y:int):Rectangle
   {
     return new Rectangle(x*tilesize, y*tilesize, tilesize, tilesize);
+  }
+
+  // getTileCoords(x, y)
+  public function getTileCoords(p:Point):Point
+  {
+    return new Point(Math.floor(p.x/tilesize), Math.floor(p.y/tilesize));
   }
 
   // scanTileX(r)

@@ -45,10 +45,10 @@ public class PlanVisualizer extends Shape
 	  continue;
 	}
 	graphics.lineStyle(0, c);
-	graphics.drawRect(x*10, y*10, 10, 10);
+	graphics.drawRect(e.x*10, e.y*10, 10, 10);
 	graphics.lineStyle(0, 0xffff00);
 	if (e.next != null) {
-	  graphics.moveTo(x*10+5, y*10+5);
+	  graphics.moveTo(e.x*10+5, e.y*10+5);
 	  graphics.lineTo(e.next.x*10+5, e.next.y*10+5);
 	}
       }

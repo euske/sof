@@ -10,39 +10,24 @@ import SOF.TileMap;
 // 
 public class PlanMap
 {
-  public var tilesize:int;
-  public var center:Point;
   public var x0:int, y0:int, x1:int, y1:int;
   private var a:Array;
 
-  public function PlanMap(tilesize:int, center:Point, width:int, height:int)
+  public function PlanMap(width:int, height:int, cx:int, cy:int)
   {
-    this.tilesize = tilesize;
-    this.center = center;
-    this.x0 = Math.floor((center.x-width)/tilesize);
-    this.y0 = Math.floor((center.y-height)/tilesize);
-    this.x1 = Math.floor((center.x+width+tilesize-1)/tilesize);
-    this.y1 = Math.floor((center.y+height+tilesize-1)/tilesize);
-    this.a = new Array(y1-y0+1);
-    var w:int = (x1-x0+1);
+    x0 = cx-width;
+    x1 = cx+width;
+    y0 = cy-height;
+    y1 = cy+height;
+    a = new Array(y1-y0+1);
     var m:int = (width+height+1)*2;
     for (var y:int = y0; y <= y1; y++) {
-      var b:Array = new Array(w);
+      var b:Array = new Array(x1-x0+1);
       for (var x:int = x0; x <= x1; x++) {
 	b[x-x0] = new PlanEntry(x, y, 0, m, null);
       }
       a[y-y0] = b;
     }
-  }
-
-  public function getTileCoords(p:Point):Point
-  {
-    return new Point(Math.floor(p.x/tilesize), Math.floor(p.y/tilesize));
-  }
-
-  public function getTileRect(x:int, y:int):Rectangle
-  {
-    return new Rectangle(x*tilesize, y*tilesize, tilesize, tilesize);
   }
 
   public function getEntry(x:int, y:int):PlanEntry
@@ -59,25 +44,19 @@ public class PlanMap
 				 new Point(+1,+2), new Point(+2,+1), 
 				 new Point(+1,+1), new Point(+2, 0), 
 				 ];
-  public function fillPlan(map:TileMap, b:Rectangle):void
+  public function fillPlan(map:TileMap, w:int, h:int):void
   {
-    var p:Point = getTileCoords(center);
-    var r0:Rectangle = getTileRect(p.x, p.y);
-    var dx0:int = Math.floor((r0.width/2+b.x)/tilesize);
-    var dy0:int = Math.floor((r0.height/2+b.y)/tilesize);
-    var dx1:int = Math.floor((r0.width/2+b.x+b.width-1)/tilesize);
-    var dy1:int = Math.floor((r0.height/2+b.y+b.height-1)/tilesize);
-    var e1:PlanEntry = getEntry(p.x, p.y);
+    var e1:PlanEntry = a[(y1-y0)/2][(x1-x0)/2];
     e1.cost = 0;
     var queue:Array = [ e1 ];
     while (0 < queue.length) {
       var e0:PlanEntry = queue.pop();
-      if (map.hasTile(e0.x+dx0, e0.x+dx1, e0.y+dy0, e0.y+dy1, Tile.isobstacle)) continue;
+      if (map.hasTile(e0.x-w, e0.x+w, e0.y-h, e0.y, Tile.isobstacle)) continue;
 
-      var cost:int, i:int, d:Point;
+      var cost:int;
       // try walking right.
-      if (this.x0 <= e0.x-1 && Tile.isstoppable(map.getTile(e0.x-1, e0.y+dy1+1))) {
-	e1 = getEntry(e0.x-1, e0.y);
+      if (x0 <= e0.x-1 && Tile.isstoppable(map.getTile(e0.x-1, e0.y+1))) {
+	e1 = a[e0.y-y0][e0.x-1-x0];
 	cost = e0.cost+1;
 	if (cost < e1.cost) {
 	  e1.action = PlanEntry.WALK;
@@ -87,8 +66,8 @@ public class PlanMap
 	}
       }
       // try walking left.
-      if (e0.x+1 <= this.x1 && Tile.isstoppable(map.getTile(e0.x+1, e0.y+dy1+1))) {
-	e1 = getEntry(e0.x+1, e0.y);
+      if (e0.x+1 <= x1 && Tile.isstoppable(map.getTile(e0.x+1, e0.y+1))) {
+	e1 = a[e0.y-y0][e0.x+1-x0];
 	cost = e0.cost+1;
 	if (cost < e1.cost) {
 	  e1.action = PlanEntry.WALK;
@@ -98,8 +77,8 @@ public class PlanMap
 	}
       }
       // try falling.
-      if (this.y0 <= e0.y-1 && !Tile.isstoppable(map.getTile(e0.x, e0.y+dy1))) {
-	e1 = getEntry(e0.x, e0.y-1);
+      if (y0 <= e0.y-1 && !Tile.isstoppable(map.getTile(e0.x, e0.y))) {
+	e1 = a[e0.y-1-y0][e0.x-x0];
 	cost = e0.cost+1;
 	if (cost < e1.cost) {
 	  e1.action = PlanEntry.FALL;
@@ -109,8 +88,8 @@ public class PlanMap
 	}
       }
       // try climbing down.
-      if (this.y0 <= e0.y-1 && Tile.isgrabbable(map.getTile(e0.x, e0.y+dy1))) {
-	e1 = getEntry(e0.x, e0.y-1);
+      if (y0 <= e0.y-1 && Tile.isgrabbable(map.getTile(e0.x, e0.y))) {
+	e1 = a[e0.y-1-y0][e0.x-x0];
 	cost = e0.cost+1;
 	if (cost < e1.cost) {
 	  e1.action = PlanEntry.CLIMB;
@@ -120,9 +99,9 @@ public class PlanMap
 	}
       }
       // try climbing up.
-      if (e0.y+1 <= this.y1 && 
-	  map.hasTile(e0.x+dx0, e0.x+dx1, e0.y+dy0+1, e0.y+dy1+1, Tile.isgrabbable)) {
-	e1 = getEntry(e0.x, e0.y+1);
+      if (e0.y+1 <= y1 && 
+	  map.hasTile(e0.x-w, e0.x-w, e0.y-h+1, e0.y+1, Tile.isgrabbable)) {
+	e1 = a[e0.y+1-y0][e0.x-x0];
 	cost = e0.cost+1;
 	if (cost < e1.cost) {
 	  e1.action = PlanEntry.CLIMB;
@@ -132,12 +111,14 @@ public class PlanMap
 	}
       }
       // try jumping.
-      for (i = 0; i < JUMPLOC.length; i++) {
-	d = JUMPLOC[i];
-	if (this.x0 <= e0.x+d.x && e0.x+d.x <= this.x1 && e0.y+d.y <= this.y1 && 
-	    Tile.isstoppable(map.getTile(e0.x+d.x, e0.y+dy1+d.y+1)) &&
-	    !map.hasTile(e0.x+dx0+d.x, e0.x+dx1, e0.y+dy0, e0.y+dy1+d.y, Tile.isstoppable)) {
-	  e1 = getEntry(e0.x+d.x, e0.y+d.y);
+      for (var i:int = 0; i < JUMPLOC.length; i++) {
+	var d:Point = JUMPLOC[i];
+	var x:int = e0.x+d.x;
+	var y:int = e0.y+d.y;
+	if (x0 <= x && x <= x1 && y0 <= y && y <= y1 && 
+	    Tile.isstoppable(map.getTile(x, x+1)) &&
+	    !map.hasTile(x-w, x+w, y-h, y, Tile.isstoppable)) {
+	  e1 = a[y-y0][x-x0];
 	  cost = e0.cost+Math.abs(d.x)+Math.abs(d.y)+1;
 	  if (cost < e1.cost) {
 	    e1.action = PlanEntry.JUMP;
