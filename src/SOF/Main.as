@@ -358,7 +358,7 @@ class Person extends Actor
       dst.y += 1;
       if (curaction == PlanEntry.NONE) {
 	// Get a macro-level planning.
-	var plan:PlanMap = scene.createPlan(dst.x, dst.y, 0, 4);
+	var plan:PlanMap = scene.createPlan(dst.x, dst.y, 1, 4);
 	var e:PlanEntry = plan.getEntry(src.x, src.y);
 	if (e != null && e.next != null) {
 	  curgoal = new Point(e.next.x, e.next.y);

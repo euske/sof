@@ -46,6 +46,8 @@ public class PlanMap
 				 ];
   public function fillPlan(map:TileMap, w:int, h:int):void
   {
+    w -= 1;
+    h -= 1;
     var e1:PlanEntry = a[(y1-y0)/2][(x1-x0)/2];
     e1.cost = 0;
     var queue:Array = [ e1 ];
