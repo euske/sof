@@ -162,6 +162,28 @@ public class TileMap extends Bitmap
     return NOTFOUND;
   }
   
+  // scanTile(r)
+  public function scanTile(x0:int, x1:int, y0:int, y1:int, f:Function):Point
+  {
+    var dx:int = Math.abs(x1+1-x0);
+    var dy:int = Math.abs(y1+1-y0);
+    var vx:int = (x0 < x1)? +1 : -1;
+    var vy:int = (y0 < y1)? +1 : -1;
+    var n:int = Math.max(dx, dy);
+    for (var i:int = 0; i < n; i++) {
+      for (var j:int = 0; j <= i; j++) {
+	if (j < dx && (i-j) < dy) {
+	  var x:int = x0+j*vx;
+	  var y:int = y0+(i-j)*vy;
+	  if (f(getTile(x, y))) {
+	    return new Point(bx, y);
+	  }
+	}
+      }
+    }
+    return null;
+  }
+  
   // hasTile(x0, x1, y0, y1, f)
   public function hasTile(x0:int, x1:int, y0:int, y1:int, f:Function):Boolean
   {
