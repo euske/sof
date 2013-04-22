@@ -1,10 +1,10 @@
-package SOF {
+package {
 
 import flash.display.Shape;
 import flash.display.BitmapData;
 import flash.geom.Point;
 import flash.geom.Rectangle;
-import SOF.Shape3D;
+import Shape3D;
 
 //  MCSkin
 //  Draw a Minecraft skin centered at (0,0)
@@ -233,4 +233,4 @@ public class MCSkin extends Shape3D
   }
 }
 
-}
+} // package

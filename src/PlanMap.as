@@ -1,10 +1,10 @@
-package SOF {
+package {
 
 import flash.geom.Point;
 import flash.geom.Rectangle;
-import SOF.PlanEntry;
-import SOF.Tile;
-import SOF.TileMap;
+import PlanEntry;
+import Tile;
+import TileMap;
 
 //  PlanMap
 // 
@@ -136,4 +136,4 @@ public class PlanMap
   }
 }
 
-}
+} // package

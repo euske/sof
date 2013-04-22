@@ -1,4 +1,4 @@
-package SOF {
+package {
 
 import flash.display.Bitmap;
 import flash.display.BitmapData;
@@ -68,4 +68,4 @@ public class BitmapFont
 
 }
 
-}
+} // package

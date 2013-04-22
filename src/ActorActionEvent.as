@@ -1,4 +1,4 @@
-package SOF {
+package {
 
 import flash.events.Event;
 
@@ -17,4 +17,4 @@ public class ActorActionEvent extends Event
   }
 }
 
-}
+} // package

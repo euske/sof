@@ -1,4 +1,4 @@
-package SOF {
+package {
 
 //  Tile
 // 
@@ -126,4 +126,4 @@ public class Tile
   }
 }
 
-}
+} // package

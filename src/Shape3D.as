@@ -1,4 +1,4 @@
-package SOF {
+package {
 
 import flash.display.Shape;
 import flash.display.BitmapData;
@@ -54,4 +54,4 @@ public class Shape3D extends Shape
   }
 }
 
-}
+} // package

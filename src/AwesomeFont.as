@@ -1,13 +1,13 @@
-package SOF {
+package {
 
 import flash.display.Bitmap;
-import SOF.BitmapFont;
+import BitmapFont;
 
 //  AwesomeFont
 // 
 public class AwesomeFont extends BitmapFont
 {
-  [Embed(source="../../assets/awesomefont.png", mimeType="image/png")]
+  [Embed(source="../assets/awesomefont.png", mimeType="image/png")]
   private static const AwesomeFontGlyphsCls:Class;
   private static const awesomefontglyphs:Bitmap = new AwesomeFontGlyphsCls();
   private static const awesomefontwidths:Array = [
@@ -34,4 +34,4 @@ public class AwesomeFont extends BitmapFont
   }
 }
 
-}
+} // package

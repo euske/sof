@@ -1,11 +1,11 @@
-package SOF {
+package {
 
 import flash.display.Bitmap;
 import flash.display.BitmapData;
 import flash.geom.Point;
 import flash.geom.Rectangle;
-import SOF.Logger;
-import SOF.Tile;
+import Logger;
+import Tile;
 
 //  TileMap
 //
@@ -176,7 +176,7 @@ public class TileMap extends Bitmap
 	  var x:int = x0+j*vx;
 	  var y:int = y0+(i-j)*vy;
 	  if (f(getTile(x, y))) {
-	    return new Point(bx, y);
+	    return new Point(x, y);
 	  }
 	}
       }
@@ -196,4 +196,4 @@ public class TileMap extends Bitmap
   }
 }
 
-}
+} // package

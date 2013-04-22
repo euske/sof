@@ -1,8 +1,8 @@
-package SOF {
+package {
 
 import flash.display.Sprite;
 import flash.display.Bitmap;
-import SOF.AwesomeFont;
+import AwesomeFont;
 
 //  MCNameTag
 //
@@ -37,4 +37,4 @@ public class MCNameTag extends Sprite
   }
 }
 
-}
+} // package

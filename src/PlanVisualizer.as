@@ -1,8 +1,8 @@
-package SOF {
+package {
 
 import flash.display.Shape;
-import SOF.PlanEntry;
-import SOF.PlanMap;
+import PlanEntry;
+import PlanMap;
 
 //  PlanVisualizer
 // 
@@ -56,4 +56,4 @@ public class PlanVisualizer extends Shape
   }
 }
 
-}
+} // package

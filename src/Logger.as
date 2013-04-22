@@ -1,11 +1,11 @@
-// Logger.as
-
-package SOF {
+package {
 
 import flash.events.Event;
 import flash.text.TextField;
 import flash.text.TextFieldType;
 
+//  Logger
+//
 public class Logger extends TextField
 {
   private static var logger:Logger = null;
@@ -41,4 +41,4 @@ public class Logger extends TextField
   }
 }
 
-}
+} // package

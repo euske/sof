@@ -1,4 +1,4 @@
-package SOF {
+package {
 
 //  PlanEntry
 //
@@ -24,4 +24,4 @@ public class PlanEntry
   }
 }
 
-}
+} // package

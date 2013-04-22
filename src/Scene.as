@@ -1,11 +1,11 @@
-package SOF {
+package {
 
 import flash.display.Sprite;
 import flash.geom.Point;
 import flash.geom.Rectangle;
-import SOF.TileMap;
-import SOF.PlanMap;
-import SOF.Actor;
+import TileMap;
+import PlanMap;
+import Actor;
 
 //  Scene
 // 
@@ -181,4 +181,4 @@ public class Scene extends Sprite
   }
 }
 
-}
+} // package

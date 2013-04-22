@@ -1,6 +1,4 @@
-// Main.as
-
-package SOF {
+package {
 
 import flash.display.Sprite;
 import flash.display.Stage;
@@ -17,11 +15,10 @@ import flash.events.AsyncErrorEvent;
 import flash.media.Sound;
 import flash.ui.Keyboard;
 import flash.utils.ByteArray;
-import SOF.Logger;
-import SOF.Scene;
-import SOF.TileMap;
-import SOF.PlanVisualizer;
-
+import Logger;
+import Scene;
+import TileMap;
+import PlanVisualizer;
 
 //  Main 
 //
@@ -29,40 +26,40 @@ import SOF.PlanVisualizer;
 public class Main extends Sprite
 {
   // Background image: 
-  [Embed(source="../../assets/background.png", mimeType="image/png")]
-  private static const BackgroundCls:Class;
-  private static const background:Bitmap = new BackgroundCls();
+  //[Embed(source="../assets/background.png", mimeType="image/png")]
+  //private static const BackgroundCls:Class;
+  //private static const background:Bitmap = new BackgroundCls();
   
   // Skin image: http://www.minecraft.net/skin/USERNAME
   //[Embed(source="Skinzones.png", mimeType="image/png")]
-  [Embed(source="../../assets/skins/FFSTV.png", mimeType="image/png")]
+  [Embed(source="../assets/skins/FFSTV.png", mimeType="image/png")]
   private static const Image0Cls:Class;
   private static const image0:Bitmap = new Image0Cls();
-  [Embed(source="../../assets/skins/MissBlow.png", mimeType="image/png")]
+  [Embed(source="../assets/skins/MissBlow.png", mimeType="image/png")]
   private static const Image1Cls:Class;
   private static const image1:Bitmap = new Image1Cls();
-  [Embed(source="../../assets/skins/Snarfy_Snarf.png", mimeType="image/png")]
+  [Embed(source="../assets/skins/Snarfy_Snarf.png", mimeType="image/png")]
   private static const Image2Cls:Class;
   private static const image2:Bitmap = new Image2Cls();
-  [Embed(source="../../assets/skins/Deakwanda.png", mimeType="image/png")]
+  [Embed(source="../assets/skins/Deakwanda.png", mimeType="image/png")]
   private static const Image3Cls:Class;
   private static const image3:Bitmap = new Image3Cls();
 
   // Jump sound
-  [Embed(source="../../assets/jump1.mp3")]
+  [Embed(source="../assets/jump1.mp3")]
   private static const JumpSoundCls:Class;
   private static const jump:Sound = new JumpSoundCls();
 
   // Video
-  [Embed(source="../../assets/Frage1.flv", mimeType="application/octet-stream")]
+  [Embed(source="../assets/Frage1.flv", mimeType="application/octet-stream")]
   private static const Frage1VideoCls:Class;
 
   // Tile images: http://www.minecraftwiki.net/wiki/File:BlockCSS.png
-  [Embed(source="../../assets/tiles.png", mimeType="image/png")]
+  [Embed(source="../assets/tiles.png", mimeType="image/png")]
   private static const TilesImageCls:Class;
   private static const tilesimage:Bitmap = new TilesImageCls();
 
-  [Embed(source="../../assets/map.png", mimeType="image/png")]
+  [Embed(source="../assets/map.png", mimeType="image/png")]
   private static const MapImageCls:Class;
   private static const mapimage:Bitmap = new MapImageCls();
 
@@ -295,15 +292,15 @@ public class Main extends Sprite
 import flash.display.BitmapData;
 import flash.geom.Point;
 import flash.geom.Rectangle;
-import SOF.Logger;
-import SOF.Scene;
-import SOF.Tile;
-import SOF.TileMap;
-import SOF.PlanEntry;
-import SOF.PlanMap;
-import SOF.PlanVisualizer;
-import SOF.Actor;
-import SOF.ActorActionEvent;
+import Logger;
+import Scene;
+import Tile;
+import TileMap;
+import PlanEntry;
+import PlanMap;
+import PlanVisualizer;
+import Actor;
+import ActorActionEvent;
 
 
 //  Person

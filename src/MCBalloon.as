@@ -1,8 +1,8 @@
-package SOF {
+package {
 
 import flash.display.Sprite;
 import flash.display.Bitmap;
-import SOF.AwesomeFont;
+import AwesomeFont;
 
 //  MCBalloon
 //
@@ -40,4 +40,4 @@ public class MCBalloon extends Sprite
   }
 }
 
-}
+} // package

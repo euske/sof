@@ -1,16 +1,16 @@
-package SOF {
+package {
 
 import flash.display.Sprite;
 import flash.display.BitmapData;
 import flash.events.Event;
 import flash.geom.Point;
 import flash.geom.Rectangle;
-import SOF.MCSkin;
-import SOF.MCNameTag;
-import SOF.MCBalloon;
-import SOF.TileMap;
-import SOF.Tile;
-import SOF.ActorActionEvent;
+import MCSkin;
+import MCNameTag;
+import MCBalloon;
+import TileMap;
+import Tile;
+import ActorActionEvent;
 
 //  Actor
 //
@@ -161,4 +161,4 @@ public class Actor extends Sprite
 
 }
 
-}
+} // package
