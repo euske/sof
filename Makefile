@@ -19,8 +19,8 @@ clean:
 	-$(RM) $(TARGET)
 	-$(RM) -r $(WEBDIR)
 
-$(TARGET): src/SOF/Main.as
-	$(AS3COMPILE) -compiler.source-path=./src -o $@ src/SOF/Main.as
+$(TARGET): src/Main.as
+	$(AS3COMPILE) -compiler.source-path=./src -o $@ src/Main.as
 
 live: $(TARGET)
 	$(SSHON)
