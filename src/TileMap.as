@@ -183,17 +183,6 @@ public class TileMap extends Bitmap
     }
     return null;
   }
-  
-  // hasTile(x0, x1, y0, y1, f)
-  public function hasTile(x0:int, x1:int, y0:int, y1:int, f:Function):Boolean
-  {
-    for (var y:int = y0; y <= y1; y++) {
-      for (var x:int = x0; x <= x1; x++) {
-	if (f(getTile(x, y))) return true;
-      }
-    }
-    return false;
-  }
 }
 
 } // package

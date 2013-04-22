@@ -19,7 +19,7 @@ clean:
 	-$(RM) $(TARGET)
 	-$(RM) -r $(WEBDIR)
 
-$(TARGET): src/Main.as
+$(TARGET): src/*.as
 	$(AS3COMPILE) -compiler.source-path=./src -o $@ src/Main.as
 
 live: $(TARGET)

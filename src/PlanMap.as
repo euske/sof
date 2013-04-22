@@ -53,7 +53,7 @@ public class PlanMap
     var queue:Array = [ e1 ];
     while (0 < queue.length) {
       var e0:PlanEntry = queue.pop();
-      if (map.hasTile(e0.x-w, e0.x+w, e0.y-h, e0.y, Tile.isobstacle)) continue;
+      if (map.scanTile(e0.x-w, e0.x+w, e0.y-h, e0.y, Tile.isobstacle) != null) continue;
 
       var cost:int;
       // try walking right.
@@ -102,7 +102,7 @@ public class PlanMap
       }
       // try climbing up.
       if (e0.y+1 <= y1 && 
-	  map.hasTile(e0.x-w, e0.x-w, e0.y-h+1, e0.y+1, Tile.isgrabbable)) {
+	  map.scanTile(e0.x-w, e0.x-w, e0.y-h+1, e0.y+1, Tile.isgrabbable) != null) {
 	e1 = a[e0.y+1-y0][e0.x-x0];
 	cost = e0.cost+1;
 	if (cost < e1.cost) {
@@ -119,7 +119,7 @@ public class PlanMap
 	var y:int = e0.y+d.y;
 	if (x0 <= x && x <= x1 && y0 <= y && y <= y1 && 
 	    Tile.isstoppable(map.getTile(x, x+1)) &&
-	    !map.hasTile(x-w, x+w, y-h, y, Tile.isstoppable)) {
+	    map.scanTile(x-w, x+w, y-h, y, Tile.isstoppable) == null) {
 	  e1 = a[y-y0][x-x0];
 	  cost = e0.cost+Math.abs(d.x)+Math.abs(d.y)+1;
 	  if (cost < e1.cost) {
