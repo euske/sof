@@ -87,9 +87,10 @@ public class Scene extends Sprite
   // createPlan(dst, bounds)
   public function createPlan(cx:int, cy:int, w:int, h:int):PlanMap
   {
-    var plan:PlanMap = new PlanMap(Math.floor(window.width/2/tilemap.tilesize),
-				   Math.floor(window.height/2/tilemap.tilesize),
-				   cx, cy);
+    var plan:PlanMap = new PlanMap(
+      Math.floor(window.width/2/tilemap.tilesize),
+      Math.floor(window.height/2/tilemap.tilesize),
+      cx, cy);
     plan.fillPlan(tilemap, w, h);
     return plan;
   }

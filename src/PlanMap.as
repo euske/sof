@@ -37,13 +37,14 @@ public class PlanMap
   }
 
   // fillPlan(plan, b)
-  public const JUMPLOC:Array = [ new Point(-1,+4), new Point(-1,+3), 
-				 new Point(-1,+2), new Point(-2,+1), 
-				 new Point(-1,+1), new Point(-2, 0), 
-				 new Point(+1,+4), new Point(+1,+3), 
-				 new Point(+1,+2), new Point(+2,+1), 
-				 new Point(+1,+1), new Point(+2, 0), 
-				 ];
+  public const JUMPLOC:Array = [
+    new Point(-1,+4), new Point(-1,+3),
+    new Point(-1,+2), new Point(-2,+1),
+    new Point(-1,+1), new Point(-2, 0),
+    new Point(+1,+4), new Point(+1,+3),
+    new Point(+1,+2), new Point(+2,+1),
+    new Point(+1,+1), new Point(+2, 0),
+  ];
   public function fillPlan(map:TileMap, w:int, h:int):void
   {
     w -= 1;
