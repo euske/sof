@@ -348,14 +348,11 @@ class Person extends Actor
 	jump();
       }
     } else {
-      var tilemap:TileMap = scene.tilemap;
-      var src:Point = tilemap.getTileCoords(pos);
-      src.y += 1;
-      var dst:Point = tilemap.getTileCoords(target.pos);
-      dst.y += 1;
+      var src:Rectangle = scene.tilemap.getTileCoords(bounds);
+      var dst:Rectangle = scene.tilemap.getTileCoords(target.bounds);
       if (curaction == PlanEntry.NONE) {
 	// Get a macro-level planning.
-	var plan:PlanMap = scene.createPlan(dst.x, dst.y, 1, 4);
+	var plan:PlanMap = scene.createPlan(dst.x, dst.y, dst.width, dst.height);
 	var e:PlanEntry = plan.getEntry(src.x, src.y);
 	if (e != null && e.next != null) {
 	  curgoal = new Point(e.next.x, e.next.y);
@@ -377,7 +374,9 @@ class Person extends Actor
 	} else if (src.x < curgoal.x) {
 	  dx = +1;
 	}
-	if (scene.getDistanceX(bounds, speed*dx, Tile.isobstacle) == 0) {
+	var r:Rectangle = bounds.clone();
+	r.x += speed*dx;
+	if (scene.tilemap.hasTileCoords(r, Tile.isobstacle)) {
 	  dx = 0;
 	}
 	if (dx == 0) {

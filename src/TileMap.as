@@ -4,7 +4,6 @@ import flash.display.Bitmap;
 import flash.display.BitmapData;
 import flash.geom.Point;
 import flash.geom.Rectangle;
-import Logger;
 import Tile;
 
 //  TileMap
@@ -14,9 +13,8 @@ public class TileMap extends Bitmap
   public var map:BitmapData;
   public var tiles:BitmapData;
   public var tilesize:int;
-  public const NOTFOUND:int = -999;
 
-  private var prevrect:Rectangle;
+  private var _prevrect:Rectangle;
 
   // TileMap(map, tiles, tilesize, width, height)
   public function TileMap(map:BitmapData, 
@@ -26,7 +24,7 @@ public class TileMap extends Bitmap
     this.map = map;
     this.tiles = tiles;
     this.tilesize = tilesize;
-    this.prevrect = new Rectangle(-1,-1,0,0);
+    _prevrect = new Rectangle(-1,-1,0,0);
   }
 
   // mapwidth
@@ -47,13 +45,13 @@ public class TileMap extends Bitmap
     var y0:int = Math.floor(window.y/tilesize);
     var mw:int = Math.floor(window.width/tilesize)+1;
     var mh:int = Math.floor(window.height/tilesize)+1;
-    if (prevrect.x != x0 || prevrect.y != y0 ||
-	prevrect.width != mw || prevrect.height != mh) {
+    if (_prevrect.x != x0 || _prevrect.y != y0 ||
+	_prevrect.width != mw || _prevrect.height != mh) {
       renderTiles(x0, y0, mw, mh);
-      prevrect.x = x0;
-      prevrect.y = y0;
-      prevrect.width = mw;
-      prevrect.height = mh;
+      _prevrect.x = x0;
+      _prevrect.y = y0;
+      _prevrect.width = mw;
+      _prevrect.height = mh;
     }
     this.x = (x0*tilesize)-window.x;
     this.y = (y0*tilesize)-window.y;
@@ -88,83 +86,10 @@ public class TileMap extends Bitmap
     return Tile.pixelToTileId(c);
   }
 
-  // getTileRect(x, y)
-  public function getTileRect(x:int, y:int):Rectangle
+  // scanTile(x0, x1, y0, y1, f)
+  public function scanTile(x0:int, x1:int, y0:int, y1:int, f:Function):Array
   {
-    return new Rectangle(x*tilesize, y*tilesize, tilesize, tilesize);
-  }
-
-  // getTileCoords(x, y)
-  public function getTileCoords(p:Point):Point
-  {
-    return new Point(Math.floor(p.x/tilesize), Math.floor(p.y/tilesize));
-  }
-
-  // scanTileX(r)
-  public function scanTileX(r:Rectangle, f:Function):int
-  {
-    var y0:int = Math.floor(r.y/tilesize);
-    var y1:int = Math.floor((r.y+r.height-1)/tilesize);
-    var x0:int, x1:int;
-    var x:int, y:int;
-    if (r.width < 0) {
-      x0 = Math.floor((r.x-1)/tilesize);
-      x1 = Math.floor((r.x+r.width)/tilesize);
-      for (x = x0; x1 <= x; x--) {
-	for (y = y0; y <= y1; y++) {
-	  if (f(getTile(x, y))) {
-	    return (x+1)*tilesize;
-	  }
-	}
-      }
-    } else if (0 < r.width) {
-      x0 = Math.floor(r.x/tilesize);
-      x1 = Math.floor((r.x+r.width-1)/tilesize);
-      for (x = x0; x <= x1; x++) {
-	for (y = y0; y <= y1; y++) {
-	  if (f(getTile(x, y))) {
-	    return x*tilesize;
-	  }
-	}
-      }
-    }
-    return NOTFOUND;
-  }
-
-  // scanTileY(r)
-  public function scanTileY(r:Rectangle, f:Function):int
-  {
-    var x0:int = Math.floor(r.x/tilesize);
-    var x1:int = Math.floor((r.x+r.width-1)/tilesize);
-    var y0:int, y1:int;
-    var x:int, y:int;
-    if (r.height < 0) {
-      y0 = Math.floor((r.y-1)/tilesize);
-      y1 = Math.floor((r.y+r.height)/tilesize);
-      for (y = y0; y1 <= y; y--) {
-	for (x = x0; x <= x1; x++) {
-	  if (f(getTile(x, y))) {
-	    return (y+1)*tilesize;
-	  }
-	}
-      }
-    } else if (0 < r.height) {
-      y0 = Math.floor(r.y/tilesize);
-      y1 = Math.floor((r.y+r.height-1)/tilesize);
-      for (y = y0; y <= y1; y++) {
-	for (x = x0; x <= x1; x++) {
-	  if (f(getTile(x, y))) {
-	    return y*tilesize;
-	  }
-	}
-      }
-    }
-    return NOTFOUND;
-  }
-  
-  // scanTile(r)
-  public function scanTile(x0:int, x1:int, y0:int, y1:int, f:Function):Point
-  {
+    var a:Array = new Array();
     var dx:int = Math.abs(x1+1-x0);
     var dy:int = Math.abs(y1+1-y0);
     var vx:int = (x0 < x1)? +1 : -1;
@@ -176,12 +101,89 @@ public class TileMap extends Bitmap
 	  var x:int = x0+j*vx;
 	  var y:int = y0+(i-j)*vy;
 	  if (f(getTile(x, y))) {
-	    return new Point(x, y);
+	    a.push(new Point(x, y));
 	  }
 	}
       }
     }
-    return null;
+    return a;
+  }
+
+  // hasTile(x0, x1, y0, y1, f)
+  public function hasTile(x0:int, x1:int, y0:int, y1:int, f:Function):Boolean
+  {
+    return (scanTile(x0, x1, y0, y1, f).length != 0);
+  }
+
+  // getTileRect(x, y)
+  public function getTileRect(x:int, y:int):Rectangle
+  {
+    return new Rectangle(x*tilesize, y*tilesize, tilesize, tilesize);
+  }
+
+  // getTileCoords(x, y)
+  public function getTileCoords(r:Rectangle):Rectangle
+  {
+    var x0:int = Math.floor(r.left/tilesize);
+    var y0:int = Math.floor(r.top/tilesize);
+    return new Rectangle(x0, y0,
+			 Math.floor(r.right/tilesize)+1-x0, 
+			 Math.floor(r.bottom/tilesize)+1-y0);
+  }
+
+  // hasTileCoords(r, f)
+  public function hasTileCoords(r:Rectangle, f:Function):Boolean
+  {
+    var r1:Rectangle = getTileCoords(r);
+    return hasTile(r1.left, r1.right, r1.top, r1.bottom, f);
+  }
+
+  // getCollisionCoords(r, f)
+  public function getCollisionCoords(r:Rectangle, f:Function, v:Point):Point
+  {
+    var src:Rectangle = r.clone();
+    src.x += v.x;
+    src.y += v.y;
+    src = src.union(r);
+    var r1:Rectangle = getTileCoords(r);
+    var a:Array = scanTile(r1.left, r1.right, r1.top, r1.bottom, f);
+    for each (var p:Point in a) {
+      var tr:Rectangle = getTileRect(p.x, p.y);
+      v = Utils.collideRect(r, tr, v);
+    }
+    return v;
+  }
+
+  // hasLadderNearby(r)
+  public function hasLadderNearby(r:Rectangle):int
+  {
+    var r0:Rectangle = new Rectangle(r.x, r.y, -tilesize/2, r.height);
+    var r1:Rectangle = new Rectangle(r.x+r.width, r.y, +tilesize/2, r.height);
+    var h0:Boolean = hasTileCoords(r0, Tile.isgrabbable);
+    var h1:Boolean = hasTileCoords(r1, Tile.isgrabbable);
+    if (!h0 && h1) {
+      return +1;
+    } else if (h0 && !h1) {
+      return -1;
+    } else {
+      return 0;
+    }
+  }
+
+  // hasHoleNearby(r)
+  public function hasHoleNearby(r:Rectangle):int
+  {
+    var r0:Rectangle = new Rectangle(r.x, r.y+r.height, -tilesize/2, 1);
+    var r1:Rectangle = new Rectangle(r.x+r.width, r.y+r.height, +tilesize/2, 1);
+    var h0:Boolean = hasTileCoords(r0, Tile.isnonobstacle);
+    var h1:Boolean = hasTileCoords(r1, Tile.isnonobstacle);
+    if (!h0 && h1) {
+      return +1;
+    } else if (h0 && !h1) {
+      return -1;
+    } else {
+      return 0;
+    }    
   }
 }
 

@@ -69,9 +69,11 @@ public class Actor extends Sprite
   public function jump():void
   {
     var v:int = vg+gravity;
-    if (0 < v && scene.getDistanceY(bounds, v, Tile.isstoppable) == 0) {
+    var r:Rectangle = bounds.clone();
+    r.y += v;
+    if (0 < v && !scene.tilemap.hasTileCoords(r, Tile.isstoppable)) {
       dispatchEvent(new ActorActionEvent(JUMP));
-      vg = scene.getDistanceY(bounds, jumpacc, Tile.isstoppable);
+      vg = jumpacc;
       jumping = true;
     }
   }
@@ -83,38 +85,43 @@ public class Actor extends Sprite
     var vy1:int = vy;
     if (vy < 0) {
       // move toward a nearby ladder.
-      var vxladder:int = scene.hasLadderNearby(bounds);
+      var vxladder:int = scene.tilemap.hasLadderNearby(bounds);
       if (vxladder != 0) {
 	vx1 = vxladder;
 	vy1 = 0;
       }
     } else if (0 < vy) {
       // move toward a nearby hole.
-      var vxhole:int = scene.hasHoleNearby(bounds);
+      var vxhole:int = scene.tilemap.hasHoleNearby(bounds);
       if (vxhole != 0) {
 	vx1 = vxhole;
 	vy1 = 0;
       }
     }
-    pos.x += scene.getDistanceX(bounds, speed*vx1, Tile.isobstacle);
-    if (scene.scanTileY(bounds, Tile.isgrabbable) ||
-	0 < vy1 && scene.getDistanceY(bounds, vy1, Tile.isgrabbable) == 0) {
-      // climbing
-      vg = 0;
-      pos.y += scene.getDistanceY(bounds, speed*vy1, Tile.isobstacle);
-      if (jumping) {
-	jumping = false;
-	dispatchEvent(new ActorActionEvent(LAND));
-      }
-    } else {
-      // falling
-      vg = scene.getDistanceY(bounds, vg+gravity, Tile.isstoppable);
-      if (jumping && 0 <= vg) {
-	jumping = false;
-	dispatchEvent(new ActorActionEvent(LAND));
-      }
-      pos.y += vg;
-    }
+    var v:Point = scene.tilemap.getCollisionCoords(bounds, Tile.isobstacle,
+						   new Point(vx1, vy1));
+    pos.x += v.x*speed;
+    pos.y += v.y*speed;
+
+    // if (scene.tilemap.hasTileCoords(bounds, Tile.isgrabbable) ||
+    // 	0 < vy1 && scene.getDistanceY(bounds, vy1, Tile.isgrabbable) == 0) {
+    //   // climbing
+    //   vg = 0;
+    //   pos.y += scene.getDistanceY(bounds, speed*vy1, Tile.isobstacle);
+    //   if (jumping) {
+    // 	jumping = false;
+    // 	dispatchEvent(new ActorActionEvent(LAND));
+    //   }
+    // } else {
+    //   // falling
+    //   vg = scene.getDistanceY(bounds, vg+gravity, Tile.isstoppable);
+    //   if (jumping && 0 <= vg) {
+    // 	jumping = false;
+    // 	dispatchEvent(new ActorActionEvent(LAND));
+    //   }
+    //   pos.y += vg;
+    // }
+
     if (vx1 != 0 || vy1 != 0) {
       skin.setDirection(vx1, vy1);
     }
