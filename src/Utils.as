@@ -8,38 +8,38 @@ import flash.geom.Rectangle;
 // 
 public class Utils
 {
-  public static function collideHLine(p:Point, r:Rectangle, v:Point):Point
+  public static function collideHLine(x0:int, x1:int, y:int, r:Rectangle, v:Point):Point
   {
     var dx:int, dy:int;
-    if (p.x <= r.left && r.left < p.x+v.x) {
-      dx = r.left - p.x;
-      dy = Math.floor(v.y*dx / v.x);
-      if (r.top <= p.y+dy && p.y+dy <= r.bottom) {
+    if (y <= r.top && r.top < y+v.y) {
+      dy = r.top - y;
+      dx = Math.floor(v.x*dy / v.y);
+      if (!(x1+dx <= r.left || r.right <= x0+dx)) {
 	return new Point(dx, dy);
       }
-    } else if (r.right <= p.x && p.x+v.x < r.right) {
-      dx = r.right - p.x;
-      dy = Math.floor(v.y*dx / v.x);
-      if (r.top <= p.y+dy && p.y+dy <= r.bottom) {
+    } else if (y <= r.bottom && r.bottom < y+v.y) {
+      dy = r.bottom - y;
+      dx = Math.floor(v.x*dy / v.y);
+      if (!(x1+dx <= r.left || r.right <= x0+dx)) {
 	return new Point(dx, dy);
       }
     }
     return v;
   }
 
-  public static function collideVLine(p:Point, r:Rectangle, v:Point):Point
+  public static function collideVLine(y0:int, y1:int, x:int, r:Rectangle, v:Point):Point
   {
     var dx:int, dy:int;
-    if (p.y <= r.top && r.top < p.y+v.y) {
-      dy = r.top - p.y;
-      dx = Math.floor(v.x*dy / v.y);
-      if (r.left <= p.x+dx && p.x+dx <= r.right) {
+    if (x <= r.left && r.left < x+v.x) {
+      dx = r.left - x;
+      dy = Math.floor(v.y*dx / v.x);
+      if (!(y1+dy <= r.top || r.bottom <= y0+dy)) {
 	return new Point(dx, dy);
       }
-    } else if (r.bottom <= p.y && p.y+v.y < r.bottom) {
-      dy = r.bottom - p.y;
-      dx = Math.floor(v.x*dy / v.y);
-      if (r.left <= p.x+dx && p.x+dx <= r.right) {
+    } else if (x <= r.right && r.right < x+v.x) {
+      dx = r.right - x;
+      dy = Math.floor(v.y*dx / v.x);
+      if (!(y1+dy <= r.top || r.bottom <= y0+dy)) {
 	return new Point(dx, dy);
       }
     }
@@ -49,18 +49,14 @@ public class Utils
   public static function collideRect(r0:Rectangle, r1:Rectangle, v:Point):Point
   {
     if (v.x < 0) {
-      v = collideHLine(new Point(r0.left, r0.top), r1, v);
-      v = collideHLine(new Point(r0.left, r0.bottom), r1, v);
+      v = collideVLine(r0.top, r0.bottom, r0.left, r1, v);
     } else {
-      v = collideHLine(new Point(r0.right, r0.top), r1, v);
-      v = collideHLine(new Point(r0.right, r0.bottom), r1, v);
+      v = collideVLine(r0.top, r0.bottom, r0.right, r1, v);
     }
     if (v.y < 0) {
-      v = collideVLine(new Point(r0.left, r0.top), r1, v);
-      v = collideVLine(new Point(r0.right, r0.top), r1, v);      
+      v = collideHLine(r0.left, r0.right, r0.top, r1, v);
     } else {
-      v = collideVLine(new Point(r0.left, r0.bottom), r1, v);
-      v = collideVLine(new Point(r0.right, r0.bottom), r1, v);
+      v = collideHLine(r0.left, r0.right, r0.bottom, r1, v);
     }
     return v;
   }

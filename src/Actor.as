@@ -98,10 +98,11 @@ public class Actor extends Sprite
 	vy1 = 0;
       }
     }
-    var v:Point = scene.tilemap.getCollisionCoords(bounds, Tile.isobstacle,
-						   new Point(vx1, vy1));
-    pos.x += v.x*speed;
-    pos.y += v.y*speed;
+    var v:Point = new Point(vx1*speed, vy1*speed+vg);
+    v = scene.tilemap.getCollisionCoords(bounds, Tile.isobstacle, v);
+    vg = v.y + gravity;
+    pos.x += v.x;
+    pos.y += v.y;
 
     // if (scene.tilemap.hasTileCoords(bounds, Tile.isgrabbable) ||
     // 	0 < vy1 && scene.getDistanceY(bounds, vy1, Tile.isgrabbable) == 0) {
