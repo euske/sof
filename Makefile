@@ -2,6 +2,7 @@
 
 RM=rm -f
 CP=cp -f
+CHMOD=chmod
 RSYNC=rsync -av
 JAVA=java
 FLEX_HOME=../flex_sdk4
@@ -11,7 +12,7 @@ FDB=$(JAVA) -jar $(FLEX_HOME)/lib/fdb.jar
 # Project settings
 CFLAGS=-static-rsls -debug=true
 TARGET=main.swf
-LIVE_URL=live.tabesugi.net:public/cgi/root/host/live.tabesugi.net/live.swf
+LIVE_URL=ludumdare.tabesugi.net:public/cgi/root/host/ludumdare.tabesugi.net/live/live.swf
 
 all: $(TARGET)
 
@@ -19,10 +20,11 @@ clean:
 	-$(RM) $(TARGET)
 
 update: $(TARGET)
-	$(RSYNC) main.html $(TARGET) $(LIVE_URL)
+	$(RSYNC) $(TARGET) $(LIVE_URL)
 
 debug: $(TARGET)
 	$(FDB) $(TARGET)
 
 $(TARGET): ./src/*.as ./assets/*.png ./assets/*.mp3
 	$(MXMLC) $(CFLAGS) -compiler.source-path=./src/ -o $@ ./src/Main.as
+	$(CHMOD) +x $(TARGET)
