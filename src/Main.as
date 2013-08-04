@@ -4,21 +4,19 @@ import flash.display.Sprite;
 import flash.display.Stage;
 import flash.display.StageScaleMode;
 import flash.display.Bitmap;
-import flash.net.NetConnection;
-import flash.net.NetStream;
-import flash.media.Video;
 import flash.events.Event;
 import flash.events.KeyboardEvent;
 import flash.events.MouseEvent;
 import flash.events.NetStatusEvent;
 import flash.events.AsyncErrorEvent;
-import flash.media.Sound;
+import flash.text.TextField;
+import flash.text.TextFieldType;
 import flash.ui.Keyboard;
 import flash.utils.ByteArray;
-import Logger;
-import Scene;
-import TileMap;
-import PlanVisualizer;
+import flash.media.Sound;
+import flash.media.Video;
+import flash.net.NetConnection;
+import flash.net.NetStream;
 
 //  Main 
 //
@@ -65,40 +63,96 @@ public class Main extends Sprite
 
   private static const images:Array = [ image1, image2, image3 ];
 
+  private static var _logger:TextField;
+
+  private var _paused:Boolean = false;
+  private var _keydown:int;
+
   // Main()
   public function Main()
   {
-    addChild(new Logger());
+    stage.scaleMode = StageScaleMode.NO_SCALE;
+    stage.addEventListener(Event.ACTIVATE, OnActivate);
+    stage.addEventListener(Event.DEACTIVATE, OnDeactivate);
+    stage.addEventListener(Event.ENTER_FRAME, OnEnterFrame);
     stage.addEventListener(KeyboardEvent.KEY_DOWN, OnKeyDown);
     stage.addEventListener(KeyboardEvent.KEY_UP, OnKeyUp);
-    stage.addEventListener(Event.ENTER_FRAME, OnEnterFrame);
-    stage.scaleMode = StageScaleMode.NO_SCALE;
+
+    _logger = new TextField();
+    _logger.multiline = true;
+    _logger.border = true;
+    _logger.width = 400;
+    _logger.height = 100;
+    _logger.background = true;
+    _logger.type = TextFieldType.DYNAMIC;
+    addChild(_logger);
+
     init();
   }
 
-  // OnKeyDown(e)
-  protected function OnKeyDown(e:KeyboardEvent):void 
+  // log(x)
+  public static function log(x:String):void
   {
-    keydown(e.keyCode);
+    _logger.appendText(x+"\n");
+    _logger.scrollV = _logger.maxScrollV;
+    if (_logger.parent != null) {
+      _logger.parent.setChildIndex(_logger, _logger.parent.numChildren-1);
+    }
   }
 
-  // OnKeyUp(e)
-  protected function OnKeyUp(e:KeyboardEvent):void 
+  // setPauseState(paused)
+  private function setPauseState(paused:Boolean):void
   {
-    keyup(e.keyCode);
+    _paused = paused;
+  }
+
+  // OnActivate(e)
+  protected function OnActivate(e:Event):void
+  {
+    setPauseState(false);
+  }
+
+  // OnDeactivate(e)
+  protected function OnDeactivate(e:Event):void
+  {
+    setPauseState(true);
   }
 
   // OnEnterFrame(e)
   protected function OnEnterFrame(e:Event):void
   {
-    if (!paused) {
+    if (!_paused) {
       update();
     }
   }
 
+  // OnKeyDown(e)
+  protected function OnKeyDown(e:KeyboardEvent):void 
+  {
+    if (_keydown == e.keyCode) return;
+    _keydown = e.keyCode;
+
+    switch (e.keyCode) {
+    case 80:			// P
+      setPauseState(!_paused);
+      break;
+
+    default:
+      keydown(e.keyCode);
+      break;
+    }
+  }
+
+  // OnKeyUp(e)
+  protected function OnKeyUp(e:KeyboardEvent):void 
+  {
+    _keydown = 0;
+
+    keyup(e.keyCode);
+  }
+
   /// Game-related functions
 
-  private var paused:Boolean = false;
   private var scene:Scene;
   private var tilemap:TileMap;
   private var player:Player;
@@ -109,8 +163,8 @@ public class Main extends Sprite
   // init()
   private function init():void
   {
-    Logger.log("init");
-
+    log("init");
+    
     //background.alpha = 0.7;
     //addChild(background);
     
@@ -124,7 +178,7 @@ public class Main extends Sprite
     player.addEventListener(ActorActionEvent.ACTION, onActorAction);
     player.addEventListener(ActorActionEvent.ACTION, onPlayerAction);
     player.speak("Video Games AWESOME!");
-    player.setSkin(image0.bitmapData);
+    player.setSkinImage(image0.bitmapData);
     player.setName("Farshar");
     scene.add(player);
 
@@ -132,7 +186,7 @@ public class Main extends Sprite
       var actor:Person = new Person(scene); 
       actor.bounds = tilemap.getTileRect(i+5, i+5);
       actor.addEventListener(ActorActionEvent.ACTION, onActorAction);
-      actor.setSkin(images[i].bitmapData);
+      actor.setSkinImage(images[i].bitmapData);
       switch (i) {
       case 0:
 	actor.setName("MissBlow");
@@ -163,31 +217,27 @@ public class Main extends Sprite
     case Keyboard.LEFT:
     case 65:			// A
     case 72:			// H
-      player.move(-1, 0);
+      player.vx = -1;
       break;
     case Keyboard.RIGHT:
     case 68:			// D
     case 76:			// L
-      player.move(+1, 0);
+      player.vx = +1;
       break;
     case Keyboard.UP:
     case 87:			// W
     case 75:			// K
-      player.move(0, -1);
+      player.vy = -1;
       break;
     case Keyboard.DOWN:
     case 83:			// S
     case 74:			// J
-      player.move(0, +1);
+      player.vy = +1;
       break;
     case Keyboard.SPACE:
     case 88:			// X
     case 90:			// Z
       player.jump();
-      break;
-
-    case 80:			// P
-      paused = !paused;
       break;
     }
   }
@@ -202,7 +252,7 @@ public class Main extends Sprite
     case 68:			// D
     case 72:			// H
     case 76:			// L
-      player.move(0, 0);
+      player.vx = 0;
       break;
     case Keyboard.UP:
     case Keyboard.DOWN:
@@ -210,7 +260,7 @@ public class Main extends Sprite
     case 75:			// K
     case 83:			// S
     case 74:			// J
-      player.move(0, 0);
+      player.vy = 0;
       break;
     }
   }
@@ -292,15 +342,6 @@ public class Main extends Sprite
 import flash.display.BitmapData;
 import flash.geom.Point;
 import flash.geom.Rectangle;
-import Logger;
-import Scene;
-import Tile;
-import TileMap;
-import PlanEntry;
-import PlanMap;
-import PlanVisualizer;
-import Actor;
-import ActorActionEvent;
 
 
 //  Person
@@ -315,7 +356,8 @@ class Person extends Actor
   public function Person(scene:Scene)
   {
     super(scene);
-    move(int(Math.random()*3)-1, 0);
+    vx = int(Math.random()*3)-1;
+    vy = 0;
     addEventListener(ActorActionEvent.ACTION, onActorAction);
   }
 
@@ -341,15 +383,17 @@ class Person extends Actor
     super.update();
     if (target == null) {
       if (Math.random() < 0.05) {
-	move(int(Math.random()*3)-1, 0);
+	vx = int(Math.random()*3)-1;
+	vy = 0;
       } else if (Math.random() < 0.05) {
-	move(0, int(Math.random()*3)-1);
+	vx = 0;
+	vy = int(Math.random()*3)-1;
       } else if (Math.random() < 0.1) {
 	jump();
       }
     } else {
-      var src:Rectangle = scene.tilemap.getTileCoords(bounds);
-      var dst:Rectangle = scene.tilemap.getTileCoords(target.bounds);
+      var src:Rectangle = scene.tilemap.getTileByRect(bounds);
+      var dst:Rectangle = scene.tilemap.getTileByRect(target.bounds);
       if (curaction == PlanEntry.NONE) {
 	// Get a macro-level planning.
 	var plan:PlanMap = scene.createPlan(dst.x, dst.y, dst.width, dst.height);
@@ -357,7 +401,7 @@ class Person extends Actor
 	if (e != null && e.next != null) {
 	  curgoal = new Point(e.next.x, e.next.y);
 	  curaction = e.action;
-	  Logger.log("goal="+curgoal+", action="+curaction);
+	  //log("goal="+curgoal+", action="+curaction);
 	  if (curaction == PlanEntry.JUMP) {
 	    jump();
 	  }
@@ -367,7 +411,7 @@ class Person extends Actor
 	// Micro-level (greedy) planning.
 	// assert(curgoal != null);
 	// assert(curaction != PlanEntry.NONE);
-	Logger.log("goal="+curgoal+", src="+src);
+	//log("goal="+curgoal+", src="+src);
 	var dx:int = 0, dy:int = 0;
 	if (curgoal.x < src.x) { 
 	  dx = -1;
@@ -376,7 +420,7 @@ class Person extends Actor
 	}
 	var r:Rectangle = bounds.clone();
 	r.x += speed*dx;
-	if (scene.tilemap.hasTileCoords(r, Tile.isobstacle)) {
+	if (scene.tilemap.hasTileByRect(r, Tile.isobstacle)) {
 	  dx = 0;
 	}
 	if (dx == 0) {
@@ -387,7 +431,8 @@ class Person extends Actor
 	  }
 	}
 	if (dx != 0 || dy != 0) {
-	  move(dx, dy);
+	  vx = dx; 
+	  vy = dy;
 	} else {
 	  curaction = PlanEntry.NONE;
 	}
@@ -424,6 +469,24 @@ class Player extends Actor
   // update()
   public override function update():void
   {
+    if (vy < 0) {
+      // move toward a nearby ladder.
+      var vxladder:int = scene.tilemap.hasLadderNearby(bounds);
+      Main.log("hasladderneaby="+vxladder);
+      if (vxladder != 0) {
+	vx = vxladder;
+	vy = 0;
+      }
+    } else if (0 < vy) {
+      // move toward a nearby hole.
+      var vxhole:int = scene.tilemap.hasHoleNearby(bounds);
+      Main.log("hasholerneaby="+vxhole);
+      if (vxhole != 0) {
+	vx = vxhole;
+	vy = 0;
+      }
+    }
+    
     super.update();
     scene.setCenter(pos, 200, 100);
 
