@@ -66,6 +66,24 @@ public class Utils
     }
     return v;
   }
+
+  // movePoint(r, dx, dy): translates a Point.
+  public static function movePoint(p:Point, dx:int, dy:int):Point
+  {
+    p = p.clone();
+    p.x += dx;
+    p.y += dy;
+    return p;
+  }
+
+  // moveRect(r, dx, dy): translates a Rectangle.
+  public static function moveRect(r:Rectangle, dx:int, dy:int):Rectangle
+  {
+    r = r.clone();
+    r.x += dx;
+    r.y += dy;
+    return r;
+  }
 }
 
 } // package

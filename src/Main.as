@@ -62,6 +62,7 @@ public class Main extends Sprite
   private static const mapimage:Bitmap = new MapImageCls();
 
   private static const images:Array = [ image1, image2, image3 ];
+  //private static const images:Array = [ ];
 
   private static var _logger:TextField;
 
@@ -217,22 +218,22 @@ public class Main extends Sprite
     case Keyboard.LEFT:
     case 65:			// A
     case 72:			// H
-      player.vx = -1;
+      player.dir.x = -1;
       break;
     case Keyboard.RIGHT:
     case 68:			// D
     case 76:			// L
-      player.vx = +1;
+      player.dir.x = +1;
       break;
     case Keyboard.UP:
     case 87:			// W
     case 75:			// K
-      player.vy = -1;
+      player.dir.y = -1;
       break;
     case Keyboard.DOWN:
     case 83:			// S
     case 74:			// J
-      player.vy = +1;
+      player.dir.y = +1;
       break;
     case Keyboard.SPACE:
     case 88:			// X
@@ -252,7 +253,7 @@ public class Main extends Sprite
     case 68:			// D
     case 72:			// H
     case 76:			// L
-      player.vx = 0;
+      player.dir.x = 0;
       break;
     case Keyboard.UP:
     case Keyboard.DOWN:
@@ -260,7 +261,7 @@ public class Main extends Sprite
     case 75:			// K
     case 83:			// S
     case 74:			// J
-      player.vy = 0;
+      player.dir.y = 0;
       break;
     }
   }
@@ -337,161 +338,3 @@ public class Main extends Sprite
 } // Main
 
 } // package
-
-
-import flash.display.BitmapData;
-import flash.geom.Point;
-import flash.geom.Rectangle;
-
-
-//  Person
-//
-class Person extends Actor
-{
-  private var target:Actor;
-  private var curgoal:Point;
-  private var curaction:int;
-
-  // Person(image)
-  public function Person(scene:Scene)
-  {
-    super(scene);
-    vx = int(Math.random()*3)-1;
-    vy = 0;
-    addEventListener(ActorActionEvent.ACTION, onActorAction);
-  }
-
-  // setTarget(actor)
-  public function setTarget(actor:Actor):void
-  {
-    target = actor;
-    curgoal = null;
-    curaction = PlanEntry.NONE;
-  }
-
-  // onActorAction()
-  private function onActorAction(e:ActorActionEvent):void
-  {
-    if (e.arg == Actor.LAND) {
-      curaction = PlanEntry.NONE;
-    }
-  }
-
-  // update()
-  public override function update():void
-  {
-    super.update();
-    if (target == null) {
-      if (Math.random() < 0.05) {
-	vx = int(Math.random()*3)-1;
-	vy = 0;
-      } else if (Math.random() < 0.05) {
-	vx = 0;
-	vy = int(Math.random()*3)-1;
-      } else if (Math.random() < 0.1) {
-	jump();
-      }
-    } else {
-      var src:Rectangle = scene.tilemap.getTileByRect(bounds);
-      var dst:Rectangle = scene.tilemap.getTileByRect(target.bounds);
-      if (curaction == PlanEntry.NONE) {
-	// Get a macro-level planning.
-	var plan:PlanMap = scene.createPlan(dst.x, dst.y, dst.width, dst.height);
-	var e:PlanEntry = plan.getEntry(src.x, src.y);
-	if (e != null && e.next != null) {
-	  curgoal = new Point(e.next.x, e.next.y);
-	  curaction = e.action;
-	  //log("goal="+curgoal+", action="+curaction);
-	  if (curaction == PlanEntry.JUMP) {
-	    jump();
-	  }
-	}
-	PlanVisualizer.update(plan);
-      } else {
-	// Micro-level (greedy) planning.
-	// assert(curgoal != null);
-	// assert(curaction != PlanEntry.NONE);
-	//log("goal="+curgoal+", src="+src);
-	var dx:int = 0, dy:int = 0;
-	if (curgoal.x < src.x) { 
-	  dx = -1;
-	} else if (src.x < curgoal.x) {
-	  dx = +1;
-	}
-	var r:Rectangle = bounds.clone();
-	r.x += speed*dx;
-	if (scene.tilemap.hasTileByRect(r, Tile.isobstacle)) {
-	  dx = 0;
-	}
-	if (dx == 0) {
-	  if (curgoal.y < src.y) { 
-	    dy = -1; 
-	  } else if (src.y < curgoal.y) {
-	    dy = +1;
-	  }
-	}
-	if (dx != 0 || dy != 0) {
-	  vx = dx; 
-	  vy = dy;
-	} else {
-	  curaction = PlanEntry.NONE;
-	}
-      }
-    }
-
-    if (Math.random() < 0.05) {
-      switch (int(Math.random()*3)) {
-      case 0:
-	speak("Derp.");
-	break;
-      case 1:
-	speak("SNARF!");
-	break;
-      default:
-	speak();
-	break;
-      }
-    }
-  }
-}
-
-
-//  Player
-//
-class Player extends Actor
-{
-  // Player(image)
-  public function Player(scene:Scene)
-  {
-    super(scene);
-  }
-
-  // update()
-  public override function update():void
-  {
-    if (vy < 0) {
-      // move toward a nearby ladder.
-      var vxladder:int = scene.tilemap.hasLadderNearby(bounds);
-      Main.log("hasladderneaby="+vxladder);
-      if (vxladder != 0) {
-	vx = vxladder;
-	vy = 0;
-      }
-    } else if (0 < vy) {
-      // move toward a nearby hole.
-      var vxhole:int = scene.tilemap.hasHoleNearby(bounds);
-      Main.log("hasholerneaby="+vxhole);
-      if (vxhole != 0) {
-	vx = vxhole;
-	vy = 0;
-      }
-    }
-    
-    super.update();
-    scene.setCenter(pos, 200, 100);
-
-    if (800 < bounds.y) {
-      dispatchEvent(new ActorActionEvent(DIE));
-    }
-  }
-}
