@@ -120,8 +120,16 @@ public class TileMap extends Bitmap
     return new Rectangle(x*tilesize, y*tilesize, tilesize, tilesize);
   }
 
-  // getTileByRect(x, y)
-  public function getTileByRect(r:Rectangle):Rectangle
+  // getCoordsByPoint(p)
+  public function getCoordsByPoint(p:Point):Point
+  {
+    var x:int = Math.floor(p.x/tilesize);
+    var y:int = Math.floor(p.y/tilesize);
+    return new Point(x, y);
+  }
+
+  // getCoordsByRect(r)
+  public function getCoordsByRect(r:Rectangle):Rectangle
   {
     var x0:int = Math.floor(r.left/tilesize);
     var y0:int = Math.floor(r.top/tilesize);
@@ -133,7 +141,7 @@ public class TileMap extends Bitmap
   // hasTileByRect(r, f)
   public function hasTileByRect(r:Rectangle, f:Function):Boolean
   {
-    var r1:Rectangle = getTileByRect(r);
+    var r1:Rectangle = getCoordsByRect(r);
     return hasTile(r1.x, r1.y, r1.width, r1.height, f);
   }
 
@@ -141,7 +149,7 @@ public class TileMap extends Bitmap
   public function getCollisionByRect(r:Rectangle, vx:int, vy:int, f:Function):Point
   {
     var src:Rectangle = r.union(Utils.moveRect(r, vx, vy));
-    var r1:Rectangle = getTileByRect(src);
+    var r1:Rectangle = getCoordsByRect(src);
     var a:Array = scanTile(r1.x, r1.y, r1.width, r1.height, f);
     var v:Point = new Point(vx, vy);
     for each (var p:Point in a) {

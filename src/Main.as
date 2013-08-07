@@ -61,8 +61,8 @@ public class Main extends Sprite
   private static const MapImageCls:Class;
   private static const mapimage:Bitmap = new MapImageCls();
 
-  private static const images:Array = [ image1, image2, image3 ];
-  //private static const images:Array = [ ];
+  //private static const images:Array = [ image1, image2, image3 ];
+  private static const images:Array = [ image1 ];
 
   private static var _logger:TextField;
 
