@@ -2,9 +2,6 @@ package {
 
 import flash.geom.Point;
 import flash.geom.Rectangle;
-import PlanEntry;
-import Tile;
-import TileMap;
 
 //  PlanMap
 // 
@@ -45,10 +42,12 @@ public class PlanMap
     new Point(+1,+2), new Point(+2,+1),
     new Point(+1,+1), new Point(+2, 0),
   ];
-  public function fillPlan(map:TileMap, dx0:int, dy0:int, w:int, h:int):void
+  public function fillPlan(map:TileMap, dx0:int, dy0:int, dx1:int, dy1:int):void
   {
     var e1:PlanEntry = a[(y1-y0)/2][(x1-x0)/2];
     e1.cost = 0;
+    var w:int = dx1-dx0+1;
+    var h:int = dy1-dy0+1;
     var queue:Array = [ e1 ];
     while (0 < queue.length) {
       var e0:PlanEntry = queue.pop();
@@ -56,8 +55,9 @@ public class PlanMap
 
       var cost:int;
       // try walking right.
-      if (x0 <= e0.x-1 && Tile.isstoppable(map.getTile(e0.x+dx0-1, e0.y+dy0+1))) {
-	e1 = a[e0.y-y0][e0.x-1-x0];
+      if (x0 <= e0.x-1 && 
+	  Tile.isstoppable(map.getTile(e0.x-1, e0.y+dy1+1))) {
+	e1 = a[e0.y-y0][e0.x-x0-1];
 	cost = e0.cost+1;
 	if (cost < e1.cost) {
 	  e1.action = PlanEntry.WALK;
@@ -67,8 +67,9 @@ public class PlanMap
 	}
       }
       // try walking left.
-      if (e0.x+1 <= x1 && Tile.isstoppable(map.getTile(e0.x+dx0+1, e0.y+dy0+1))) {
-	e1 = a[e0.y-y0][e0.x+1-x0];
+      if (e0.x+1 <= x1 && 
+	  Tile.isstoppable(map.getTile(e0.x+1, e0.y+dy1+1))) {
+	e1 = a[e0.y-y0][e0.x-x0+1];
 	cost = e0.cost+1;
 	if (cost < e1.cost) {
 	  e1.action = PlanEntry.WALK;
@@ -78,8 +79,9 @@ public class PlanMap
 	}
       }
       // try falling.
-      if (y0 <= e0.y-1 && !Tile.isstoppable(map.getTile(e0.x+dx0, e0.y+dy0))) {
-	e1 = a[e0.y-1-y0][e0.x-x0];
+      if (y0 <= e0.y-1 &&
+	  !Tile.isgrabbable(map.getTile(e0.x, e0.y+dy1))) {
+	e1 = a[e0.y-y0-1][e0.x-x0];
 	cost = e0.cost+1;
 	if (cost < e1.cost) {
 	  e1.action = PlanEntry.FALL;
@@ -89,8 +91,9 @@ public class PlanMap
 	}
       }
       // try climbing down.
-      if (y0 <= e0.y-1 && Tile.isgrabbable(map.getTile(e0.x+dx0, e0.y+dy0))) {
-	e1 = a[e0.y-1-y0][e0.x-x0];
+      if (y0 <= e0.y-1 &&
+	  Tile.isgrabbable(map.getTile(e0.x, e0.y+dy1))) {
+	e1 = a[e0.y-y0-1][e0.x-x0];
 	cost = e0.cost+1;
 	if (cost < e1.cost) {
 	  e1.action = PlanEntry.CLIMB;
@@ -100,8 +103,9 @@ public class PlanMap
 	}
       }
       // try climbing up.
-      if (e0.y+1 <= y1 && map.hasTile(e0.x+dx0, e0.y+dy0+1, w, h, Tile.isgrabbable)) {
-	e1 = a[e0.y+1-y0][e0.x-x0];
+      if (e0.y+1 <= y1 &&
+	  map.hasTile(e0.x+dx0, e0.y+dy0+1, w, h, Tile.isgrabbable)) {
+	e1 = a[e0.y-y0+1][e0.x-x0];
 	cost = e0.cost+1;
 	if (cost < e1.cost) {
 	  e1.action = PlanEntry.CLIMB;
@@ -116,7 +120,7 @@ public class PlanMap
 	var x:int = e0.x+d.x;
 	var y:int = e0.y+d.y;
 	if (x0 <= x && x <= x1 && y0 <= y && y <= y1 && 
-	    Tile.isstoppable(map.getTile(x, x+1)) &&
+	    Tile.isstoppable(map.getTile(x, y+dy1+1)) &&
 	    map.hasTile(x+dx0, y+dy0, w, h, Tile.isstoppable)) {
 	  e1 = a[y-y0][x-x0];
 	  cost = e0.cost+Math.abs(d.x)+Math.abs(d.y)+1;

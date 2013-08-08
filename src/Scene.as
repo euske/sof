@@ -91,13 +91,13 @@ public class Scene extends Sprite
   }
 
   // createPlan(dst, bounds)
-  public function createPlan(cx:int, cy:int, dx0:int, dy0:int, w:int, h:int):PlanMap
+  public function createPlan(cx:int, cy:int, dx0:int, dy0:int, dx1:int, dy1:int):PlanMap
   {
     var plan:PlanMap = new PlanMap(
       Math.floor(_window.width/2/tilemap.tilesize),
       Math.floor(_window.height/2/tilemap.tilesize),
       cx, cy);
-    plan.fillPlan(tilemap, dx0, dy0, w, h);
+    plan.fillPlan(tilemap, dx0, dy0, dx1, dy1);
     return plan;
   }
 }

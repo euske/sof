@@ -1,8 +1,7 @@
 package {
 
 import flash.display.Shape;
-import PlanEntry;
-import PlanMap;
+import flash.geom.Point;
 
 //  PlanVisualizer
 // 
@@ -19,6 +18,12 @@ public class PlanVisualizer extends Shape
   public static function update(plan:PlanMap):void
   {
     main.update(plan);
+  }
+
+  public function setpos(p:Point):void
+  {
+    graphics.lineStyle(0, 0xffffff);
+    graphics.drawRect(p.x*10+2, p.y*10+2, 6, 6);
   }
 
   public function update(plan:PlanMap):void

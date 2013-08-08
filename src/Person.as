@@ -51,7 +51,8 @@ public class Person extends Actor
       if (cursrc == null || cursrc.x != src.x || cursrc.y != src.y) {
 	// Get a macro-level planning.
 	var dst:Point = scene.tilemap.getCoordsByPoint(target.pos);
-	var plan:PlanMap = scene.createPlan(dst.x, dst.y, 0, -4, 1, 4);
+	Main.log("src="+src+", dst="+dst);
+	var plan:PlanMap = scene.createPlan(dst.x, dst.y, 0, -3, 0, 0);
 	var e:PlanEntry = plan.getEntry(src.x, src.y);
 	if (e != null && e.next != null) {
 	  cursrc = src;
@@ -65,19 +66,19 @@ public class Person extends Actor
       }
       if (curgoal != null) {
 	// Micro-level (greedy) planning.
-	Main.log("goal="+curgoal+", src="+src);
-	var dx:int = 0, dy:int = 0;
+	//Main.log("goal="+curgoal+", pos="+src);
 	if (curgoal.x < src.x) { 
 	  vx = -1;
 	} else if (src.x < curgoal.x) {
 	  vx = +1;
-	} else if (curgoal.y < src.y) { 
+	} 
+	if (curgoal.y < src.y) { 
 	  vy = -1; 
 	} else if (src.y < curgoal.y) {
 	  vy = +1;
 	}
-	move(new Point(vx*speed, vy*speed));
       }
+      move(new Point(vx*speed, vy*speed));
     }
 
     if (Math.random() < 0.05) {
