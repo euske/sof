@@ -272,7 +272,8 @@ public class Main extends Sprite
     scene.update();
     scene.repaint();
     //var p:Point = scene.tilemap.getCoordsByPoint(player.pos);
-    //visualizer.update(scene.createPlan(p.x, p.y, 0, -2, 0, +1));
+    //visualizer.plan = scene.createPlan(p.x, p.y, 0, -2, 0, +1));
+    visualizer.update();
   }
 
   // onActorAction()

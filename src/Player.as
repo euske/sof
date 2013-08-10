@@ -24,7 +24,7 @@ public class Player extends Actor
     var v:Point = new Point(dir.x*speed, dir.y*speed);
     if (v.y < 0) {
       // move toward a nearby ladder.
-      var vxladder:int = hasLadderNearby();
+      var vxladder:int = hasUpperLadderNearby();
       if (vxladder != 0) {
 	v.x = vxladder*speed;
 	v.y = 0;

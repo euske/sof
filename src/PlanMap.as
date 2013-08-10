@@ -7,15 +7,18 @@ import flash.geom.Rectangle;
 // 
 public class PlanMap
 {
+  public var center:Point;
   public var x0:int, y0:int, x1:int, y1:int;
+
   private var a:Array;
 
-  public function PlanMap(width:int, height:int, cx:int, cy:int)
+  public function PlanMap(width:int, height:int, center:Point)
   {
-    x0 = cx-width;
-    x1 = cx+width;
-    y0 = cy-height;
-    y1 = cy+height;
+    this.center = center;
+    x0 = center.x-width;
+    x1 = center.x+width;
+    y0 = center.y-height;
+    y1 = center.y+height;
     a = new Array(y1-y0+1);
     var cost:int = (width+height+1)*2;
     for (var y:int = y0; y <= y1; y++) {

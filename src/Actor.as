@@ -142,12 +142,14 @@ public class Actor extends Sprite
     }
   }
 
-  // hasLadderNearby()
-  public function hasLadderNearby():int
+  // hasUpperLadderNearby()
+  public function hasUpperLadderNearby():int
   {
     var r:Rectangle = bounds;
-    var h0:Boolean = scene.tilemap.hasTileByRect(Utils.moveRect(r, -r.width, 0), Tile.isgrabbable);
-    var h1:Boolean = scene.tilemap.hasTileByRect(Utils.moveRect(r, +r.width, 0), Tile.isgrabbable);
+    var r0:Rectangle = Utils.moveRect(r, -r.width, 0);
+    var r1:Rectangle = Utils.moveRect(r, +r.width, 0);
+    var h0:Boolean = scene.tilemap.hasTileByRect(r0, Tile.isgrabbable);
+    var h1:Boolean = scene.tilemap.hasTileByRect(r1, Tile.isgrabbable);
     if (!h0 && h1) {
       return +1;
     } else if (h0 && !h1) {
@@ -162,8 +164,10 @@ public class Actor extends Sprite
   {
     var r:Rectangle = bounds;
     var rb:Rectangle = new Rectangle(r.x, r.bottom, r.width, 1);
-    var h0:Boolean = scene.tilemap.hasTileByRect(Utils.moveRect(rb, -r.width, 0), Tile.isnonobstacle);
-    var h1:Boolean = scene.tilemap.hasTileByRect(Utils.moveRect(rb, +r.width, 0), Tile.isnonobstacle);
+    var rb0:Rectangle = Utils.moveRect(rb, -rb.width, 0);
+    var rb1:Rectangle = Utils.moveRect(rb, +rb.width, 0);
+    var h0:Boolean = scene.tilemap.hasTileByRect(rb0, Tile.isnonobstacle);
+    var h1:Boolean = scene.tilemap.hasTileByRect(rb1, Tile.isnonobstacle);
     if (!h0 && h1) {
       return +1;
     } else if (h0 && !h1) {

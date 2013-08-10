@@ -8,7 +8,9 @@ import flash.geom.Point;
 public class PlanVisualizer extends Shape
 {
   public static var main:PlanVisualizer;
+
   public var src:Point;
+  public var plan:PlanMap;
 
   public function PlanVisualizer()
   {
@@ -16,12 +18,7 @@ public class PlanVisualizer extends Shape
     main = this;
   }
 
-  public function setsrc(p:Point):void
-  {
-    src = p;
-  }
-
-  public function update(plan:PlanMap):void
+  public function update():void
   {
     graphics.clear();
     for (var y:int = plan.y0; y <= plan.y1; y++) {
