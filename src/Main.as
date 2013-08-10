@@ -159,7 +159,6 @@ public class Main extends Sprite
   private var player:Player;
   private var state:int = 0;
 
-  private var becky:Actor;
   private var visualizer:PlanVisualizer;
 
   // init()
@@ -193,7 +192,6 @@ public class Main extends Sprite
       case 0:
 	actor.setName("MissBlow");
 	actor.setTarget(player);
-	becky = actor;
 	break;
       case 1:
 	actor.setName("Snarf");
@@ -273,7 +271,8 @@ public class Main extends Sprite
   {
     scene.update();
     scene.repaint();
-    visualizer.setpos(scene.tilemap.getCoordsByPoint(becky.pos));
+    //var p:Point = scene.tilemap.getCoordsByPoint(player.pos);
+    //visualizer.update(scene.createPlan(p.x, p.y, 0, -2, 0, +1));
   }
 
   // onActorAction()

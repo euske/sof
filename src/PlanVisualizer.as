@@ -8,6 +8,7 @@ import flash.geom.Point;
 public class PlanVisualizer extends Shape
 {
   public static var main:PlanVisualizer;
+  public var src:Point;
 
   public function PlanVisualizer()
   {
@@ -15,15 +16,9 @@ public class PlanVisualizer extends Shape
     main = this;
   }
 
-  public static function update(plan:PlanMap):void
+  public function setsrc(p:Point):void
   {
-    main.update(plan);
-  }
-
-  public function setpos(p:Point):void
-  {
-    graphics.lineStyle(0, 0xffffff);
-    graphics.drawRect(p.x*10+2, p.y*10+2, 6, 6);
+    src = p;
   }
 
   public function update(plan:PlanMap):void
@@ -57,6 +52,13 @@ public class PlanVisualizer extends Shape
 	  graphics.lineTo(e.next.x*10+5, e.next.y*10+5);
 	}
       }
+    }
+    var pc:Point = new Point((plan.x0+plan.x1)/2, (plan.y0+plan.y1)/2);
+    graphics.lineStyle(0, 0x00ff00);
+    graphics.drawRect(pc.x*10+2, pc.y*10+2, 6, 6);
+    if (src != null) {
+      graphics.lineStyle(0, 0xffffff);
+      graphics.drawRect(src.x*10+2, src.y*10+2, 6, 6);
     }
   }
 }

@@ -17,11 +17,11 @@ public class PlanMap
     y0 = cy-height;
     y1 = cy+height;
     a = new Array(y1-y0+1);
-    var m:int = (width+height+1)*2;
+    var cost:int = (width+height+1)*2;
     for (var y:int = y0; y <= y1; y++) {
       var b:Array = new Array(x1-x0+1);
       for (var x:int = x0; x <= x1; x++) {
-	b[x-x0] = new PlanEntry(x, y, 0, m, null);
+	b[x-x0] = new PlanEntry(x, y, 0, cost, null);
       }
       a[y-y0] = b;
     }
@@ -44,10 +44,10 @@ public class PlanMap
   ];
   public function fillPlan(map:TileMap, dx0:int, dy0:int, dx1:int, dy1:int):void
   {
-    var e1:PlanEntry = a[(y1-y0)/2][(x1-x0)/2];
-    e1.cost = 0;
     var w:int = dx1-dx0+1;
     var h:int = dy1-dy0+1;
+    var e1:PlanEntry = a[(y1-y0)/2][(x1-x0)/2];
+    e1.cost = 0;
     var queue:Array = [ e1 ];
     while (0 < queue.length) {
       var e0:PlanEntry = queue.pop();
@@ -121,7 +121,7 @@ public class PlanMap
 	var y:int = e0.y+d.y;
 	if (x0 <= x && x <= x1 && y0 <= y && y <= y1 && 
 	    Tile.isstoppable(map.getTile(x, y+dy1+1)) &&
-	    map.hasTile(x+dx0, y+dy0, w, h, Tile.isstoppable)) {
+	    !map.hasTile(x+dx0, y+dy0, w, h, Tile.isstoppable)) {
 	  e1 = a[y-y0][x-x0];
 	  cost = e0.cost+Math.abs(d.x)+Math.abs(d.y)+1;
 	  if (cost < e1.cost) {
