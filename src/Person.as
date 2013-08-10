@@ -73,6 +73,11 @@ public class Person extends Actor
 	switch (curentry.action) {
 	case PlanEntry.JUMP:
 	  jump();
+	  if (curentry.next.x < src.x) { 
+	    vx = -1;
+	  } else if (src.x < curentry.next.x) {
+	    vx = +1;
+	  } 
 	  break;
 	case PlanEntry.CLIMB:
 	case PlanEntry.FALL:
@@ -102,8 +107,8 @@ public class Person extends Actor
 	  } 
 	  break;
 	}
-	move(new Point(vx*speed, vy*speed));
       }
+      move(new Point(vx*speed, vy*speed));
     }
 
     if (Math.random() < 0.05) {
