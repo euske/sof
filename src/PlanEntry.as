@@ -22,6 +22,11 @@ public class PlanEntry
     this.cost = cost;
     this.next = next;
   }
+
+  public function toString():String
+  {
+    return ("<PlanEntry: ("+x+","+y+") action="+action+", cost="+cost+">");
+  }
 }
 
 } // package

@@ -54,7 +54,6 @@ public class Actor extends Sprite
     pos.y = Math.floor((value.top+value.bottom)/2);
   }
 
-
   // setSkinImage(skin)
   public function setSkinImage(image:BitmapData):void
   {

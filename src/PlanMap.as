@@ -30,6 +30,11 @@ public class PlanMap
     }
   }
 
+  public function toString():String
+  {
+    return ("<PlanMap ("+x0+","+y0+")-("+x1+","+y1+")>");
+  }
+
   public function getEntry(x:int, y:int):PlanEntry
   {
     if (x < x0 || x1 < x || y < y0 || y1 < y) return null;
