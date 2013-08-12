@@ -24,16 +24,16 @@ public class Player extends Actor
     var v:Point = new Point(dir.x*speed, dir.y*speed);
     if (v.y < 0) {
       // move toward a nearby ladder.
-      var vxladder:int = hasUpperLadderNearby();
-      if (vxladder != 0) {
-	v.x = vxladder*speed;
+      var vx1:int = hasUpperLadderNearby();
+      if (vx1 != 0) {
+	v.x = vx1*speed;
 	v.y = 0;
       }
     } else if (0 < v.y) {
-      // move toward a nearby hole.
-      var vxhole:int = hasHoleNearby();
-      if (vxhole != 0) {
-	v.x = vxhole*speed;
+      // move toward a nearby ladder.
+      var vx2:int = hasLowerLadderNearby();
+      if (vx2 != 0) {
+	v.x = vx2*speed;
 	v.y = 0;
       }
     }

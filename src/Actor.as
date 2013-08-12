@@ -158,6 +158,24 @@ public class Actor extends Sprite
     }
   }
 
+  // hasLowerLadderNearby()
+  public function hasLowerLadderNearby():int
+  {
+    var r:Rectangle = bounds;
+    var rb:Rectangle = new Rectangle(r.x, r.bottom, r.width, 1);
+    var rb0:Rectangle = Utils.moveRect(rb, -rb.width, 0);
+    var rb1:Rectangle = Utils.moveRect(rb, +rb.width, 0);
+    var h0:Boolean = scene.tilemap.hasTileByRect(rb0, Tile.isgrabbable);
+    var h1:Boolean = scene.tilemap.hasTileByRect(rb1, Tile.isgrabbable);
+    if (!h0 && h1) {
+      return +1;
+    } else if (h0 && !h1) {
+      return -1;
+    } else {
+      return 0;
+    }    
+  }
+
   // hasHoleNearby()
   public function hasHoleNearby():int
   {
@@ -165,8 +183,8 @@ public class Actor extends Sprite
     var rb:Rectangle = new Rectangle(r.x, r.bottom, r.width, 1);
     var rb0:Rectangle = Utils.moveRect(rb, -rb.width, 0);
     var rb1:Rectangle = Utils.moveRect(rb, +rb.width, 0);
-    var h0:Boolean = scene.tilemap.hasTileByRect(rb0, Tile.isnonobstacle);
-    var h1:Boolean = scene.tilemap.hasTileByRect(rb1, Tile.isnonobstacle);
+    var h0:Boolean = scene.tilemap.hasTileByRect(rb0, Tile.isnone);
+    var h1:Boolean = scene.tilemap.hasTileByRect(rb1, Tile.isnone);
     if (!h0 && h1) {
       return +1;
     } else if (h0 && !h1) {

@@ -39,15 +39,15 @@ public class Tile
   public static const LEAF:int = 32;
   public static const STONEBRICK:int = 33;
 
+  // isnone
+  public static var isnone:Function = 
+    (function (b:int):Boolean { return b == NONE; });
   // isobstacle
   public static var isobstacle:Function = 
     (function (b:int):Boolean { return b < 0 || b == COBBLE; });
   // isstoppable
   public static var isstoppable:Function = 
     (function (b:int):Boolean { return b < 0 || b != NONE; });
-  // isnonobstacle
-  public static var isnonobstacle:Function = 
-    (function (b:int):Boolean { return !isobstacle(b); });
   // isgrabbable
   public static var isgrabbable:Function = 
     (function (b:int):Boolean { return b == LADDER; });
