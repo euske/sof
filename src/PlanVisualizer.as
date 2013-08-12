@@ -21,6 +21,7 @@ public class PlanVisualizer extends Shape
   public function update():void
   {
     graphics.clear();
+    if (plan == null) return;
     for (var y:int = plan.y0; y <= plan.y1; y++) {
       for (var x:int = plan.x0; x <= plan.x1; x++) {
 	var e:PlanEntry = plan.getEntry(x, y);

@@ -71,7 +71,7 @@ public class Actor extends Sprite
   // move()
   public function move(v0:Point):void
   {
-    if (v0.y != 0 && scene.tilemap.hasTileByRect(bounds, Tile.isgrabbable)) {
+    if (scene.tilemap.hasTileByRect(bounds, Tile.isgrabbable)) {
       // climing a ladder.
       var vl:Point = scene.tilemap.getCollisionByRect(bounds, v0.x, v0.y, Tile.isobstacle);
       pos = Utils.movePoint(pos, vl.x, vl.y);

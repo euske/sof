@@ -99,6 +99,7 @@ public class Main extends Sprite
     if (_logger.parent != null) {
       _logger.parent.setChildIndex(_logger, _logger.parent.numChildren-1);
     }
+    trace(x);
   }
 
   // setPauseState(paused)

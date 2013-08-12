@@ -116,6 +116,7 @@ public class Person extends Actor
 	  } 
 	  break;
 	}
+	//Main.log("action="+curentry.action+", vx="+vx+", vy="+vy);
       }
       move(new Point(vx*speed, vy*speed));
     }
