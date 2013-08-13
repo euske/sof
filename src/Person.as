@@ -69,54 +69,36 @@ public class Person extends Actor
 	PlanVisualizer.main.src = src;
       }
       if (curentry != null && curentry.next != null) {
+	var nextpos:Point = scene.tilemap.getTilePoint(curentry.next.x, curentry.next.y);
 	// Get a micro-level (greedy) plan.
-	var vx1:int;
 	switch (curentry.action) {
 	case PlanEntry.WALK:
-	  if (curentry.next.x < src.x) { 
-	    vx = -1;
-	  } else if (src.x < curentry.next.x) {
-	    vx = +1;
-	  } 
-	  break;
-
-	case PlanEntry.FALL:
-	  if (curentry.next.x < src.x) { 
-	    vx = -1;
-	  } else if (src.x < curentry.next.x) {
-	    vx = +1;
-	  } else {
-	    vx = hasHoleNearby();
+	  vx = Utils.clamp(-1, (nextpos.x-pos.x), +1);
+	  if (!isMovable(vx*speed, 0)) {
+	    vx = 0;
+	    vy = Utils.clamp(-1, (nextpos.y-pos.y), +1);
 	  }
 	  break;
 
+	case PlanEntry.FALL:
+	  vx = Utils.clamp(-1, (nextpos.x-pos.x), +1);
+	  break;
+
 	case PlanEntry.CLIMB:
-	  if (curentry.next.y < src.y) { 
-	    // move toward a nearby ladder.
-	    vx1 = hasUpperLadderNearby();
-	    if (vx1 != 0) {
-	      vx = vx1;
-	    } else {
-	      vy = -1;
+	  if (scene.tilemap.hasTileByRect(bounds, Tile.isgrabbable)) {
+	    vy = Utils.clamp(-1, (nextpos.y-pos.y), +1);
+	    if (!isMovable(0, vy*speed)) {
+	      vx = Utils.clamp(-1, (nextpos.x-pos.x), +1);
+	      vy = 0;
 	    }
-	  } else if (src.y < curentry.next.y) {
-	    // move toward a nearby ladder.
-	    vx1 = hasLowerLadderNearby();
-	    if (vx1 != 0) {
-	      vx = vx1;
-	    } else {
-	      vy = +1;
-	    }
+	  } else {
+	    vx = Utils.clamp(-1, (nextpos.x-pos.x), +1);
 	  }
 	  break;
 
 	case PlanEntry.JUMP:
 	  jump();
-	  if (curentry.next.x < src.x) { 
-	    vx = -1;
-	  } else if (src.x < curentry.next.x) {
-	    vx = +1;
-	  } 
+	  vx = Utils.clamp(-1, (nextpos.x-pos.x), +1);
 	  break;
 	}
 	//Main.log("action="+curentry.action+", vx="+vx+", vy="+vy);

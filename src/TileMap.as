@@ -114,6 +114,12 @@ public class TileMap extends Bitmap
     return (scanTile(x, y, w, h, f).length != 0);
   }
 
+  // getTilePoint(x, y)
+  public function getTilePoint(x:int, y:int):Point
+  {
+    return new Point(x*tilesize+tilesize/2, y*tilesize+tilesize/2);
+  }
+
   // getTileRect(x, y)
   public function getTileRect(x:int, y:int):Rectangle
   {

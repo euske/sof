@@ -141,6 +141,13 @@ public class Actor extends Sprite
     }
   }
 
+  // isMovable(dx, dy)
+  public function isMovable(dx:int, dy:int):Boolean
+  {
+    var r:Rectangle = Utils.moveRect(bounds, dx, dy);
+    return (!scene.tilemap.hasTileByRect(r, Tile.isobstacle));
+  }
+
   // hasUpperLadderNearby()
   public function hasUpperLadderNearby():int
   {

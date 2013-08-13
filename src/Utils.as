@@ -84,6 +84,13 @@ public class Utils
     r.y += dy;
     return r;
   }
+
+  // clamp(v0, v, v1)
+  public static function clamp(v0:int, v:int, v1:int):int
+  {
+    return Math.min(Math.max(v, v0), v1);
+  }
+  
 }
 
 } // package
