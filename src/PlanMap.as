@@ -24,7 +24,7 @@ public class PlanMap
     for (var y:int = y0; y <= y1; y++) {
       var b:Array = new Array(x1-x0+1);
       for (var x:int = x0; x <= x1; x++) {
-	b[x-x0] = new PlanEntry(x, y, 0, cost, null);
+	b[x-x0] = new PlanEntry(x, y, PlanEntry.NONE, cost, null);
       }
       a[y-y0] = b;
     }

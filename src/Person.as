@@ -72,14 +72,14 @@ public class Person extends Actor
 	// Get a micro-level (greedy) plan.
 	var vx1:int;
 	switch (curentry.action) {
-	case PlanEntry.JUMP:
-	  jump();
+	case PlanEntry.WALK:
 	  if (curentry.next.x < src.x) { 
 	    vx = -1;
 	  } else if (src.x < curentry.next.x) {
 	    vx = +1;
 	  } 
 	  break;
+
 	case PlanEntry.FALL:
 	  if (curentry.next.x < src.x) { 
 	    vx = -1;
@@ -89,6 +89,7 @@ public class Person extends Actor
 	    vx = hasHoleNearby();
 	  }
 	  break;
+
 	case PlanEntry.CLIMB:
 	  if (curentry.next.y < src.y) { 
 	    // move toward a nearby ladder.
@@ -108,7 +109,9 @@ public class Person extends Actor
 	    }
 	  }
 	  break;
-	case PlanEntry.WALK:
+
+	case PlanEntry.JUMP:
+	  jump();
 	  if (curentry.next.x < src.x) { 
 	    vx = -1;
 	  } else if (src.x < curentry.next.x) {
