@@ -42,15 +42,8 @@ public class PlanMap
   }
 
   // fillPlan(plan, b)
-  public const JUMPLOC:Array = [
-    new Point(-1,+4), new Point(-1,+3),
-    new Point(-1,+2), new Point(-2,+1),
-    new Point(-1,+1), new Point(-2, 0),
-    new Point(+1,+4), new Point(+1,+3),
-    new Point(+1,+2), new Point(+2,+1),
-    new Point(+1,+1), new Point(+2, 0),
-  ];
-  public function fillPlan(map:TileMap, dx0:int, dy0:int, dx1:int, dy1:int):void
+  public function fillPlan(map:TileMap, dx0:int, dy0:int, dx1:int, dy1:int,
+			   jumpdx:int, jumpdy:int):void
   {
     var w:int = dx1-dx0+1;
     var h:int = dy1-dy0+1;
@@ -86,18 +79,6 @@ public class PlanMap
 	  queue.push(e1);
 	}
       }
-      // try falling.
-      if (y0 <= e0.y-1 &&
-	  !Tile.isgrabbable(map.getTile(e0.x, e0.y+dy1))) {
-	e1 = a[e0.y-y0-1][e0.x-x0];
-	cost = e0.cost+1;
-	if (cost < e1.cost) {
-	  e1.action = PlanEntry.FALL;
-	  e1.cost = cost;
-	  e1.next = e0;
-	  queue.push(e1);
-	}
-      }
       // try climbing down.
       if (y0 <= e0.y-1 &&
 	  Tile.isgrabbable(map.getTile(e0.x, e0.y+dy1))) {
@@ -123,21 +104,47 @@ public class PlanMap
 	}
       }
       // try jumping.
-      for (var i:int = 0; i < JUMPLOC.length; i++) {
-	var d:Point = JUMPLOC[i];
-	var x:int = e0.x+d.x;
-	var y:int = e0.y+d.y;
-	if (x0 <= x && x <= x1 && y0 <= y && y <= y1 && 
-	    Tile.isstoppable(map.getTile(x, y+dy1+1)) &&
-	    !map.hasTile(x+dx0, y+dy0, w, h, Tile.isstoppable)) {
-	  e1 = a[y-y0][x-x0];
-	  cost = e0.cost+Math.abs(d.x)+Math.abs(d.y)+1;
-	  if (cost < e1.cost) {
-	    e1.action = PlanEntry.JUMP;
-	    e1.cost = cost;
-	    e1.next = e0;
-	    queue.push(e1);
+      for (var dy:int = 1; dy <= jumpdy; dy++) {
+	var y:int = e0.y+dy;
+	for (var dx:int = 1; dx <= jumpdx; dx++) {
+	  var x:int = e0.x+dx;
+	  if (x0 <= x && x <= x1 && y0 <= y && y <= y1 && 
+	      Tile.isstoppable(map.getTile(x, y+dy1+1)) && 
+	      map.hasTile(x+dx0, y+dy0-dy, w+dx, h+dy, Tile.isstoppable)) {
+	    e1 = a[y-y0][x-x0];
+	    cost = e0.cost+Math.abs(dx)+Math.abs(dy)+1;
+	    if (cost < e1.cost) {
+	      e1.action = PlanEntry.JUMP;
+	      e1.cost = cost;
+	      e1.next = e0;
+	      queue.push(e1);
+	    }
 	  }
+	  x = e0.x-dx;
+	  if (x0 <= x && x <= x1 && y0 <= y && y <= y1 && 
+	      Tile.isstoppable(map.getTile(x, y+dy1+1)) && 
+	      map.hasTile(x+dx0-dx, y+dy0-dy, w, h+dy, Tile.isstoppable)) {
+	    e1 = a[y-y0][x-x0];
+	    cost = e0.cost+Math.abs(dx)+Math.abs(dy)+1;
+	    if (cost < e1.cost) {
+	      e1.action = PlanEntry.JUMP;
+	      e1.cost = cost;
+	      e1.next = e0;
+	      queue.push(e1);
+	    }
+	  }
+	}
+      }
+      // try falling.
+      if (y0 <= e0.y-1 &&
+	  !Tile.isgrabbable(map.getTile(e0.x, e0.y+dy1))) {
+	e1 = a[e0.y-y0-1][e0.x-x0];
+	cost = e0.cost+1;
+	if (cost < e1.cost) {
+	  e1.action = PlanEntry.FALL;
+	  e1.cost = cost;
+	  e1.next = e0;
+	  queue.push(e1);
 	}
       }
       //queue.sortOn("cost", Array.DESCENDING);

@@ -97,7 +97,7 @@ public class Scene extends Sprite
       Math.floor(_window.width/2/tilemap.tilesize),
       Math.floor(_window.height/2/tilemap.tilesize),
       center);
-    plan.fillPlan(tilemap, dx0, dy0, dx1, dy1);
+    plan.fillPlan(tilemap, dx0, dy0, dx1, dy1, 3, 4);
     return plan;
   }
 }
