@@ -54,7 +54,11 @@ public class Person extends Actor
 	  curplan.center.x != dst.x || 
 	  curplan.center.y != dst.y) {
 	// Make a plan.
-	curplan = scene.createPlan(dst, 0, -2, 0, +1);
+	var dt:int = Math.floor(jumpspeed / gravity);
+	var dx:int = Math.floor(dt*speed / scene.tilemap.tilesize);
+	var dy:int = Math.floor(dt*(dt+1)/2 * gravity / scene.tilemap.tilesize);
+	curplan = scene.createPlan(dst);
+	curplan.fillPlan(0, -2, 0, +1, dx, dy);
 	curentry = null;
 	PlanVisualizer.main.plan = curplan;
       }

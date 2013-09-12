@@ -90,15 +90,13 @@ public class Scene extends Sprite
     return new Point(p.x-_window.x, p.y-_window.y);
   }
 
-  // createPlan(dst, bounds)
-  public function createPlan(center:Point, dx0:int, dy0:int, dx1:int, dy1:int):PlanMap
+  // createPlan(center)
+  public function createPlan(center:Point):PlanMap
   {
-    var plan:PlanMap = new PlanMap(
-      Math.floor(_window.width/2/tilemap.tilesize),
-      Math.floor(_window.height/2/tilemap.tilesize),
-      center);
-    plan.fillPlan(tilemap, dx0, dy0, dx1, dy1, 3, 4);
-    return plan;
+    return new PlanMap(tilemap,
+		       Math.floor(_window.width/2/tilemap.tilesize),
+		       Math.floor(_window.height/2/tilemap.tilesize),
+		       center);
   }
 }
 

@@ -7,13 +7,15 @@ import flash.geom.Rectangle;
 // 
 public class PlanMap
 {
+  public var map:TileMap;
   public var center:Point;
   public var x0:int, y0:int, x1:int, y1:int;
 
   private var a:Array;
 
-  public function PlanMap(width:int, height:int, center:Point)
+  public function PlanMap(map:TileMap, width:int, height:int, center:Point)
   {
+    this.map = map;
     this.center = center;
     x0 = center.x-width;
     x1 = center.x+width;
@@ -42,7 +44,7 @@ public class PlanMap
   }
 
   // fillPlan(plan, b)
-  public function fillPlan(map:TileMap, dx0:int, dy0:int, dx1:int, dy1:int,
+  public function fillPlan(dx0:int, dy0:int, dx1:int, dy1:int,
 			   jumpdx:int, jumpdy:int):void
   {
     var w:int = dx1-dx0+1;
@@ -110,7 +112,7 @@ public class PlanMap
 	  var x:int = e0.x+dx;
 	  if (x0 <= x && x <= x1 && y0 <= y && y <= y1 && 
 	      Tile.isstoppable(map.getTile(x, y+dy1+1)) && 
-	      map.hasTile(x+dx0, y+dy0-dy, w+dx, h+dy, Tile.isstoppable)) {
+	      map.hasTile(x+dx0-dx, y+dy0-dy, w+dx, h+dy, Tile.isstoppable)) {
 	    e1 = a[y-y0][x-x0];
 	    cost = e0.cost+Math.abs(dx)+Math.abs(dy)+1;
 	    if (cost < e1.cost) {
@@ -123,7 +125,7 @@ public class PlanMap
 	  x = e0.x-dx;
 	  if (x0 <= x && x <= x1 && y0 <= y && y <= y1 && 
 	      Tile.isstoppable(map.getTile(x, y+dy1+1)) && 
-	      map.hasTile(x+dx0-dx, y+dy0-dy, w, h+dy, Tile.isstoppable)) {
+	      map.hasTile(x+dx0, y+dy0-dy, w+dx, h+dy, Tile.isstoppable)) {
 	    e1 = a[y-y0][x-x0];
 	    cost = e0.cost+Math.abs(dx)+Math.abs(dy)+1;
 	    if (cost < e1.cost) {
