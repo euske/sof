@@ -58,7 +58,7 @@ public class Person extends Actor
 	var dx:int = Math.floor(dt*speed / scene.tilemap.tilesize);
 	var dy:int = Math.floor(dt*(dt+1)/2 * gravity / scene.tilemap.tilesize);
 	curplan = scene.createPlan(dst);
-	curplan.fillPlan(0, -2, 0, +1, dx, dy);
+	curplan.fillPlan(0, 0, -2, +1, dx, dy);
 	curentry = null;
 	PlanVisualizer.main.plan = curplan;
       }

@@ -94,24 +94,33 @@ public class TileMap extends Bitmap
     return _tilevalue[c];
   }
 
-  // scanTile(x, y, w, h, f)
-  public function scanTile(x:int, y:int, w:int, h:int, f:Function):Array
+  // scanTile(x0, y0, x1, y1, f)
+  public function scanTile(x0:int, y0:int, x1:int, y1:int, f:Function):Array
   {
     var a:Array = new Array();
-    for (var dy:int = 0; dy < h; dy++) {
-      for (var dx:int = 0; dx < w; dx++) {
-	if (f(getTile(x+dx, y+dy))) {
-	  a.push(new Point(x+dx, y+dy));
+    var t:int;
+    // assert(x0 <= x1);
+    if (x1 < x0) {
+      t = x0; x0 = x1; x1 = t;
+    }
+    // assert(y0 <= y1);
+    if (y1 < y0) {
+      t = y0; y0 = y1; y1 = t;
+    }
+    for (var y:int = y0; y <= y1; y++) {
+      for (var x:int = x0; x <= x1; x++) {
+	if (f(getTile(x, y))) {
+	  a.push(new Point(x, y));
 	}
       }
     }
     return a;
   }
 
-  // hasTile(x, y, w, h, f)
-  public function hasTile(x:int, y:int, w:int, h:int, f:Function):Boolean
+  // hasTile(x0, y0, x1, x1, f)
+  public function hasTile(x0:int, y0:int, x1:int, y1:int, f:Function):Boolean
   {
-    return (scanTile(x, y, w, h, f).length != 0);
+    return (scanTile(x0, y0, x1, y1, f).length != 0);
   }
 
   // getTilePoint(x, y)
@@ -148,7 +157,7 @@ public class TileMap extends Bitmap
   public function hasTileByRect(r:Rectangle, f:Function):Boolean
   {
     var r1:Rectangle = getCoordsByRect(r);
-    return hasTile(r1.x, r1.y, r1.width, r1.height, f);
+    return hasTile(r1.left, r1.top, r1.right, r1.bottom, f);
   }
 
   // getCollisionByRect(r, vx, vy, f)
@@ -156,7 +165,7 @@ public class TileMap extends Bitmap
   {
     var src:Rectangle = r.union(Utils.moveRect(r, vx, vy));
     var r1:Rectangle = getCoordsByRect(src);
-    var a:Array = scanTile(r1.x, r1.y, r1.width, r1.height, f);
+    var a:Array = scanTile(r1.left, r1.top, r1.right, r1.bottom, f);
     var v:Point = new Point(vx, vy);
     for each (var p:Point in a) {
       var t:Rectangle = getTileRect(p.x, p.y);
