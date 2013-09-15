@@ -157,7 +157,7 @@ public class TileMap extends Bitmap
   public function hasTileByRect(r:Rectangle, f:Function):Boolean
   {
     var r1:Rectangle = getCoordsByRect(r);
-    return hasTile(r1.left, r1.top, r1.right, r1.bottom, f);
+    return hasTile(r1.left, r1.top, r1.right-1, r1.bottom-1, f);
   }
 
   // getCollisionByRect(r, vx, vy, f)
@@ -165,7 +165,7 @@ public class TileMap extends Bitmap
   {
     var src:Rectangle = r.union(Utils.moveRect(r, vx, vy));
     var r1:Rectangle = getCoordsByRect(src);
-    var a:Array = scanTile(r1.left, r1.top, r1.right, r1.bottom, f);
+    var a:Array = scanTile(r1.left, r1.top, r1.right-1, r1.bottom-1, f);
     var v:Point = new Point(vx, vy);
     for each (var p:Point in a) {
       var t:Rectangle = getTileRect(p.x, p.y);
