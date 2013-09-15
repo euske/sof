@@ -51,8 +51,8 @@ public class Person extends Actor
       // planned
       var dst:Point = scene.tilemap.getCoordsByPoint(target.pos);
       if (curplan == null || 
-	  curplan.center.x != dst.x || 
-	  curplan.center.y != dst.y) {
+	  curplan.dst.x != dst.x || 
+	  curplan.dst.y != dst.y) {
 	// Make a plan.
 	var dt:int = Math.floor(jumpspeed / gravity);
 	var dx:int = Math.floor(dt*speed / scene.tilemap.tilesize);
