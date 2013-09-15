@@ -23,6 +23,7 @@ public class Actor extends Sprite
   public const gravity:int = 2;
   public const speed:int = 8;
   public const jumpspeed:int = 24;
+  public const maxspeed:int = 24;
 
   public static const DIE:String = "DIE";
   public static const JUMP:String = "JUMP";
@@ -91,7 +92,7 @@ public class Actor extends Sprite
 	vdy = scene.tilemap.getCollisionByRect(bounds, 0, vg-vf.y, Tile.isstoppable);
       }
       pos = Utils.movePoint(pos, vdy.x, vdy.y);
-      vg = Math.min(vf.y+vdx.y+vdy.y+gravity, jumpspeed);
+      vg = Math.min(vf.y+vdx.y+vdy.y+gravity, maxspeed);
     }
 
     if (v0.x != 0 || v0.y != 0) {
@@ -133,11 +134,17 @@ public class Actor extends Sprite
   // jump()
   public function jump():void
   {
-    if (scene.tilemap.hasCollisionByRect(bounds, 0, vg, Tile.isstoppable)) {
+    if (isOnGround()) {
       dispatchEvent(new ActorActionEvent(JUMP));
       vg = -jumpspeed;
       jumping = true;
     }
+  }
+
+  // isOnGround()
+  public function isOnGround():Boolean
+  {
+    return scene.tilemap.hasCollisionByRect(bounds, 0, vg, Tile.isstoppable);
   }
 
   // isMovable(dx, dy)
