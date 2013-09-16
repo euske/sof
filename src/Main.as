@@ -92,8 +92,13 @@ public class Main extends Sprite
   }
 
   // log(x)
-  public static function log(x:String):void
+  public static function log(... args):void
   {
+    var x:String = "";
+    for each (var a:Object in args) {
+      if (x.length != 0) x += " ";
+      x += a;
+    }
     _logger.appendText(x+"\n");
     _logger.scrollV = _logger.maxScrollV;
     if (_logger.parent != null) {
