@@ -49,20 +49,19 @@ public class Person extends Actor
       move(new Point(vx*speed, vy*speed));
     } else {
       // planned
+      var src:Point = scene.tilemap.getCoordsByPoint(pos);
       var dst:Point = scene.tilemap.getCoordsByPoint(target.pos);
       if (curplan == null || 
 	  curplan.dst.x != dst.x || 
 	  curplan.dst.y != dst.y) {
 	// Make a plan.
-	var dt:int = Math.floor(jumpspeed / gravity);
-	var dx:int = Math.floor(dt*speed / scene.tilemap.tilesize);
-	var dy:int = Math.floor(dt*(dt+1)/2 * gravity / scene.tilemap.tilesize);
+	var jumpdt:int = Math.floor(jumpspeed / gravity);
+	var falldt:int = Math.floor(maxspeed / gravity);
 	curplan = scene.createPlan(dst);
-	curplan.fillPlan(0, 0, -2, +1, dx, dy);
+	curplan.fillPlan(src, 0, 0, -2, +1, jumpdt, falldt, speed, gravity);
 	curentry = null;
 	PlanVisualizer.main.plan = curplan;
       }
-      var src:Point = scene.tilemap.getCoordsByPoint(pos);
       if (curentry == null || curentry.x != src.x || curentry.y != src.y) {
 	// Get a macro-level plan.
 	var entry:PlanEntry = curplan.getEntry(src.x, src.y);
