@@ -11,6 +11,8 @@ public class Person extends Actor
   private var curplan:PlanMap;
   private var curentry:PlanEntry;
 
+  public const tilebounds:Rectangle = new Rectangle(0, -2, 0, 3);
+
   // Person(image)
   public function Person(scene:Scene)
   {
@@ -58,7 +60,7 @@ public class Person extends Actor
 	var jumpdt:int = Math.floor(jumpspeed / gravity);
 	var falldt:int = Math.floor(maxspeed / gravity);
 	curplan = scene.createPlan(dst);
-	curplan.fillPlan(src, 0, 0, -2, +1, jumpdt, falldt, speed, gravity);
+	curplan.fillPlan(src, tilebounds, jumpdt, falldt, speed, gravity);
 	curentry = null;
 	PlanVisualizer.main.plan = curplan;
       }
