@@ -10,6 +10,7 @@ public class Person extends Actor
   private var target:Actor;
   private var curplan:PlanMap;
   private var curentry:PlanEntry;
+  private var plantimeout:int;
 
   public const tilebounds:Rectangle = new Rectangle(0, -2, 0, 3);
 
@@ -53,27 +54,31 @@ public class Person extends Actor
       // planned
       var src:Point = scene.tilemap.getCoordsByPoint(pos);
       var dst:Point = scene.tilemap.getCoordsByPoint(target.pos);
-      if (curplan == null || 
-	  curplan.dst.x != dst.x || 
-	  curplan.dst.y != dst.y) {
-	// Make a plan.
-	var jumpdt:int = Math.floor(jumpspeed / gravity);
-	var falldt:int = Math.floor(maxspeed / gravity);
-	curplan = scene.createPlan(dst);
-	curplan.fillPlan(src, tilebounds, jumpdt, falldt, speed, gravity);
-	curentry = null;
-	PlanVisualizer.main.plan = curplan;
+      // invalidate plan.
+      if (curplan != null && !curplan.dst.equals(dst)) {
+	curplan = null;
       }
-      if (curentry == null || curentry.x != src.x || curentry.y != src.y) {
+      // make a plan.
+      if (curplan == null) {
+	if (target.isLanded()) {
+	  var jumpdt:int = Math.floor(jumpspeed / gravity);
+	  var falldt:int = Math.floor(maxspeed / gravity);
+	  curplan = scene.createPlan(dst);
+	  curplan.fillPlan(src, tilebounds, jumpdt, falldt, speed, gravity);
+	  PlanVisualizer.main.plan = curplan;
+	}
+      }
+      // follow a plan.
+      if (curentry == null && curplan != null) {
 	// Get a macro-level plan.
 	var entry:PlanEntry = curplan.getEntry(src.x, src.y);
-	if (entry != null && (curentry == null || entry.cost < curentry.cost)) {
+	if (entry != null && entry.next != null) {
 	  Main.log("entry="+entry);
 	  curentry = entry;
 	}
-	PlanVisualizer.main.src = src;
       }
-      if (curentry != null && curentry.next != null) {
+      PlanVisualizer.main.src = src;
+      if (curentry != null) {
 	var nextpos:Point = scene.tilemap.getTilePoint(curentry.next.x, curentry.next.y);
 	// Get a micro-level (greedy) plan.
 	switch (curentry.action) {
@@ -84,29 +89,28 @@ public class Person extends Actor
 	    vy = Utils.clamp(-1, (nextpos.y-pos.y), +1);
 	  }
 	  break;
-
+	  
 	case PlanEntry.FALL:
 	  vx = Utils.clamp(-1, (nextpos.x-pos.x), +1);
 	  break;
-
+	  
 	case PlanEntry.CLIMB:
-	  if (scene.tilemap.hasTileByRect(bounds, Tile.isgrabbable)) {
-	    vy = Utils.clamp(-1, (nextpos.y-pos.y), +1);
-	    if (!isMovable(0, vy*speed)) {
-	      vx = Utils.clamp(-1, (nextpos.x-pos.x), +1);
-	      vy = 0;
-	    }
-	  } else {
+	  vy = Utils.clamp(-1, (nextpos.y-pos.y), +1);
+	  if (!isMovable(0, vy*speed)) {
 	    vx = Utils.clamp(-1, (nextpos.x-pos.x), +1);
+	    vy = 0;
 	  }
 	  break;
-
+	  
 	case PlanEntry.JUMP:
 	  jump();
 	  vx = Utils.clamp(-1, (nextpos.x-pos.x), +1);
 	  break;
 	}
-	//Main.log("action="+curentry.action+", vx="+vx+", vy="+vy);
+	  //Main.log("action="+curentry.action+", vx="+vx+", vy="+vy);
+	if (curentry.next.x == src.x && curentry.next.y == src.y) {
+	    curentry = null;
+	}
       }
       move(new Point(vx*speed, vy*speed));
     }

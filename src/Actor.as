@@ -71,7 +71,7 @@ public class Actor extends Sprite
   // move()
   public function move(v0:Point):void
   {
-    if (scene.tilemap.hasTileByRect(bounds, Tile.isgrabbable)) {
+    if (isGrabbing()) {
       // climing a ladder.
       var vl:Point = scene.tilemap.getCollisionByRect(bounds, v0.x, v0.y, Tile.isobstacle);
       pos = Utils.movePoint(pos, vl.x, vl.y);
@@ -134,26 +134,32 @@ public class Actor extends Sprite
   // jump()
   public function jump():void
   {
-    if (isOnGround()) {
+    if (isLanded()) {
       dispatchEvent(new ActorActionEvent(JUMP));
       vg = -jumpspeed;
       jumping = true;
     }
   }
 
-  // isOnGround()
-  public function isOnGround():Boolean
+  // isLanded()
+  public function isLanded():Boolean
   {
     return scene.tilemap.hasCollisionByRect(bounds, 0, vg, Tile.isstoppable);
   }
-
+  
+  // isGrabbing()
+  public function isGrabbing():Boolean
+  {
+    return scene.tilemap.hasTileByRect(bounds, Tile.isgrabbable);
+  }
+  
   // isMovable(dx, dy)
   public function isMovable(dx:int, dy:int):Boolean
   {
     var r:Rectangle = Utils.moveRect(bounds, dx, dy);
     return (!scene.tilemap.hasTileByRect(r, Tile.isobstacle));
   }
-
+  
   // hasUpperLadderNearby()
   public function hasUpperLadderNearby():int
   {
