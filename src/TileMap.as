@@ -13,9 +13,9 @@ public class TileMap extends Bitmap
   public var map:BitmapData;
   public var tiles:BitmapData;
   public var tilesize:int;
+  public var tilewindow:Rectangle;
 
   private var _tilevalue:Dictionary;
-  private var _prevrect:Rectangle;
 
   // TileMap(map, tiles, tilesize, width, height)
   public function TileMap(map:BitmapData, 
@@ -25,7 +25,7 @@ public class TileMap extends Bitmap
     this.map = map;
     this.tiles = tiles;
     this.tilesize = tilesize;
-    _prevrect = new Rectangle(-1,-1,0,0);
+    this.tilewindow = new Rectangle();
     _tilevalue = new Dictionary();
     for (var i:int = 0; i < map.width; i++) {
       var c:uint = map.getPixel(i, 0);
@@ -49,20 +49,16 @@ public class TileMap extends Bitmap
   // repaint(window)
   public function repaint(window:Rectangle):void
   {
-    var x0:int = Math.floor(window.x/tilesize);
-    var y0:int = Math.floor(window.y/tilesize);
-    var mw:int = Math.floor(window.width/tilesize)+1;
-    var mh:int = Math.floor(window.height/tilesize)+1;
-    if (_prevrect.x != x0 || _prevrect.y != y0 ||
-	_prevrect.width != mw || _prevrect.height != mh) {
-      renderTiles(x0, y0, mw, mh);
-      _prevrect.x = x0;
-      _prevrect.y = y0;
-      _prevrect.width = mw;
-      _prevrect.height = mh;
+    var r:Rectangle = new Rectangle(Math.floor(window.x/tilesize),
+				    Math.floor(window.y/tilesize),
+				    Math.floor(window.width/tilesize)+1,
+				    Math.floor(window.height/tilesize)+1);
+    if (!tilewindow.equals(r)) {
+      tilewindow = r;
+      renderTiles(tilewindow.x, tilewindow.y, tilewindow.width, tilewindow.height);
     }
-    this.x = (x0*tilesize)-window.x;
-    this.y = (y0*tilesize)-window.y;
+    this.x = (tilewindow.x*tilesize)-window.x;
+    this.y = (tilewindow.y*tilesize)-window.y;
   }
 
   // renderTiles(x, y)

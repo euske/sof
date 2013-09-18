@@ -161,7 +161,6 @@ public class Main extends Sprite
   /// Game-related functions
 
   private var scene:Scene;
-  private var tilemap:TileMap;
   private var player:Player;
   private var state:int = 0;
 
@@ -175,7 +174,7 @@ public class Main extends Sprite
     //background.alpha = 0.7;
     //addChild(background);
     
-    tilemap = new TileMap(mapimage.bitmapData, tilesimage.bitmapData, 32);
+    var tilemap:TileMap = new TileMap(mapimage.bitmapData, tilesimage.bitmapData, 32);
     addChild(tilemap);
 
     scene = new Scene(stage.stageWidth, stage.stageHeight, tilemap);
@@ -211,9 +210,7 @@ public class Main extends Sprite
 
     addChild(scene);
     
-    visualizer = new PlanVisualizer();
-    visualizer.x = 200;
-    visualizer.y = 200;
+    visualizer = new PlanVisualizer(tilemap);
     addChild(visualizer);
   }
 
@@ -277,9 +274,7 @@ public class Main extends Sprite
   {
     scene.update();
     scene.repaint();
-    //var p:Point = scene.tilemap.getCoordsByPoint(player.pos);
-    //visualizer.plan = scene.createPlan(p.x, p.y, 0, -2, 0, +1));
-    visualizer.update();
+    visualizer.repaint();
   }
 
   // onActorAction()

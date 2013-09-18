@@ -2,6 +2,7 @@ package {
 
 import flash.display.Shape;
 import flash.geom.Point;
+import flash.geom.Rectangle;
 
 //  PlanVisualizer
 // 
@@ -11,20 +12,26 @@ public class PlanVisualizer extends Shape
 
   public var src:Point;
   public var plan:PlanMap;
+  public var tilemap:TileMap;
 
-  public function PlanVisualizer()
+  public function PlanVisualizer(tilemap:TileMap)
   {
     super();
     main = this;
+    this.tilemap = tilemap;
   }
 
-  public function update():void
+  public function repaint():void
   {
     graphics.clear();
     if (plan == null) return;
-    for (var y:int = plan.y0; y <= plan.y1; y++) {
-      for (var x:int = plan.x0; x <= plan.x1; x++) {
-	var e:PlanEntry = plan.getEntry(x, y);
+
+    var ts:int = tilemap.tilesize;
+    var tw:Rectangle = tilemap.tilewindow;
+    for (var y:int = 0; y < tw.height; y++) {
+      for (var x:int = 0; x <= tw.width; x++) {
+	var e:PlanEntry = plan.getEntry(tw.x+x, tw.y+y);
+	if (e == null) continue;
 	var c:int = 0x0000ff;
 	switch (e.action) {
 	case PlanEntry.WALK:
@@ -43,21 +50,24 @@ public class PlanVisualizer extends Shape
 	  continue;
 	}
 	graphics.lineStyle(0, c);
-	graphics.drawRect(e.x*10, e.y*10, 10, 10);
+	graphics.drawRect((e.x-tw.x)*ts, (e.y-tw.y)*ts, ts, ts);
 	graphics.lineStyle(0, 0xffff00);
 	if (e.next != null) {
-	  graphics.moveTo(e.x*10+5, e.y*10+5);
-	  graphics.lineTo(e.next.x*10+5, e.next.y*10+5);
+	  graphics.moveTo((e.x-tw.x)*ts+ts/2, (e.y-tw.y)*ts+ts/2);
+	  graphics.lineTo((e.next.x-tw.x)*ts+ts/2, (e.next.y-tw.y)*ts+ts/2);
 	}
       }
     }
     var pc:Point = new Point((plan.x0+plan.x1)/2, (plan.y0+plan.y1)/2);
     graphics.lineStyle(0, 0x00ff00);
-    graphics.drawRect(pc.x*10+2, pc.y*10+2, 6, 6);
+    graphics.drawRect((pc.x-tw.x)*ts+2, (pc.y-tw.y)*ts+2, ts-4, ts-4);
     if (src != null) {
       graphics.lineStyle(0, 0xffffff);
-      graphics.drawRect(src.x*10+2, src.y*10+2, 6, 6);
+      graphics.drawRect((src.x-tw.x)*ts+2, (src.y-tw.y)*ts+2, ts-4, ts-4);
     }
+
+    this.x = tilemap.x;
+    this.y = tilemap.y;
   }
 }
 
