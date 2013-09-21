@@ -94,8 +94,8 @@ public class Scene extends Sprite
   public function createPlan(center:Point):PlanMap
   {
     return new PlanMap(tilemap,
-		       Math.floor(_window.width/2/tilemap.tilesize),
-		       Math.floor(_window.height/2/tilemap.tilesize),
+		       Math.floor(_window.width/tilemap.tilesize),
+		       Math.floor(_window.height/tilemap.tilesize),
 		       center);
   }
 }

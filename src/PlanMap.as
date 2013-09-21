@@ -112,6 +112,30 @@ public class PlanMap
 	  }
 	}
 
+	// try falling.
+	for (fdx = 1; fdx <= falldx; fdx++) {
+	  fx = e0.x+vx*fdx;
+	  if (fx < x0 || x1 < fx) continue;
+	  fdt = Math.floor(map.tilesize*fdx/speed);
+	  fdy = Math.ceil(fdt*(fdt+1)/2 * gravity / map.tilesize);
+	  for (; fdy <= falldy; fdy++) {
+	    fy = e0.y-fdy;
+	    if (fy < y0 || y1 < fy) continue;
+	    if (!Tile.isstoppable(map.getTile(fx, fy+bounds.bottom+1)) ||
+		map.hasTile(e0.x, e0.y+bounds.bottom,
+			    fx-vx, fy+bounds.top, 
+			    Tile.isstoppable)) continue;
+	    e1 = a[fy-y0][fx-x0];
+	    cost = e0.cost+Math.abs(fdx)+Math.abs(fdy)+1;
+	    if (cost < e1.cost) {
+	      e1.action = PlanEntry.FALL;
+	      e1.cost = cost;
+	      e1.next = e0;
+	      queue.push(e1);
+	    }
+	  }
+	}
+
 	// try jumping + falling.
 	var fx:int, fy:int;
 	var fdt:int, fdx:int, fdy:int;
@@ -146,32 +170,7 @@ public class PlanMap
 	    }
 	  }
 	}
-
-	// try falling.
-	for (fdx = 1; fdx <= falldx; fdx++) {
-	  fx = e0.x+vx*fdx;
-	  if (fx < x0 || x1 < fx) continue;
-	  fdt = Math.floor(map.tilesize*fdx/speed);
-	  fdy = Math.ceil(fdt*(fdt+1)/2 * gravity / map.tilesize);
-	  for (; fdy <= falldy; fdy++) {
-	    fy = e0.y-fdy;
-	    if (fy < y0 || y1 < fy) continue;
-	    if (!Tile.isstoppable(map.getTile(fx, fy+bounds.bottom+1)) &&
-		map.hasTile(e0.x, e0.y+bounds.bottom,
-			    fx-vx, fy+bounds.top, 
-			    Tile.isstoppable)) continue;
-	    e1 = a[fy-y0][fx-x0];
-	    cost = e0.cost+Math.abs(fdx)+Math.abs(fdy)+1;
-	    if (cost < e1.cost) {
-	      e1.action = PlanEntry.FALL;
-	      e1.cost = cost;
-	      e1.next = e0;
-	      queue.push(e1);
-	    }
-	  }
-	}
       }
-
       //queue.sortOn("prio", Array.DESCENDING);
     }
     return;
