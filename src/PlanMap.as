@@ -50,9 +50,11 @@ public class PlanMap
 			   speed:int, gravity:int):void
   {
     var jumpdx:int = Math.floor(jumpdt*speed / map.tilesize);
-    var jumpdy:int = Math.floor(jumpdt*(jumpdt+1)/2 * gravity / map.tilesize);
+    var jumpdy:int = -Math.floor(jumpdt*(jumpdt+1)/2 * gravity / map.tilesize);
     var falldx:int = Math.floor(falldt*speed / map.tilesize);
     var falldy:int = Math.ceil(falldt*(falldt+1)/2 * gravity / map.tilesize);
+    // jump=(3,-4), fall=(3,5)
+
     var cost:int, x:int, y:int, dx:int, dy:int, dt:int;
     var bx0:int, bx1:int, by0:int, by1:int;
     var e1:PlanEntry = a[(y1-y0)/2][(x1-x0)/2];
@@ -61,7 +63,8 @@ public class PlanMap
     while (0 < queue.length) {
       var e0:PlanEntry = queue.pop();
       if (map.hasTile(e0.x+bounds.left, e0.y+bounds.top, 
-		      e0.x+bounds.right, e0.y+bounds.bottom, Tile.isobstacle)) continue;
+		      e0.x+bounds.right, e0.y+bounds.bottom, 
+		      Tile.isobstacle)) continue;
       if (!Tile.isstoppable(map.getTile(e0.x, e0.y+bounds.bottom+1))) continue;
       // assert(x0 <= e0.x && e0.x <= x1);
       // assert(y0 <= e0.y && e0.y <= y1);
@@ -97,7 +100,8 @@ public class PlanMap
       // try climbing up.
       if (e0.y+1 <= y1 &&
 	  map.hasTile(e0.x+bounds.left, e0.y+bounds.top+1,
-		      e0.x+bounds.right, e0.y+bounds.bottom+1, Tile.isgrabbable)) {
+		      e0.x+bounds.right, e0.y+bounds.bottom+1,
+		      Tile.isgrabbable)) {
 	e1 = a[e0.y-y0+1][e0.x-x0];
 	cost = e0.cost+1;
 	if (cost < e1.cost) {
@@ -108,29 +112,67 @@ public class PlanMap
 	}
       }
 
-      // try jumping.
-      for (dx = -jumpdx; dx <= jumpdx; dx++) {
-	if (dx == 0) continue;
-	x = e0.x+dx;
-	if (x < x0 || x1 < x) continue;
-	bx0 = (dx < 0)? -1+bounds.left : +1+bounds.right;
-	bx1 = (dx < 0)? bounds.left : bounds.right;
-	for (dy = 1; dy <= jumpdy; dy++) {
-	  y = e0.y+dy;
-	  if (y < y0 || y1 < y) continue;
-	  if (!Tile.isstoppable(map.getTile(x, y+bounds.bottom+1))) continue;
-	  if (map.hasTile(e0.x+bx0, e0.y+bounds.top, 
-			  x+bx1, y+bounds.bottom, Tile.isstoppable)) continue;
-	  e1 = a[y-y0][x-x0];
-	  cost = e0.cost+Math.abs(dx)+Math.abs(dy)+1;
-	  if (cost < e1.cost) {
-	    e1.action = PlanEntry.JUMP;
-	    e1.cost = cost;
-	    e1.next = e0;
-	    queue.push(e1);
+      // try jumping + falling.
+      for (var vx:int = -1; vx <= +1; vx += 2) {
+	var bx:int = (vx < 0)? bounds.left : bounds.right;
+	for (var fdx:int = 0; fdx <= falldx; fdx++) {
+	  var fx:int = e0.x+vx*fdx;
+	  if (fx < x0 || x1 < fx) continue;
+	  var fdt:int = Math.floor(map.tilesize*fdx/speed);
+	  var fdy:int = Math.ceil(fdt*(fdt+1)/2 * gravity / map.tilesize);
+	  for (; fdy <= falldy; fdy++) {
+	    var fy:int = e0.y-fdy;
+	    if (fy < y0 || y1 < fy) continue;
+	    if (map.hasTile(e0.x, e0.y+bounds.bottom, 
+			    fx, fy+bounds.top, 
+			    Tile.isstoppable)) continue;
+	    for (var jdx:int = 1; jdx <= jumpdx; jdx++) {
+	      var jx:int = fx+vx*jdx;
+	      if (jx < x0 || x1 < jx) continue;
+	      var jy:int = fy-jumpdy;
+	      if (jy < y0 || y1 < jy) continue;
+	      if (!Tile.isstoppable(map.getTile(jx, 
+						jy+bounds.bottom+1))) continue;
+	      if (map.hasTile(fx+vx, fy+bounds.top, 
+	       		      jx, jy+bounds.bottom, 
+	      		      Tile.isstoppable)) continue;
+	      //trace("jump: e0="+e0.x+","+e0.y+ ", f="+fx+","+fy+", j="+jx+","+jy);
+	      e1 = a[jy-y0][jx-x0];
+	      cost = e0.cost+Math.abs(fdx+jdx)+Math.abs(fdy+jumpdy)+1;
+	      if (cost < e1.cost) {
+		e1.action = PlanEntry.JUMP;
+		e1.cost = cost;
+		e1.next = e0;
+		queue.push(e1);
+	      }
+	    }
 	  }
 	}
       }
+
+      // // try jumping.
+      // for (dx = -jumpdx; dx <= jumpdx; dx++) {
+      // 	if (dx == 0) continue;
+      // 	x = e0.x+dx;
+      // 	if (x < x0 || x1 < x) continue;
+      // 	bx0 = (dx < 0)? -1+bounds.left : +1+bounds.right;
+      // 	bx1 = (dx < 0)? bounds.left : bounds.right;
+      // 	for (dy = 1; dy <= jumpdy; dy++) {
+      // 	  y = e0.y+dy;
+      // 	  if (y < y0 || y1 < y) continue;
+      // 	  if (!Tile.isstoppable(map.getTile(x, y+bounds.bottom+1))) continue;
+      // 	  if (map.hasTile(e0.x+bx0, e0.y+bounds.top, 
+      // 			  x+bx1, y+bounds.bottom, Tile.isstoppable)) continue;
+      // 	  e1 = a[y-y0][x-x0];
+      // 	  cost = e0.cost+Math.abs(dx)+Math.abs(dy)+1;
+      // 	  if (cost < e1.cost) {
+      // 	    e1.action = PlanEntry.JUMP;
+      // 	    e1.cost = cost;
+      // 	    e1.next = e0;
+      // 	    queue.push(e1);
+      // 	  }
+      // 	}
+      // }
 
       // try falling.
       for (dx = -falldx; dx <= falldx; dx++) {
