@@ -9,43 +9,42 @@ public class PlanMap
 {
   public var map:TileMap;
   public var dst:Point;
-  public var x0:int, y0:int, x1:int, y1:int;
+  public var bounds:Rectangle;
 
-  private var a:Array;
+  private var _a:Array;
 
-  public function PlanMap(map:TileMap, width:int, height:int, dst:Point)
+  public function PlanMap(map:TileMap, dst:Point, bounds:Rectangle)
   {
     this.map = map;
     this.dst = dst;
-    x0 = dst.x-width;
-    x1 = dst.x+width;
-    y0 = dst.y-height;
-    y1 = dst.y+height;
-    a = new Array(y1-y0+1);
-    var cost:int = (width+height+1)*2;
-    for (var y:int = y0; y <= y1; y++) {
-      var b:Array = new Array(x1-x0+1);
-      for (var x:int = x0; x <= x1; x++) {
-	b[x-x0] = new PlanEntry(x, y, PlanEntry.NONE, cost, null);
+    this.bounds = bounds;
+    _a = new Array(bounds.height+1);
+    var maxcost:int = (bounds.width+bounds.height+1)*2;
+    for (var y:int = bounds.top; y <= bounds.bottom; y++) {
+      var b:Array = new Array(bounds.width+1);
+      for (var x:int = bounds.left; x <= bounds.right; x++) {
+	b[x-bounds.left] = new PlanEntry(x, y, PlanEntry.NONE, maxcost, null);
       }
-      a[y-y0] = b;
+      _a[y-bounds.top] = b;
     }
   }
 
   public function toString():String
   {
-    return ("<PlanMap ("+x0+","+y0+")-("+x1+","+y1+")>");
+    return ("<PlanMap ("+bounds.left+","+bounds.top+")-("+
+	    bounds.right+","+bounds.bottom+")>");
   }
 
   // getEntry(x, y)
   public function getEntry(x:int, y:int):PlanEntry
   {
-    if (x < x0 || x1 < x || y < y0 || y1 < y) return null;
-    return a[y-y0][x-x0];
+    if (x < bounds.left || bounds.right < x ||
+	y < bounds.top || bounds.bottom < y) return null;
+    return _a[y-bounds.top][x-bounds.left];
   }
 
   // fillPlan(plan, b)
-  public function fillPlan(src:Point, bounds:Rectangle,
+  public function fillPlan(src:Point, cb:Rectangle,
 			   jumpdt:int, falldt:int, 
 			   speed:int, gravity:int):void
   {
@@ -56,22 +55,22 @@ public class PlanMap
     // jump=(3,-4), fall=(3,5)
 
     var cost:int;
-    var e1:PlanEntry = a[(y1-y0)/2][(x1-x0)/2];
+    var e1:PlanEntry = _a[dst.y-bounds.top][dst.x-bounds.left];
     e1.cost = 0;
     var queue:Array = [ e1 ];
     while (0 < queue.length) {
       var e0:PlanEntry = queue.pop();
-      if (map.hasTile(e0.x+bounds.left, e0.y+bounds.top, 
-		      e0.x+bounds.right, e0.y+bounds.bottom, 
+      if (map.hasTile(e0.x+cb.left, e0.y+cb.top, 
+		      e0.x+cb.right, e0.y+cb.bottom, 
 		      Tile.isobstacle) ||
-	  !map.isTile(e0.x, e0.y+bounds.bottom+1, Tile.isstoppable)) continue;
-      // assert(x0 <= e0.x && e0.x <= x1);
-      // assert(y0 <= e0.y && e0.y <= y1);
+	  !map.isTile(e0.x, e0.y+cb.bottom+1, Tile.isstoppable)) continue;
+      // assert(bounds.left <= e0.x && e0.x <= bounds.right);
+      // assert(bounds.top <= e0.y && e0.y <= bounds.bottom);
 
       // try climbing down.
-      if (y0 <= e0.y-1 &&
-	  map.isTile(e0.x, e0.y+bounds.bottom, Tile.isgrabbable)) {
-	e1 = a[e0.y-y0-1][e0.x-x0];
+      if (bounds.top <= e0.y-1 &&
+	  map.isTile(e0.x, e0.y+cb.bottom, Tile.isgrabbable)) {
+	e1 = _a[e0.y-bounds.top-1][e0.x-bounds.left];
 	cost = e0.cost+1;
 	if (cost < e1.cost) {
 	  e1.action = PlanEntry.CLIMB;
@@ -81,11 +80,11 @@ public class PlanMap
 	}
       }
       // try climbing up.
-      if (e0.y+1 <= y1 &&
-	  map.hasTile(e0.x+bounds.left, e0.y+bounds.top+1,
-		      e0.x+bounds.right, e0.y+bounds.bottom+1,
+      if (e0.y+1 <= bounds.bottom &&
+	  map.hasTile(e0.x+cb.left, e0.y+cb.top+1,
+		      e0.x+cb.right, e0.y+cb.bottom+1,
 		      Tile.isgrabbable)) {
-	e1 = a[e0.y-y0+1][e0.x-x0];
+	e1 = _a[e0.y-bounds.top+1][e0.x-bounds.left];
 	cost = e0.cost+1;
 	if (cost < e1.cost) {
 	  e1.action = PlanEntry.CLIMB;
@@ -100,9 +99,9 @@ public class PlanMap
 
 	// try walking.
 	var wx:int = e0.x+vx;
-	if (x0 <= wx && wx <= x1 &&
-	    map.isTile(wx, e0.y+bounds.bottom+1, Tile.isstoppable)) {
-	  e1 = a[e0.y-y0][wx-x0];
+	if (bounds.left <= wx && wx <= bounds.right &&
+	    map.isTile(wx, e0.y+cb.bottom+1, Tile.isstoppable)) {
+	  e1 = _a[e0.y-bounds.top][wx-bounds.left];
 	  cost = e0.cost+1;
 	  if (cost < e1.cost) {
 	    e1.action = PlanEntry.WALK;
@@ -115,17 +114,17 @@ public class PlanMap
 	// try falling.
 	for (fdx = 1; fdx <= falldx; fdx++) {
 	  fx = e0.x+vx*fdx;
-	  if (fx < x0 || x1 < fx) continue;
+	  if (fx < bounds.left || bounds.right < fx) continue;
 	  fdt = Math.floor(map.tilesize*fdx/speed);
 	  fdy = Math.ceil(fdt*(fdt+1)/2 * gravity / map.tilesize);
 	  for (; fdy <= falldy; fdy++) {
 	    fy = e0.y-fdy;
-	    if (fy < y0 || y1 < fy) continue;
-	    if (!map.isTile(fx, fy+bounds.bottom+1, Tile.isstoppable) ||
-		map.hasTile(e0.x, e0.y+bounds.bottom,
-			    fx-vx, fy+bounds.top, 
+	    if (fy < bounds.top || bounds.bottom < fy) continue;
+	    if (!map.isTile(fx, fy+cb.bottom+1, Tile.isstoppable) ||
+		map.hasTile(e0.x, e0.y+cb.bottom,
+			    fx-vx, fy+cb.top, 
 			    Tile.isstoppable)) continue;
-	    e1 = a[fy-y0][fx-x0];
+	    e1 = _a[fy-bounds.top][fx-bounds.left];
 	    cost = e0.cost+Math.abs(fdx)+Math.abs(fdy)+1;
 	    if (cost < e1.cost) {
 	      e1.action = PlanEntry.FALL;
@@ -141,25 +140,25 @@ public class PlanMap
 	var fdt:int, fdx:int, fdy:int;
 	for (fdx = 0; fdx <= falldx; fdx++) {
 	  fx = e0.x+vx*fdx;
-	  if (fx < x0 || x1 < fx) continue;
+	  if (fx < bounds.left || bounds.right < fx) continue;
 	  fdt = Math.floor(map.tilesize*fdx/speed);
 	  fdy = Math.ceil(fdt*(fdt+1)/2 * gravity / map.tilesize);
 	  for (; fdy <= falldy; fdy++) {
 	    fy = e0.y-fdy;
-	    if (fy < y0 || y1 < fy) continue;
-	    if (map.hasTile(e0.x, e0.y+bounds.bottom, 
-			    fx, fy+bounds.top, 
+	    if (fy < bounds.top || bounds.bottom < fy) continue;
+	    if (map.hasTile(e0.x, e0.y+cb.bottom, 
+			    fx, fy+cb.top, 
 			    Tile.isstoppable)) continue;
 	    for (var jdx:int = 1; jdx <= jumpdx; jdx++) {
 	      var jx:int = fx+vx*jdx;
-	      if (jx < x0 || x1 < jx) continue;
+	      if (jx < bounds.left || bounds.right < jx) continue;
 	      var jy:int = fy-jumpdy;
-	      if (jy < y0 || y1 < jy) continue;
-	      if (!map.isTile(jx, jy+bounds.bottom+1, Tile.isstoppable) ||
-		  map.hasTile(fx+vx, fy+bounds.top, 
-	       		      jx, jy+bounds.bottom, 
+	      if (jy < bounds.top || bounds.bottom < jy) continue;
+	      if (!map.isTile(jx, jy+cb.bottom+1, Tile.isstoppable) ||
+		  map.hasTile(fx+vx, fy+cb.top, 
+			      jx, jy+cb.bottom, 
 	      		      Tile.isstoppable)) continue;
-	      e1 = a[jy-y0][jx-x0];
+	      e1 = _a[jy-bounds.top][jx-bounds.left];
 	      cost = e0.cost+Math.abs(fdx+jdx)+Math.abs(fdy+jumpdy)+1;
 	      if (cost < e1.cost) {
 		e1.action = PlanEntry.JUMP;

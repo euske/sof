@@ -93,10 +93,12 @@ public class Scene extends Sprite
   // createPlan(center)
   public function createPlan(center:Point):PlanMap
   {
-    return new PlanMap(tilemap,
-		       Math.floor(_window.width/tilemap.tilesize),
-		       Math.floor(_window.height/tilemap.tilesize),
-		       center);
+    var x0:int = Math.floor(_window.left/tilemap.tilesize);
+    var y0:int = Math.floor(_window.top/tilemap.tilesize);
+    var x1:int = Math.ceil(_window.right/tilemap.tilesize);
+    var y1:int = Math.ceil(_window.bottom/tilemap.tilesize);
+    return new PlanMap(tilemap, center, 
+		       new Rectangle(x0, y0, x1-x0, y1-y0));
   }
 }
 
