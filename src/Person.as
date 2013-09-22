@@ -12,8 +12,6 @@ public class Person extends Actor
   private var curentry:PlanEntry;
   private var plantimeout:int;
 
-  public const tilebounds:Rectangle = new Rectangle(0, -2, 0, 3);
-
   // Person(image)
   public function Person(scene:Scene)
   {
@@ -64,7 +62,7 @@ public class Person extends Actor
 	  var jumpdt:int = Math.floor(jumpspeed / gravity);
 	  var falldt:int = Math.floor(maxspeed / gravity);
 	  curplan = scene.createPlan(dst);
-	  curplan.fillPlan(src, tilebounds, jumpdt, falldt, speed, gravity);
+	  curplan.fillPlan(src, skin.tilebounds, jumpdt, falldt, speed, gravity);
 	  PlanVisualizer.main.plan = curplan;
 	}
       }
@@ -79,7 +77,8 @@ public class Person extends Actor
       }
       PlanVisualizer.main.src = src;
       if (curentry != null) {
-	var nextpos:Point = scene.tilemap.getTilePoint(curentry.next.x, curentry.next.y);
+	var pn:Point = curentry.next.p;
+	var nextpos:Point = scene.tilemap.getTilePoint(pn.x, pn.y);
 	// Get a micro-level (greedy) plan.
 	switch (curentry.action) {
 	case PlanEntry.WALK:
@@ -108,7 +107,7 @@ public class Person extends Actor
 	  break;
 	}
 	  //Main.log("action="+curentry.action+", vx="+vx+", vy="+vy);
-	if (curentry.next.x == src.x && curentry.next.y == src.y) {
+	if (curentry.next.p.equals(src)) {
 	    curentry = null;
 	}
       }

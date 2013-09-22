@@ -1,5 +1,7 @@
 package {
 
+import flash.geom.Point;
+
 //  PlanEntry
 //
 public class PlanEntry
@@ -10,14 +12,13 @@ public class PlanEntry
   public static const CLIMB:String = "CLIMB";
   public static const JUMP:String = "JUMP";
 
-  public var x:int, y:int;
+  public var p:Point;
   public var action:String;
   public var cost:int;
   public var next:PlanEntry;
-  public function PlanEntry(x:int, y:int, action:String, cost:int, next:PlanEntry)
+  public function PlanEntry(p:Point, action:String, cost:int, next:PlanEntry)
   {
-    this.x = x;
-    this.y = y;
+    this.p = p;
     this.action = action;
     this.cost = cost;
     this.next = next;
@@ -25,7 +26,7 @@ public class PlanEntry
 
   public function toString():String
   {
-    return ("<PlanEntry: ("+x+","+y+") action="+action+", cost="+cost+">");
+    return ("<PlanEntry: ("+p.x+","+p.y+") action="+action+", cost="+cost+">");
   }
 }
 

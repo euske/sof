@@ -23,7 +23,8 @@ public class PlanMap
     for (var y:int = bounds.top; y <= bounds.bottom; y++) {
       var b:Array = new Array(bounds.width+1);
       for (var x:int = bounds.left; x <= bounds.right; x++) {
-	b[x-bounds.left] = new PlanEntry(x, y, PlanEntry.NONE, maxcost, null);
+	var p:Point = new Point(x, y);
+	b[x-bounds.left] = new PlanEntry(p, PlanEntry.NONE, maxcost, null);
       }
       _a[y-bounds.top] = b;
     }
@@ -60,17 +61,18 @@ public class PlanMap
     var queue:Array = [ e1 ];
     while (0 < queue.length) {
       var e0:PlanEntry = queue.pop();
-      if (map.hasTile(e0.x+cb.left, e0.y+cb.top, 
-		      e0.x+cb.right, e0.y+cb.bottom, 
+      var p:Point = e0.p;
+      if (map.hasTile(p.x+cb.left, p.y+cb.top, 
+		      p.x+cb.right, p.y+cb.bottom, 
 		      Tile.isobstacle) ||
-	  !map.isTile(e0.x, e0.y+cb.bottom+1, Tile.isstoppable)) continue;
-      // assert(bounds.left <= e0.x && e0.x <= bounds.right);
-      // assert(bounds.top <= e0.y && e0.y <= bounds.bottom);
+	  !map.isTile(p.x, p.y+cb.bottom+1, Tile.isstoppable)) continue;
+      // assert(bounds.left <= p.x && p.x <= bounds.right);
+      // assert(bounds.top <= p.y && p.y <= bounds.bottom);
 
       // try climbing down.
-      if (bounds.top <= e0.y-1 &&
-	  map.isTile(e0.x, e0.y+cb.bottom, Tile.isgrabbable)) {
-	e1 = _a[e0.y-bounds.top-1][e0.x-bounds.left];
+      if (bounds.top <= p.y-1 &&
+	  map.isTile(p.x, p.y+cb.bottom, Tile.isgrabbable)) {
+	e1 = _a[p.y-bounds.top-1][p.x-bounds.left];
 	cost = e0.cost+1;
 	if (cost < e1.cost) {
 	  e1.action = PlanEntry.CLIMB;
@@ -80,11 +82,11 @@ public class PlanMap
 	}
       }
       // try climbing up.
-      if (e0.y+1 <= bounds.bottom &&
-	  map.hasTile(e0.x+cb.left, e0.y+cb.top+1,
-		      e0.x+cb.right, e0.y+cb.bottom+1,
+      if (p.y+1 <= bounds.bottom &&
+	  map.hasTile(p.x+cb.left, p.y+cb.top+1,
+		      p.x+cb.right, p.y+cb.bottom+1,
 		      Tile.isgrabbable)) {
-	e1 = _a[e0.y-bounds.top+1][e0.x-bounds.left];
+	e1 = _a[p.y-bounds.top+1][p.x-bounds.left];
 	cost = e0.cost+1;
 	if (cost < e1.cost) {
 	  e1.action = PlanEntry.CLIMB;
@@ -98,10 +100,10 @@ public class PlanMap
       for (var vx:int = -1; vx <= +1; vx += 2) {
 
 	// try walking.
-	var wx:int = e0.x+vx;
+	var wx:int = p.x+vx;
 	if (bounds.left <= wx && wx <= bounds.right &&
-	    map.isTile(wx, e0.y+cb.bottom+1, Tile.isstoppable)) {
-	  e1 = _a[e0.y-bounds.top][wx-bounds.left];
+	    map.isTile(wx, p.y+cb.bottom+1, Tile.isstoppable)) {
+	  e1 = _a[p.y-bounds.top][wx-bounds.left];
 	  cost = e0.cost+1;
 	  if (cost < e1.cost) {
 	    e1.action = PlanEntry.WALK;
@@ -113,15 +115,15 @@ public class PlanMap
 
 	// try falling.
 	for (fdx = 1; fdx <= falldx; fdx++) {
-	  fx = e0.x+vx*fdx;
+	  fx = p.x+vx*fdx;
 	  if (fx < bounds.left || bounds.right < fx) continue;
 	  fdt = Math.floor(map.tilesize*fdx/speed);
 	  fdy = Math.ceil(fdt*(fdt+1)/2 * gravity / map.tilesize);
 	  for (; fdy <= falldy; fdy++) {
-	    fy = e0.y-fdy;
+	    fy = p.y-fdy;
 	    if (fy < bounds.top || bounds.bottom < fy) continue;
 	    if (!map.isTile(fx, fy+cb.bottom+1, Tile.isstoppable) ||
-		map.hasTile(e0.x, e0.y+cb.bottom,
+		map.hasTile(p.x, p.y+cb.bottom,
 			    fx-vx, fy+cb.top, 
 			    Tile.isstoppable)) continue;
 	    e1 = _a[fy-bounds.top][fx-bounds.left];
@@ -139,14 +141,14 @@ public class PlanMap
 	var fx:int, fy:int;
 	var fdt:int, fdx:int, fdy:int;
 	for (fdx = 0; fdx <= falldx; fdx++) {
-	  fx = e0.x+vx*fdx;
+	  fx = p.x+vx*fdx;
 	  if (fx < bounds.left || bounds.right < fx) continue;
 	  fdt = Math.floor(map.tilesize*fdx/speed);
 	  fdy = Math.ceil(fdt*(fdt+1)/2 * gravity / map.tilesize);
 	  for (; fdy <= falldy; fdy++) {
-	    fy = e0.y-fdy;
+	    fy = p.y-fdy;
 	    if (fy < bounds.top || bounds.bottom < fy) continue;
-	    if (map.hasTile(e0.x, e0.y+cb.bottom, 
+	    if (map.hasTile(p.x, p.y+cb.bottom, 
 			    fx, fy+cb.top, 
 			    Tile.isstoppable)) continue;
 	    for (var jdx:int = 1; jdx <= jumpdx; jdx++) {

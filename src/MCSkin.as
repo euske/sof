@@ -13,6 +13,7 @@ public class MCSkin extends Shape3D
 {
   public const N:int = 8, M:int = 1;
   public const bounds:Rectangle = new Rectangle(-16, -32*2-16, 32*1, 32*4);
+  public const tilebounds:Rectangle = new Rectangle(0, -2, 0, 3);
 
   // setPhase(r)
   public function setPhase(r:Number):void

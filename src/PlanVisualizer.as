@@ -32,6 +32,7 @@ public class PlanVisualizer extends Shape
       for (var x:int = 0; x <= tw.width; x++) {
 	var e:PlanEntry = plan.getEntry(tw.left+x, tw.top+y);
 	if (e == null) continue;
+	var p:Point = e.p;
 	var c:int = 0x0000ff;
 	switch (e.action) {
 	case PlanEntry.WALK:
@@ -50,11 +51,12 @@ public class PlanVisualizer extends Shape
 	  continue;
 	}
 	graphics.lineStyle(0, c);
-	graphics.drawRect((e.x-tw.left)*ts, (e.y-tw.top)*ts, ts, ts);
+	graphics.drawRect((p.x-tw.left)*ts, (p.y-tw.top)*ts, ts, ts);
 	graphics.lineStyle(0, 0xffff00);
 	if (e.next != null) {
-	  graphics.moveTo((e.x-tw.left)*ts+ts/2, (e.y-tw.top)*ts+ts/2);
-	  graphics.lineTo((e.next.x-tw.left)*ts+ts/2, (e.next.y-tw.top)*ts+ts/2);
+	  var pn:Point = e.next.p;
+	  graphics.moveTo((p.x-tw.left)*ts+ts/2, (p.y-tw.top)*ts+ts/2);
+	  graphics.lineTo((pn.x-tw.left)*ts+ts/2, (pn.y-tw.top)*ts+ts/2);
 	}
       }
     }
