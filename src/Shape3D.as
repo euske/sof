@@ -10,12 +10,12 @@ import flash.geom.Rectangle;
 // 
 public class Shape3D extends Shape
 {
+  public var image:BitmapData;
+
   // VX:
   public const VX:Number = 0.4;
   // VZ:
   public const VZ:Number = 0.2;
-
-  public var image:BitmapData;
 
   // Shape3D()
   public function Shape3D()

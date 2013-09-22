@@ -17,9 +17,9 @@ public class Actor extends Sprite
   protected var _nametag:MCNameTag;
   protected var _balloon:MCBalloon;
 
-  private var vg:int = 0;
-  private var phase:Number = 0;
-  private var jumping:Boolean;
+  private var _vg:int = 0;
+  private var _phase:Number = 0;
+  private var _jumping:Boolean;
 
   public const gravity:int = 2;
   public const speed:int = 8;
@@ -70,10 +70,10 @@ public class Actor extends Sprite
       // climing a ladder.
       var vl:Point = _scene.tilemap.getCollisionByRect(bounds, v0.x, v0.y, Tile.isobstacle);
       pos = Utils.movePoint(pos, vl.x, vl.y);
-      vg = 0;
+      _vg = 0;
     } else {
       // falling.
-      var vf:Point = _scene.tilemap.getCollisionByRect(bounds, v0.x, vg, Tile.isstoppable);
+      var vf:Point = _scene.tilemap.getCollisionByRect(bounds, v0.x, _vg, Tile.isstoppable);
       pos = Utils.movePoint(pos, vf.x, vf.y);
       // moving (in air).
       var vdx:Point = _scene.tilemap.getCollisionByRect(bounds, v0.x-vf.x, 0, Tile.isobstacle);
@@ -81,22 +81,22 @@ public class Actor extends Sprite
       var vdy:Point;
       if (0 < v0.y) {
 	// start climing down.
-	vdy = _scene.tilemap.getCollisionByRect(bounds, 0, vg-vf.y+v0.y, Tile.isobstacle);
+	vdy = _scene.tilemap.getCollisionByRect(bounds, 0, _vg-vf.y+v0.y, Tile.isobstacle);
       } else {
 	// falling (cont'd).
-	vdy = _scene.tilemap.getCollisionByRect(bounds, 0, vg-vf.y, Tile.isstoppable);
+	vdy = _scene.tilemap.getCollisionByRect(bounds, 0, _vg-vf.y, Tile.isstoppable);
       }
       pos = Utils.movePoint(pos, vdy.x, vdy.y);
-      vg = Math.min(vf.y+vdx.y+vdy.y+gravity, maxspeed);
+      _vg = Math.min(vf.y+vdx.y+vdy.y+gravity, maxspeed);
     }
 
     if (v0.x != 0 || v0.y != 0) {
       skin.dir = v0;
     }
 
-    if (_scene.tilemap.hasCollisionByRect(bounds, 0, vg, Tile.isstoppable)) {
-      phase += v0.x;
-      skin.phase = Math.cos(phase)*0.5;
+    if (_scene.tilemap.hasCollisionByRect(bounds, 0, _vg, Tile.isstoppable)) {
+      _phase += v0.x;
+      skin.phase = Math.cos(_phase)*0.5;
     }
   }
 
@@ -131,8 +131,8 @@ public class Actor extends Sprite
   {
     if (isLanded()) {
       dispatchEvent(new ActorActionEvent(JUMP));
-      vg = -jumpspeed;
-      jumping = true;
+      _vg = -jumpspeed;
+      _jumping = true;
     }
   }
 

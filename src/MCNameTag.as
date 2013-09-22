@@ -8,7 +8,7 @@ import AwesomeFont;
 //
 public class MCNameTag extends Sprite
 {
-  private static var font:AwesomeFont = new AwesomeFont();
+  public static var font:AwesomeFont = new AwesomeFont();
 
   public const scale:int = 2;
   public const marginWidth:int = 1;

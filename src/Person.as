@@ -7,11 +7,11 @@ import flash.geom.Rectangle;
 //
 public class Person extends Actor
 {
+  public var visualizer:PlanVisualizer;
+
   private var _target:Actor;
   private var _plan:PlanMap;
   private var _entry:PlanEntry;
-
-  public var visualizer:PlanVisualizer;
 
   // Person(image)
   public function Person(scene:Scene)
