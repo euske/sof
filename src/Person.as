@@ -62,7 +62,8 @@ public class Person extends Actor
 	  var jumpdt:int = Math.floor(jumpspeed / gravity);
 	  var falldt:int = Math.floor(maxspeed / gravity);
 	  curplan = scene.createPlan(dst);
-	  curplan.fillPlan(src, skin.tilebounds, jumpdt, falldt, speed, gravity);
+	  curplan.fillPlan(src, skin.tilebounds, 
+			   jumpdt, falldt, speed, gravity);
 	  PlanVisualizer.main.plan = curplan;
 	}
       }

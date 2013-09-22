@@ -62,6 +62,7 @@ public class PlanMap
     while (0 < queue.length) {
       var e0:PlanEntry = queue.pop();
       var p:Point = e0.p;
+      if (src != null && src.equals(p)) break;
       if (map.hasTile(p.x+cb.left, p.y+cb.top, 
 		      p.x+cb.right, p.y+cb.bottom, 
 		      Tile.isobstacle) ||
@@ -78,6 +79,9 @@ public class PlanMap
 	  e1.action = PlanEntry.CLIMB;
 	  e1.cost = cost;
 	  e1.next = e0;
+	  if (src != null) {
+	    e1.prio = Math.abs(src.x-e1.p.x)+Math.abs(src.y-e1.p.y);
+	  }
 	  queue.push(e1);
 	}
       }
@@ -92,6 +96,9 @@ public class PlanMap
 	  e1.action = PlanEntry.CLIMB;
 	  e1.cost = cost;
 	  e1.next = e0;
+	  if (src != null) {
+	    e1.prio = Math.abs(src.x-e1.p.x)+Math.abs(src.y-e1.p.y);
+	  }
 	  queue.push(e1);
 	}
       }
@@ -109,6 +116,9 @@ public class PlanMap
 	    e1.action = PlanEntry.WALK;
 	    e1.cost = cost;
 	    e1.next = e0;
+	    if (src != null) {
+	      e1.prio = Math.abs(src.x-e1.p.x)+Math.abs(src.y-e1.p.y);
+	    }
 	    queue.push(e1);
 	  }
 	}
@@ -132,6 +142,9 @@ public class PlanMap
 	      e1.action = PlanEntry.FALL;
 	      e1.cost = cost;
 	      e1.next = e0;
+	      if (src != null) {
+		e1.prio = Math.abs(src.x-e1.p.x)+Math.abs(src.y-e1.p.y);
+	      }
 	      queue.push(e1);
 	    }
 	  }
@@ -166,13 +179,19 @@ public class PlanMap
 		e1.action = PlanEntry.JUMP;
 		e1.cost = cost;
 		e1.next = e0;
+		if (src != null) {
+		  e1.prio = Math.abs(src.x-e1.p.x)+Math.abs(src.y-e1.p.y);
+		}
 		queue.push(e1);
 	      }
 	    }
 	  }
 	}
       }
-      //queue.sortOn("prio", Array.DESCENDING);
+      if (src != null) {
+	// A* search.
+	queue.sortOn("prio", Array.NUMERIC | Array.DESCENDING);
+      }
     }
     return;
   }

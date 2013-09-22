@@ -15,6 +15,7 @@ public class PlanEntry
   public var p:Point;
   public var action:String;
   public var cost:int;
+  public var prio:int;
   public var next:PlanEntry;
   public function PlanEntry(p:Point, action:String, cost:int, next:PlanEntry)
   {
