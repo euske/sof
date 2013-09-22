@@ -105,6 +105,7 @@ public class PlanMap
 
       // for left and right.
       for (var vx:int = -1; vx <= +1; vx += 2) {
+	var bx:int = (vx < 0)? cb.right : cb.left;
 
 	// try walking.
 	var wx:int = p.x+vx;
@@ -133,8 +134,8 @@ public class PlanMap
 	    fy = p.y-fdy;
 	    if (fy < bounds.top || bounds.bottom < fy) continue;
 	    if (!map.isTile(fx, fy+cb.bottom+1, Tile.isstoppable) ||
-		map.hasTile(p.x, p.y+cb.bottom,
-			    fx-vx, fy+cb.top, 
+		map.hasTile(p.x+bx, p.y+cb.bottom,
+			    fx-vx, fy+cb.top-1, 
 			    Tile.isstoppable)) continue;
 	    e1 = _a[fy-bounds.top][fx-bounds.left];
 	    cost = e0.cost+Math.abs(fdx)+Math.abs(fdy)+1;
@@ -161,8 +162,8 @@ public class PlanMap
 	  for (; fdy <= falldy; fdy++) {
 	    fy = p.y-fdy;
 	    if (fy < bounds.top || bounds.bottom < fy) continue;
-	    if (map.hasTile(p.x, p.y+cb.bottom, 
-			    fx, fy+cb.top, 
+	    if (map.hasTile(p.x+bx, p.y+cb.bottom, 
+			    fx, fy+cb.top-1, 
 			    Tile.isstoppable)) continue;
 	    for (var jdx:int = 1; jdx <= jumpdx; jdx++) {
 	      var jx:int = fx+vx*jdx;
@@ -170,7 +171,7 @@ public class PlanMap
 	      var jy:int = fy-jumpdy;
 	      if (jy < bounds.top || bounds.bottom < jy) continue;
 	      if (!map.isTile(jx, jy+cb.bottom+1, Tile.isstoppable) ||
-		  map.hasTile(fx+vx, fy+cb.top, 
+		  map.hasTile(fx+vx, fy+cb.top-1, 
 			      jx, jy+cb.bottom, 
 	      		      Tile.isstoppable)) continue;
 	      e1 = _a[jy-bounds.top][jx-bounds.left];
