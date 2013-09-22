@@ -185,26 +185,26 @@ public class Main extends Sprite
     player.addEventListener(ActorActionEvent.ACTION, onActorAction);
     player.addEventListener(ActorActionEvent.ACTION, onPlayerAction);
     player.speak("Video Games AWESOME!");
-    player.setSkinImage(image0.bitmapData);
-    player.setName("Farshar");
+    player.skin.image = image0.bitmapData;
+    player.nametag = "Farshar";
     scene.add(player);
 
     for (var i:int = 0; i < images.length; i++) {
       var actor:Person = new Person(scene); 
       actor.bounds = tilemap.getTileRect(i+5, i+5);
       actor.addEventListener(ActorActionEvent.ACTION, onActorAction);
-      actor.setSkinImage(images[i].bitmapData);
+      actor.skin.image = images[i].bitmapData;
       switch (i) {
       case 0:
-	actor.setName("MissBlow");
-	actor.setTarget(player);
+	actor.nametag = "MissBlow";
+	actor.target = player;
 	actor.visualizer = visualizer;
 	break;
       case 1:
-	actor.setName("Snarf");
+	actor.nametag = "Snarf";
 	break;
       case 2:
-	actor.setName("Deakwanda");
+	actor.nametag = "Deakwanda";
 	break;
       }
       scene.add(actor);

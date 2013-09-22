@@ -17,13 +17,14 @@ public class MCBalloon extends Sprite
   public function MCBalloon()
   {
   }
-  
-  public function setText(text:String):void
+
+  // text
+  public function set text(value:String):void
   {
     graphics.clear();
     removeChildren();
-    if (text != null) {
-      var w:int = font.getTextWidth(text);
+    if (value != null) {
+      var w:int = font.getTextWidth(value);
       graphics.lineStyle(4, 0xffffff);
       graphics.beginFill(0x444444);
       graphics.drawRoundRect(0, 0, 
@@ -32,7 +33,7 @@ public class MCBalloon extends Sprite
 			     cornerWidth, cornerWidth);
       graphics.endFill();
 
-      var glyphs:Bitmap = font.render(text, 0xffff00, scale);
+      var glyphs:Bitmap = font.render(value, 0xffff00, scale);
       glyphs.x = marginWidth;
       glyphs.y = marginWidth;
       addChild(glyphs);

@@ -17,19 +17,20 @@ public class MCNameTag extends Sprite
   {
   }
   
-  public function setText(text:String):void
+  // text
+  public function set text(value:String):void
   {
     graphics.clear();
     removeChildren();
-    if (text != null) {
-      var w:int = font.getTextWidth(text);
+    if (value != null) {
+      var w:int = font.getTextWidth(value);
       graphics.beginFill(0x000000, 0.5);
       graphics.drawRect(0, 0, 
 			w*scale + marginWidth*2,
 			font.height*scale + marginWidth*2);
       graphics.endFill();
 
-      var glyphs:Bitmap = font.render(text, 0xffffff, scale);
+      var glyphs:Bitmap = font.render(value, 0xffffff, scale);
       glyphs.x = marginWidth;
       glyphs.y = marginWidth;
       addChild(glyphs);

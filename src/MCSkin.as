@@ -11,28 +11,28 @@ import Shape3D;
 // 
 public class MCSkin extends Shape3D
 {
+  public var dir:Point;
+
   public const N:int = 8, M:int = 1;
   public const bounds:Rectangle = new Rectangle(-16, -32*2-16, 32*1, 32*4);
   public const tilebounds:Rectangle = new Rectangle(0, -2, 0, 3);
 
-  // setPhase(r)
-  public function setPhase(r:Number):void
+  // MCSkin()
+  public function MCSkin()
   {
-    p0 = Math.cos(r);
-    q0 = Math.sin(r);
+    super();
+    dir = new Point(0, 0);
+  }
+
+  // phase
+  public function set phase(value:Number):void
+  {
+    p0 = Math.cos(value);
+    q0 = Math.sin(value);
     p1 = p0;
     q1 = -q0;
   }
 
-  // setDirection(vx, vz)
-  public function setDirection(vx:int, vz:int):void
-  {
-    this.vx = vx;
-    this.vz = vz;
-  }
-
-  public var vx:int = 1, vz:int = 0;
-  
   private var p0:Number = 1.0;
   private var q0:Number = 0.0;
   private var p1:Number = 1.0;
@@ -44,9 +44,9 @@ public class MCSkin extends Shape3D
     // Skin format: http://www.minecraftwiki.net/wiki/File:Skinzones.png
     graphics.clear();
 
-    if (vz == 0) {
+    if (dir.y == 0) {
       // L-arm
-      if (0 < vx) {
+      if (0 < dir.x) {
 	quad(new Rectangle(44, 20, 4, 12), // front
 	     p3d(+N*p0,-N*6-N*q0,N*3), p3d(0,0,N*2), p3d(N*6*q0,N*6*p0,0));    
 	quad(new Rectangle(40, 20, 4, 12), // right
@@ -58,7 +58,7 @@ public class MCSkin extends Shape3D
 	     p3d(-N*p0,-N*6-N*q0,N*3), p3d(N*2*p0,+N*2*q0,0), p3d(-N*6*q0,N*6*p0,0));    
       }
       // L-leg
-      if (0 < vx) {
+      if (0 < dir.x) {
 	quad(new Rectangle(4, 20, 4, 12), // front
 	     p3d(+N*p1,-N*q1,+N), p3d(0,0,N*2), p3d(N*6*q1,N*6*p1,0));    
 	quad(new Rectangle(0, 20, 4, 12), // right
@@ -74,7 +74,7 @@ public class MCSkin extends Shape3D
 	     p3d(-N*p1,-N*q1,+N), p3d(0,0,N*2), p3d(N*2*p1,+N*2*q1,0));
       }
       // R-leg
-      if (0 < vx) {
+      if (0 < dir.x) {
 	quad(new Rectangle(4, 20, 4, 12), // front
 	     p3d(+N*p0,-N*q0,-N), p3d(0,0,N*2), p3d(N*6*q0,N*6*p0,0));    
 	quad(new Rectangle(0, 20, 4, 12), // right
@@ -90,7 +90,7 @@ public class MCSkin extends Shape3D
 	     p3d(-N*p0,-N*q0,-N), p3d(0,0,N*2), p3d(N*2*p0,+N*2*q0,0));
       }
       // body
-      if (0 < vx) {
+      if (0 < dir.x) {
 	quad(new Rectangle(20, 20, 8, 12), // front
 	     p3d(+N,-N*6,-N), p3d(0,0,N*4), p3d(0,N*6,0));
 	quad(new Rectangle(16, 20, 4, 12), // right
@@ -103,7 +103,7 @@ public class MCSkin extends Shape3D
       }
 
       // head
-      if (0 < vx) {
+      if (0 < dir.x) {
 	quad(new Rectangle(8, 8, 8, 8), // front
 	     p3d(+N*2,-N*10,-N), p3d(0,0,N*4), p3d(0,N*4,0));
 	quad(new Rectangle(0, 8, 8, 8), // right
@@ -119,7 +119,7 @@ public class MCSkin extends Shape3D
 	     p3d(+N*2,-N*10,-N), p3d(0,0,N*4), p3d(-N*4,0,0));
       }
       // mask
-      if (0 < vx) {
+      if (0 < dir.x) {
 	quad(new Rectangle(40, 8, 8, 8), // front
 	     p3d(+N*2+M,-N*10-M,-N-M), p3d(0,0,N*4+M*2), p3d(0,N*4+M*2,0));
 	quad(new Rectangle(32, 8, 8, 8), // right
@@ -135,7 +135,7 @@ public class MCSkin extends Shape3D
 	     p3d(+N*2+M,-N*10-M,-N-M), p3d(0,0,N*4+M*2), p3d(-N*4-M*2,0,0));
       }
       // R-arm
-      if (0 < vx) {
+      if (0 < dir.x) {
 	quad(new Rectangle(44, 20, 4, 12), // front
 	     p3d(+N*p1,-N*6-N*q1,-N*3), p3d(0,0,N*2), p3d(N*6*q1,N*6*p1,0));    
 	quad(new Rectangle(40, 20, 4, 12), // right
@@ -150,7 +150,7 @@ public class MCSkin extends Shape3D
 	quad(new Rectangle(44, 16, 4, 4), // top
 	     p3d(-N*p1,-N*6-N*q1,-N*3), p3d(0,0,N*2), p3d(N*2*p1,N*2*q1,0));
       }
-    } else if (0 < vz) {
+    } else if (0 < dir.y) {
       // R-leg
       quad(new Rectangle(4, 20, 4, 12), // front
 	   p3d(-N*2,0,-N), p3d(N*2,0,0), p3d(0,N*6,0));    
@@ -189,7 +189,7 @@ public class MCSkin extends Shape3D
       quad(new Rectangle(40, 0, 8, 8), // top
 	   p3d(-N*2-M,-N*10-M,-N-M), p3d(0,0,N*4+M*2), p3d(N*4+M*2,0,0));
       
-    } else if (vz < 0) {
+    } else if (dir.y < 0) {
       // L-leg
       quad(new Rectangle(12, 20, 4, 12), // front
 	   p3d(-N*2,0,-N), p3d(N*2,0,0), p3d(0,N*6,0));    

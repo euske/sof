@@ -7,9 +7,9 @@ import flash.geom.Rectangle;
 //
 public class Person extends Actor
 {
-  private var target:Actor;
-  private var curplan:PlanMap;
-  private var curentry:PlanEntry;
+  private var _target:Actor;
+  private var _plan:PlanMap;
+  private var _entry:PlanEntry;
 
   public var visualizer:PlanVisualizer;
 
@@ -20,11 +20,11 @@ public class Person extends Actor
     addEventListener(ActorActionEvent.ACTION, onActorAction);
   }
 
-  // setTarget(actor)
-  public function setTarget(actor:Actor):void
+  // target
+  public function set target(value:Actor):void
   {
-    target = actor;
-    curplan = null;
+    _target = value;
+    _plan = null;
   }
 
   // onActorAction()
@@ -37,7 +37,7 @@ public class Person extends Actor
   {
     super.update();
     var vx:int, vy:int;
-    if (target == null) {
+    if (_target == null) {
       // random
       if (Math.random() < 0.05) {
 	vx = int(Math.random()*3)-1;
@@ -51,21 +51,21 @@ public class Person extends Actor
       move(new Point(vx*speed, vy*speed));
     } else {
       // planned
-      var src:Point = scene.tilemap.getCoordsByPoint(pos);
-      var dst:Point = scene.tilemap.getCoordsByPoint(target.pos);
+      var src:Point = _scene.tilemap.getCoordsByPoint(pos);
+      var dst:Point = _scene.tilemap.getCoordsByPoint(_target.pos);
       // invalidate plan.
-      if (curplan != null && !curplan.dst.equals(dst)) {
-	curplan = null;
+      if (_plan != null && !_plan.dst.equals(dst)) {
+	_plan = null;
       }
       // make a plan.
-      if (curplan == null) {
-	if (target.isLanded()) {
+      if (_plan == null) {
+	if (_target.isLanded()) {
 	  var jumpdt:int = Math.floor(jumpspeed / gravity);
 	  var falldt:int = Math.floor(maxspeed / gravity);
-	  var plan:PlanMap = scene.createPlan(dst);
+	  var plan:PlanMap = _scene.createPlan(dst);
 	  if (plan.fillPlan(src, skin.tilebounds, 
 			    jumpdt, falldt, speed, gravity)) {
-	    curplan = plan;
+	    _plan = plan;
 	    if (visualizer != null) {
 	      visualizer.plan = plan;
 	    }
@@ -73,19 +73,19 @@ public class Person extends Actor
 	}
       }
       // follow a plan.
-      if (curentry == null && curplan != null) {
+      if (_entry == null && _plan != null) {
 	// Get a macro-level plan.
-	var entry:PlanEntry = curplan.getEntry(src.x, src.y);
+	var entry:PlanEntry = _plan.getEntry(src.x, src.y);
 	if (entry != null && entry.next != null) {
 	  Main.log("entry="+entry);
-	  curentry = entry;
+	  _entry = entry;
 	}
       }
-      if (curentry != null) {
-	var pn:Point = curentry.next.p;
-	var nextpos:Point = scene.tilemap.getTilePoint(pn.x, pn.y);
+      if (_entry != null) {
+	var pn:Point = _entry.next.p;
+	var nextpos:Point = _scene.tilemap.getTilePoint(pn.x, pn.y);
 	// Get a micro-level (greedy) plan.
-	switch (curentry.action) {
+	switch (_entry.action) {
 	case PlanEntry.WALK:
 	  vx = Utils.clamp(-1, (nextpos.x-pos.x), +1);
 	  if (!isMovable(vx*speed, 0)) {
@@ -107,15 +107,15 @@ public class Person extends Actor
 	  break;
 	  
 	case PlanEntry.JUMP:
-	  if (src.equals(curentry.p)) {
+	  if (src.equals(_entry.p)) {
 	    jump();
 	  }
 	  vx = Utils.clamp(-1, (nextpos.x-pos.x), +1);
 	  break;
 	}
-	  //Main.log("action="+curentry.action+", vx="+vx+", vy="+vy);
-	if (curentry.next.p.equals(src)) {
-	    curentry = null;
+	  //Main.log("action="+_entry.action+", vx="+vx+", vy="+vy);
+	if (_entry.next.p.equals(src)) {
+	    _entry = null;
 	}
       }
       move(new Point(vx*speed, vy*speed));

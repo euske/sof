@@ -38,7 +38,7 @@ public class Player extends Actor
       }
     }
     move(v);
-    scene.setCenter(pos, 200, 100);
+    _scene.setCenter(pos, 200, 100);
 
     if (800 < bounds.y) {
       dispatchEvent(new ActorActionEvent(DIE));

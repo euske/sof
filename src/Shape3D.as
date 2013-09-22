@@ -15,17 +15,11 @@ public class Shape3D extends Shape
   // VZ:
   public const VZ:Number = 0.2;
 
-  private var image:BitmapData;
+  public var image:BitmapData;
 
   // Shape3D()
   public function Shape3D()
   {
-  }
-
-  // setImage(image)
-  public function setImage(image:BitmapData):void
-  {
-    this.image = image;
   }
 
   // p3d(x,y,z)
