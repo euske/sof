@@ -102,7 +102,9 @@ public class Person extends Actor
 	  break;
 	  
 	case PlanEntry.JUMP:
-	  jump();
+	  if (src.equals(curentry.p)) {
+	    jump();
+	  }
 	  vx = Utils.clamp(-1, (nextpos.x-pos.x), +1);
 	  break;
 	}

@@ -49,11 +49,11 @@ public class PlanMap
 			   jumpdt:int, falldt:int, 
 			   speed:int, gravity:int):void
   {
+    // jumpd=(3,-4), falld=(3,5)
     var jumpdx:int = Math.floor(jumpdt*speed / map.tilesize);
     var jumpdy:int = -Math.floor(jumpdt*(jumpdt+1)/2 * gravity / map.tilesize);
     var falldx:int = Math.floor(falldt*speed / map.tilesize);
     var falldy:int = Math.ceil(falldt*(falldt+1)/2 * gravity / map.tilesize);
-    // jump=(3,-4), fall=(3,5)
 
     var cost:int;
     var e1:PlanEntry = _a[dst.y-bounds.top][dst.x-bounds.left];
