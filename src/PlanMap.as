@@ -46,23 +46,24 @@ public class PlanMap
   }
 
   // fillPlan(plan, b)
-  public function fillPlan(src:Point, cb:Rectangle,
+  public function fillPlan(src:Point, cb:Rectangle, n:int,
 			   jumpdt:int, falldt:int, 
-			   speed:int, gravity:int):Boolean
+			   speed:int, gravity:int):int
   {
-    if (src != null && 
-	!map.isTile(src.x, src.y+cb.bottom+1, Tile.isstoppable)) return false;
-
     // jumpd=(3,-4), falld=(3,5)
     var jumpdx:int = Math.floor(jumpdt*speed / map.tilesize);
     var jumpdy:int = -Math.floor(jumpdt*(jumpdt+1)/2 * gravity / map.tilesize);
     var falldx:int = Math.floor(falldt*speed / map.tilesize);
     var falldy:int = Math.ceil(falldt*(falldt+1)/2 * gravity / map.tilesize);
 
+    if (src != null && 
+	!map.isTile(src.x, src.y+cb.bottom+1, Tile.isstoppable)) return 0;
+    this.src = src;
+    
     var e1:PlanEntry = _a[dst.y-bounds.top][dst.x-bounds.left];
     e1.cost = 0;
     var queue:Array = [ e1 ];
-    while (0 < queue.length) {
+    while (0 < n && 0 < queue.length) {
       var cost:int;
       var e0:PlanEntry = queue.pop();
       var p:Point = e0.p;
@@ -197,9 +198,10 @@ public class PlanMap
 	// A* search.
 	queue.sortOn("prio", Array.NUMERIC | Array.DESCENDING);
       }
+      n--;
     }
-    this.src = src;
-    return true;
+
+    return n;
   }
 }
 

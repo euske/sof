@@ -63,8 +63,8 @@ public class Person extends Actor
 	  var jumpdt:int = Math.floor(jumpspeed / gravity);
 	  var falldt:int = Math.floor(maxspeed / gravity);
 	  var plan:PlanMap = _scene.createPlan(dst);
-	  if (plan.fillPlan(src, skin.tilebounds, 
-			    jumpdt, falldt, speed, gravity)) {
+	  if (0 < plan.fillPlan(src, skin.tilebounds, 50,
+				jumpdt, falldt, speed, gravity)) {
 	    _plan = plan;
 	    if (visualizer != null) {
 	      visualizer.plan = plan;
