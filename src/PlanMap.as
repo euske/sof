@@ -63,14 +63,14 @@ public class PlanMap
       var e0:PlanEntry = queue.pop();
       if (map.hasTile(e0.x+bounds.left, e0.y+bounds.top, 
 		      e0.x+bounds.right, e0.y+bounds.bottom, 
-		      Tile.isobstacle)) continue;
-      if (!Tile.isstoppable(map.getTile(e0.x, e0.y+bounds.bottom+1))) continue;
+		      Tile.isobstacle) ||
+	  !map.isTile(e0.x, e0.y+bounds.bottom+1, Tile.isstoppable)) continue;
       // assert(x0 <= e0.x && e0.x <= x1);
       // assert(y0 <= e0.y && e0.y <= y1);
 
       // try climbing down.
       if (y0 <= e0.y-1 &&
-	  Tile.isgrabbable(map.getTile(e0.x, e0.y+bounds.bottom))) {
+	  map.isTile(e0.x, e0.y+bounds.bottom, Tile.isgrabbable)) {
 	e1 = a[e0.y-y0-1][e0.x-x0];
 	cost = e0.cost+1;
 	if (cost < e1.cost) {
@@ -101,7 +101,7 @@ public class PlanMap
 	// try walking.
 	var wx:int = e0.x+vx;
 	if (x0 <= wx && wx <= x1 &&
-	    Tile.isstoppable(map.getTile(wx, e0.y+bounds.bottom+1))) {
+	    map.isTile(wx, e0.y+bounds.bottom+1, Tile.isstoppable)) {
 	  e1 = a[e0.y-y0][wx-x0];
 	  cost = e0.cost+1;
 	  if (cost < e1.cost) {
@@ -121,7 +121,7 @@ public class PlanMap
 	  for (; fdy <= falldy; fdy++) {
 	    fy = e0.y-fdy;
 	    if (fy < y0 || y1 < fy) continue;
-	    if (!Tile.isstoppable(map.getTile(fx, fy+bounds.bottom+1)) ||
+	    if (!map.isTile(fx, fy+bounds.bottom+1, Tile.isstoppable) ||
 		map.hasTile(e0.x, e0.y+bounds.bottom,
 			    fx-vx, fy+bounds.top, 
 			    Tile.isstoppable)) continue;
@@ -155,7 +155,7 @@ public class PlanMap
 	      if (jx < x0 || x1 < jx) continue;
 	      var jy:int = fy-jumpdy;
 	      if (jy < y0 || y1 < jy) continue;
-	      if (!Tile.isstoppable(map.getTile(jx, jy+bounds.bottom+1)) ||
+	      if (!map.isTile(jx, jy+bounds.bottom+1, Tile.isstoppable) ||
 		  map.hasTile(fx+vx, fy+bounds.top, 
 	       		      jx, jy+bounds.bottom, 
 	      		      Tile.isstoppable)) continue;

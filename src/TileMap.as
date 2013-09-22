@@ -16,6 +16,7 @@ public class TileMap extends Bitmap
   public var tilewindow:Rectangle;
 
   private var _tilevalue:Dictionary;
+  private var _mapcache:Dictionary;
 
   // TileMap(map, tiles, tilesize, width, height)
   public function TileMap(map:BitmapData, 
@@ -26,6 +27,7 @@ public class TileMap extends Bitmap
     this.tiles = tiles;
     this.tilesize = tilesize;
     this.tilewindow = new Rectangle();
+
     _tilevalue = new Dictionary();
     for (var i:int = 0; i < map.width; i++) {
       var c:uint = map.getPixel(i, 0);
@@ -33,6 +35,8 @@ public class TileMap extends Bitmap
 	_tilevalue[c] = i;
       }
     }
+
+    _mapcache = new Dictionary();
   }
 
   // mapwidth
@@ -55,7 +59,8 @@ public class TileMap extends Bitmap
 				    Math.floor(window.height/tilesize)+1);
     if (!tilewindow.equals(r)) {
       tilewindow = r;
-      renderTiles(tilewindow.x, tilewindow.y, tilewindow.width, tilewindow.height);
+      renderTiles(tilewindow.x, tilewindow.y,
+		  tilewindow.width, tilewindow.height);
     }
     this.x = (tilewindow.x*tilesize)-window.x;
     this.y = (tilewindow.y*tilesize)-window.y;
@@ -83,13 +88,19 @@ public class TileMap extends Bitmap
   public function getTile(x:int, y:int):int
   {
     if (x < 0 || map.width <= x || 
-	y < 0 || map.height <= y+1) {
+	y < 0 || map.height-1 <= y) {
       return -1;
     }
     var c:uint = map.getPixel(x, y+1);
     return _tilevalue[c];
   }
 
+  // isTile(x, y, f)
+  public function isTile(x:int, y:int, f:Function):Boolean
+  {
+    return f(getTile(x, y));
+  }
+  
   // scanTile(x0, y0, x1, y1, f)
   public function scanTile(x0:int, y0:int, x1:int, y1:int, f:Function):Array
   {
@@ -116,7 +127,14 @@ public class TileMap extends Bitmap
   // hasTile(x0, y0, x1, x1, f)
   public function hasTile(x0:int, y0:int, x1:int, y1:int, f:Function):Boolean
   {
-    return (scanTile(x0, y0, x1, y1, f).length != 0);
+    var cache:TileMapCache;
+    if (_mapcache[f] === undefined) {
+      cache = new TileMapCache(this, f);
+      _mapcache[f] = cache;
+    } else {
+      cache = _mapcache[f];
+    }
+    return (cache.getCount(x0, y0, x1, y1) != 0);
   }
 
   // getTilePoint(x, y)
@@ -179,3 +197,48 @@ public class TileMap extends Bitmap
 }
 
 } // package
+
+
+import flash.display.BitmapData;
+
+class TileMapCache 
+{
+  private var _data:BitmapData;
+
+  public function TileMapCache(tilemap:TileMap, f:Function)
+  {
+    _data = new BitmapData(tilemap.mapwidth+2, 
+			   tilemap.mapheight+2, false, 0);
+    for (var y:int = -1; y <= tilemap.mapheight; y++) {
+      var n:uint = 0;
+      for (var x:int = -1; x <= tilemap.mapwidth; x++) {
+	var n0:uint = (y<0)? 0 : _data.getPixel(x+1, y);
+	if (f(tilemap.getTile(x, y))) {
+	  n++;
+	}
+	_data.setPixel(x+1, y+1, n0+n);
+      }
+    }
+  }
+
+  public function getCount(x0:int, y0:int, x1:int, y1:int):uint
+  {
+    var t:int;
+    // assert(x0 <= x1);
+    if (x1 < x0) {
+      t = x0; x0 = x1; x1 = t;
+    }
+    // assert(y0 <= y1);
+    if (y1 < y0) {
+      t = y0; y0 = y1; y1 = t;
+    }
+    x0 = Math.max(-1, Math.min(_data.width-1, x0));
+    y0 = Math.max(-1, Math.min(_data.height-1, y0));
+    x1 = Math.max(0, Math.min(_data.width-1, x1+1));
+    y1 = Math.max(0, Math.min(_data.height-1, y1+1));
+    return (_data.getPixel(x1, y1)+
+	    ((x0<0 || y0<0)? 0 : _data.getPixel(x0, y0))-
+	    ((y0<0)? 0 : _data.getPixel(x1, y0))-
+	    ((x0<0)? 0 : _data.getPixel(x0, y1)));
+  }
+}
