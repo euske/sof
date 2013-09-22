@@ -144,7 +144,7 @@ public class Actor extends Sprite
   // isLanded()
   public function isLanded():Boolean
   {
-    return scene.tilemap.hasCollisionByRect(bounds, 0, vg, Tile.isstoppable);
+    return scene.tilemap.hasCollisionByRect(bounds, 0, 1, Tile.isstoppable);
   }
   
   // isGrabbing()

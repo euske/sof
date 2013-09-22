@@ -10,7 +10,6 @@ public class PlanVisualizer extends Shape
 {
   public static var main:PlanVisualizer;
 
-  public var src:Point;
   public var plan:PlanMap;
   public var tilemap:TileMap;
 
@@ -62,9 +61,9 @@ public class PlanVisualizer extends Shape
     }
     graphics.lineStyle(0, 0x00ff00);
     graphics.drawRect((plan.dst.x-tw.left)*ts+2, (plan.dst.y-tw.top)*ts+2, ts-4, ts-4);
-    if (src != null) {
+    if (plan.src != null) {
       graphics.lineStyle(0, 0xffffff);
-      graphics.drawRect((src.x-tw.left)*ts+2, (src.y-tw.top)*ts+2, ts-4, ts-4);
+      graphics.drawRect((plan.src.x-tw.left)*ts+2, (plan.src.y-tw.top)*ts+2, ts-4, ts-4);
     }
 
     this.x = tilemap.x;

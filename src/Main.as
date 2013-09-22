@@ -178,6 +178,7 @@ public class Main extends Sprite
     addChild(tilemap);
 
     scene = new Scene(stage.stageWidth, stage.stageHeight, tilemap);
+    visualizer = new PlanVisualizer(tilemap);
 
     player = new Player(scene);
     player.bounds = tilemap.getTileRect(3, 3);
@@ -197,6 +198,7 @@ public class Main extends Sprite
       case 0:
 	actor.setName("MissBlow");
 	actor.setTarget(player);
+	actor.visualizer = visualizer;
 	break;
       case 1:
 	actor.setName("Snarf");
@@ -209,8 +211,6 @@ public class Main extends Sprite
     }
 
     addChild(scene);
-    
-    visualizer = new PlanVisualizer(tilemap);
     addChild(visualizer);
   }
 

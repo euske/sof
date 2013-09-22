@@ -8,6 +8,7 @@ import flash.geom.Rectangle;
 public class PlanMap
 {
   public var map:TileMap;
+  public var src:Point;
   public var dst:Point;
   public var bounds:Rectangle;
 
@@ -47,19 +48,22 @@ public class PlanMap
   // fillPlan(plan, b)
   public function fillPlan(src:Point, cb:Rectangle,
 			   jumpdt:int, falldt:int, 
-			   speed:int, gravity:int):void
+			   speed:int, gravity:int):Boolean
   {
+    if (src != null && 
+	!map.isTile(src.x, src.y+cb.bottom+1, Tile.isstoppable)) return false;
+
     // jumpd=(3,-4), falld=(3,5)
     var jumpdx:int = Math.floor(jumpdt*speed / map.tilesize);
     var jumpdy:int = -Math.floor(jumpdt*(jumpdt+1)/2 * gravity / map.tilesize);
     var falldx:int = Math.floor(falldt*speed / map.tilesize);
     var falldy:int = Math.ceil(falldt*(falldt+1)/2 * gravity / map.tilesize);
 
-    var cost:int;
     var e1:PlanEntry = _a[dst.y-bounds.top][dst.x-bounds.left];
     e1.cost = 0;
     var queue:Array = [ e1 ];
     while (0 < queue.length) {
+      var cost:int;
       var e0:PlanEntry = queue.pop();
       var p:Point = e0.p;
       if (src != null && src.equals(p)) break;
@@ -194,7 +198,8 @@ public class PlanMap
 	queue.sortOn("prio", Array.NUMERIC | Array.DESCENDING);
       }
     }
-    return;
+    this.src = src;
+    return true;
   }
 }
 

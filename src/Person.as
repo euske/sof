@@ -10,7 +10,8 @@ public class Person extends Actor
   private var target:Actor;
   private var curplan:PlanMap;
   private var curentry:PlanEntry;
-  private var plantimeout:int;
+
+  public var visualizer:PlanVisualizer;
 
   // Person(image)
   public function Person(scene:Scene)
@@ -61,10 +62,14 @@ public class Person extends Actor
 	if (target.isLanded()) {
 	  var jumpdt:int = Math.floor(jumpspeed / gravity);
 	  var falldt:int = Math.floor(maxspeed / gravity);
-	  curplan = scene.createPlan(dst);
-	  curplan.fillPlan(src, skin.tilebounds, 
-			   jumpdt, falldt, speed, gravity);
-	  PlanVisualizer.main.plan = curplan;
+	  var plan:PlanMap = scene.createPlan(dst);
+	  if (plan.fillPlan(src, skin.tilebounds, 
+			    jumpdt, falldt, speed, gravity)) {
+	    curplan = plan;
+	    if (visualizer != null) {
+	      visualizer.plan = plan;
+	    }
+	  }
 	}
       }
       // follow a plan.
@@ -76,7 +81,6 @@ public class Person extends Actor
 	  curentry = entry;
 	}
       }
-      PlanVisualizer.main.src = src;
       if (curentry != null) {
 	var pn:Point = curentry.next.p;
 	var nextpos:Point = scene.tilemap.getTilePoint(pn.x, pn.y);
